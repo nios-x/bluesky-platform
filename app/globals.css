@@ -4,28 +4,29 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
+  --brand-blue: #1a4d9e;
   --background: oklch(0.985 0.001 0);
   --foreground: oklch(0.11 0.02 250);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.11 0.02 250);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.11 0.02 250);
-  --primary: oklch(0.4 0.18 255);
+  --primary: #1a4d9e;
   --primary-foreground: oklch(0.99 0 0);
   --secondary: oklch(0.58 0.2 195);
   --secondary-foreground: oklch(1 0 0);
   --muted: oklch(0.92 0.01 0);
   --muted-foreground: oklch(0.45 0.01 0);
-  --accent: oklch(0.62 0.22 200);
+  --accent: #ff8c42;
   --accent-foreground: oklch(1 0 0);
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(0.577 0.245 27.325);
   --border: oklch(0.93 0.01 0);
   --input: oklch(0.97 0.001 0);
-  --ring: oklch(0.4 0.18 255);
+  --ring: #1a4d9e;
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
+  --chart-3: #0b2a6f;
   --chart-4: oklch(0.828 0.189 84.429);
   --chart-5: oklch(0.769 0.188 70.08);
   --radius: 0.625rem;

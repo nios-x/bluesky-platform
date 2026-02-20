@@ -1,37 +1,45 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { ImageWithFallback } from "@/components/ui/image-with-fallback";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { motion } from "framer-motion";
-import { useState, useEffect } from "react";
-import { MapPin } from "lucide-react";
-
+import { useMemo, useState, useEffect } from "react";
+import { MapPin, Calendar, MessageCircle } from "lucide-react";
+import Link from "next/link";
 export function Hero() {
-  const [address, setAddress] = useState("");
-  const [displayText, setDisplayText] = useState("");
-  const [wordIndex, setWordIndex] = useState(0);
-  
-  const words = ["Michigan's", "Trusted", "Waste", "Management", "Solution"];
+  const [zipCode, setZipCode] = useState("");
+  const [selectedDate, setSelectedDate] = useState("");
+  const [removalDate, setRemovalDate] = useState("");
+  const [dumpsterSize, setDumpsterSize] = useState("");
+  const [displayedWords, setDisplayedWords] = useState<string[]>([]);
+  const [isResetting, setIsResetting] = useState(false);
 
+  const subheadingText = "Instantly Compare Sizes, Get an Estimate, & Schedule Delivery.";
+  const words = useMemo(() => subheadingText.split(" "), [subheadingText]);
+
+  // Word-by-word animation with loop
   useEffect(() => {
-    if (wordIndex < words.length) {
+    if (isResetting) return;
+
+    if (displayedWords.length < words.length) {
       const timer = setTimeout(() => {
-        setDisplayText(prev => prev + (prev ? " " : "") + words[wordIndex]);
-        setWordIndex(prev => prev + 1);
-      }, 500);
+        setDisplayedWords((prev) => [...prev, words[prev.length]]);
+      }, 200);
       return () => clearTimeout(timer);
-    } else {
-      const resetTimer = setTimeout(() => {
-        setDisplayText("");
-        setWordIndex(0);
-      }, 3000);
-      return () => clearTimeout(resetTimer);
     }
-  }, [wordIndex]);
+
+    const pauseTimer = setTimeout(() => {
+      setIsResetting(true);
+      setDisplayedWords([]);
+      setTimeout(() => setIsResetting(false), 300);
+    }, 1200);
+
+    return () => clearTimeout(pauseTimer);
+  }, [displayedWords.length, isResetting, words]);
 
   return (
-    <section className="relative min-h-[700px] lg:min-h-[800px] flex items-center overflow-hidden">
-      {/* Background Image Container - Fixed flickering */}
+    <section className="relative min-h-[800px] lg:min-h-[900px] flex items-center overflow-hidden">
+      {/* Background Image Container */}
       <div className="absolute inset-0 w-full h-full">
         <img
           src="/images/Home_page_main.png"
@@ -39,103 +47,220 @@ export function Hero() {
           className="w-full h-full object-cover object-[center_75%]"
           loading="eager"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/40 to-black/60" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#1a4d9e]/70 via-[#1a4d9e]/55 to-[#1a4d9e]/80" />
       </div>
 
       {/* Content */}
-      <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
-        {/* Badge */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="inline-flex items-center gap-2 bg-blue-600 text-white px-5 py-2.5 rounded-full text-sm font-semibold mb-6 shadow-lg"
-        >
-          <span className="text-lg">👩</span>
-          <span>Women-Owned & Operated</span>
-        </motion.div>
-
+      <div className="relative z-10 w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
         {/* Main Heading */}
         <motion.h1
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.2 }}
-          className="text-5xl sm:text-6xl lg:text-7xl xl:text-8xl font-bold text-white mb-6 drop-shadow-2xl"
+          transition={{ duration: 0.8 }}
+          className="text-5xl sm:text-6xl lg:text-7xl font-bold text-white mb-4 drop-shadow-2xl"
         >
-          Blue Sky Disposal
+          Book a Dumpster in Seconds
         </motion.h1>
 
-        {/* Animated Subheading */}
-        <div className="min-h-[60px] sm:min-h-[70px] mb-8 flex items-center justify-center">
-          <motion.h2
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5, delay: 0.4 }}
-            className="text-2xl sm:text-3xl lg:text-4xl font-bold text-cyan-400 drop-shadow-lg px-4"
-          >
-            {displayText || "\u00A0"}
-          </motion.h2>
-        </div>
-
-        {/* Description */}
-        <motion.p
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.6 }}
-          className="text-lg sm:text-xl lg:text-2xl text-white/95 mb-10 max-w-4xl mx-auto drop-shadow-lg px-4"
-        >
-          Professional dumpster rental services for residential, commercial, and construction projects across Michigan
-        </motion.p>
-
-        {/* Address Search Box - Fixed Alignment */}
+        {/* Description - Word by Word Animation */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.8 }}
-          className="max-w-3xl mx-auto mb-12 px-4"
+          transition={{ duration: 0.8, delay: 0.2 }}
+          className="text-xl text-white/95 mb-12 drop-shadow-lg min-h-[32px] flex flex-wrap justify-center gap-2"
         >
-          <div className="bg-white rounded-2xl shadow-2xl p-5 sm:p-6">
-            <div className="flex flex-col sm:flex-row gap-3 items-stretch">
-              <div className="flex-1 relative">
-                <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none z-10" size={22} />
-                <input
-                  type="text"
-                  value={address}
-                  onChange={(e) => setAddress(e.target.value)}
-                  placeholder="Enter your address to check service area"
-                  className="w-full h-full pl-12 pr-4 py-4 rounded-xl border-2 border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none text-slate-900 text-base sm:text-lg transition-all"
-                />
-              </div>
-              <Button 
-                size="lg" 
-                className="bg-blue-600 hover:bg-blue-700 text-white px-10 h-full min-h-[56px] text-base sm:text-lg rounded-xl whitespace-nowrap font-semibold shadow-lg hover:shadow-xl transition-all flex items-center justify-center"
+          {displayedWords.map((word, index) => (
+            <motion.span
+              key={index}
+              initial={{ opacity: 0, x: 16 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.3 }}
+              className="inline-block"
+            >
+              {word}
+            </motion.span>
+          ))}
+        </motion.div>
+
+        {/* Booking Form */}
+        <motion.div
+          initial={{ opacity: 0, y: 50, scale: 0.95 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
+          whileHover={{ y: -5 }}
+          className="max-w-4xl mx-auto mb-12"
+        >
+          <div className="relative bg-white rounded-3xl shadow-2xl p-6 sm:p-10 text-left overflow-hidden border-2 border-white">
+            {/* Animated top gradient bar */}
+            <motion.div 
+              className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#1a4d9e] via-[#ff8c42] to-[#1a4d9e]"
+              animate={{ backgroundPosition: ["0% center", "100% center"] }}
+              transition={{ duration: 3, repeat: Infinity }}
+            />
+            <div className="absolute top-0 right-0 w-48 h-48 bg-[#1a4d9e]/8 rounded-full -mr-24 -mt-24" />
+            <div className="absolute bottom-0 left-0 w-32 h-32 bg-[#ff8c42]/8 rounded-full -ml-16 -mb-16" />
+            
+            <motion.h3 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.5 }}
+              className="text-xl sm:text-2xl font-bold text-[#1a4d9e] relative z-10"
+            >
+              Get Your Dumpster Rental Quote
+            </motion.h3>
+            <motion.p 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.6 }}
+              className="text-slate-600 text-sm mt-2 relative z-10"
+            >
+              Enter your details for instant pricing and availability
+            </motion.p>
+
+            <div className="space-y-4 mt-8 relative z-10">
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5, delay: 0.7 }}
               >
-                Check Service
-              </Button>
+                <label className="text-xs font-bold text-[#1a4d9e] uppercase tracking-wide">Delivery Address</label>
+                <div className="relative mt-2">
+                  <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-[#1a4d9e] z-10" size={18} />
+                  <input
+                    type="text"
+                    value={zipCode}
+                    onChange={(e) => setZipCode(e.target.value)}
+                    placeholder="Enter your address"
+                    className="w-full pl-11 pr-4 py-3 rounded-lg border-2 border-slate-300 focus:border-[#1a4d9e] focus:ring-2 focus:ring-[#1a4d9e]/20 focus:outline-none text-slate-900 text-base transition-all font-medium hover:border-slate-400"
+                  />
+                </div>
+              </motion.div>
+
+              <motion.div 
+                className="grid grid-cols-1 sm:grid-cols-2 gap-4"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5, delay: 0.8 }}
+              >
+                <div>
+                  <label className="text-xs font-bold text-[#1a4d9e] uppercase tracking-wide">Delivery Date</label>
+                  <div className="relative mt-2">
+                    <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-[#1a4d9e] z-10" size={18} />
+                    <input
+                      type="date"
+                      value={selectedDate}
+                      onChange={(e) => setSelectedDate(e.target.value)}
+                      className="w-full pl-11 pr-4 py-3 rounded-lg border-2 border-slate-300 focus:border-[#1a4d9e] focus:ring-2 focus:ring-[#1a4d9e]/20 focus:outline-none text-slate-900 text-base transition-all font-medium hover:border-slate-400"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-[#1a4d9e] uppercase tracking-wide">Removal Date</label>
+                  <div className="relative mt-2">
+                    <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-[#1a4d9e] z-10" size={18} />
+                    <input
+                      type="date"
+                      value={removalDate}
+                      onChange={(e) => setRemovalDate(e.target.value)}
+                      className="w-full pl-11 pr-4 py-3 rounded-lg border-2 border-slate-300 focus:border-[#1a4d9e] focus:ring-2 focus:ring-[#1a4d9e]/20 focus:outline-none text-slate-900 text-base transition-all font-medium hover:border-slate-400"
+                    />
+                  </div>
+                </div>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5, delay: 0.9 }}
+              >
+                <label className="text-xs font-bold text-[#1a4d9e] uppercase tracking-wide">Dumpster Size</label>
+                <div className="mt-2">
+                  <Select value={dumpsterSize} onValueChange={setDumpsterSize}>
+                    <SelectTrigger className="h-12 rounded-lg border-2 border-slate-300 focus:border-[#1a4d9e] focus:ring-2 focus:ring-[#1a4d9e]/20 transition-all font-medium text-slate-900 hover:border-slate-400">
+                      <SelectValue placeholder="Select dumpster size" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="10">10 Yard</SelectItem>
+                      <SelectItem value="15">15 Yard</SelectItem>
+                      <SelectItem value="20">20 Yard</SelectItem>
+                      <SelectItem value="30">30 Yard</SelectItem>
+                      <SelectItem value="40">40 Yard</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </motion.div>
             </div>
           </div>
+
+          <motion.div 
+            className="mt-8 relative z-10"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 1.0 }}
+          >
+            <motion.div
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <Button className="w-full bg-gradient-to-r from-[#ff8c42] to-[#ff7a2d] hover:from-[#ff9555] hover:to-[#ff8d40] text-white py-4 rounded-xl font-bold text-lg shadow-xl hover:shadow-2xl transition-all duration-300">
+                Get Quote & Book Now
+              </Button>
+            </motion.div>
+          </motion.div>
+
+          {/* Two-Path Buttons */}
+          <motion.div 
+            className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3 relative z-10"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 1.1 }}
+          >
+            <Link href="/services/dumpster-rental">
+              <motion.div
+                whileHover={{ scale: 1.02, y: -2 }}
+                whileTap={{ scale: 0.98 }}
+                className="w-full"
+              >
+                <Button 
+                  className="w-full border-2 border-[#1a4d9e] bg-white text-[#1a4d9e] hover:bg-[#1a4d9e] hover:text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all duration-300 shadow-md hover:shadow-lg"
+                >
+                  <motion.span
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                    className="inline-flex items-center justify-center w-5 h-5 rounded-full border-2 border-current"
+                  >
+                    ✓
+                  </motion.span>
+                  I Know My Size
+                </Button>
+              </motion.div>
+            </Link>
+            <Link href="/size-guide">
+              <motion.div
+                whileHover={{ scale: 1.02, y: -2 }}
+                whileTap={{ scale: 0.98 }}
+                className="w-full"
+              >
+                <Button 
+                  className="w-full border-2 border-[#1a4d9e] bg-white text-[#1a4d9e] hover:bg-[#1a4d9e] hover:text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all duration-300 shadow-md hover:shadow-lg"
+                >
+                  <MessageCircle size={18} className="flex-shrink-0" />
+                  Help Me Choose
+                </Button>
+              </motion.div>
+            </Link>
+          </motion.div>
         </motion.div>
 
-        {/* Stats */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 1 }}
-          className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 max-w-5xl mx-auto px-4"
+        {/* Trusted Badge */}
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.8, delay: 0.6 }}
+          className="text-white/90 text-base drop-shadow-lg"
         >
-          <div className="bg-white/5 backdrop-blur-md rounded-2xl p-8 border border-white/20 shadow-xl hover:bg-white/10 transition-all">
-            <div className="text-5xl font-bold text-cyan-400 mb-2">15+</div>
-            <div className="text-white/90 font-medium text-base">Years Experience</div>
-          </div>
-          <div className="bg-white/5 backdrop-blur-md rounded-2xl p-8 border border-white/20 shadow-xl hover:bg-white/10 transition-all">
-            <div className="text-5xl font-bold text-cyan-400 mb-2">5K+</div>
-            <div className="text-white/90 font-medium text-base">Happy Customers</div>
-          </div>
-          <div className="bg-white/5 backdrop-blur-md rounded-2xl p-8 border border-white/20 shadow-xl hover:bg-white/10 transition-all">
-            <div className="text-5xl font-bold text-cyan-400 mb-2">50+</div>
-            <div className="text-white/90 font-medium text-base">Service Areas</div>
-          </div>
-        </motion.div>
+          Trusted Dumpster Service Near Detroit • Warren • Sterling Heights • Livonia & More
+        </motion.p>
       </div>
     </section>
   );
