@@ -88,9 +88,9 @@ export function Hero() {
           animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
           whileHover={{ y: -5 }}
-          className="max-w-4xl mx-auto mb-12"
+          className="max-w-3xl mx-auto mb-12"
         >
-          <div className="relative bg-white rounded-3xl shadow-2xl p-6 sm:p-10 text-left overflow-hidden border-2 border-white">
+          <div className="relative bg-white rounded-3xl shadow-2xl p-5 sm:p-7 text-left overflow-hidden border-2 border-white">
             {/* Animated top gradient bar */}
             <motion.div 
               className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#1a4d9e] via-[#ff8c42] to-[#1a4d9e]"
@@ -104,7 +104,7 @@ export function Hero() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.5, delay: 0.5 }}
-              className="text-xl sm:text-2xl font-bold text-[#1a4d9e] relative z-10"
+              className="text-lg sm:text-xl font-bold text-[#1a4d9e] relative z-10"
             >
               Get Your Dumpster Rental Quote
             </motion.h3>
@@ -112,12 +112,12 @@ export function Hero() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.5, delay: 0.6 }}
-              className="text-slate-600 text-sm mt-2 relative z-10"
+              className="text-slate-600 text-xs mt-1 relative z-10"
             >
               Enter your details for instant pricing and availability
             </motion.p>
 
-            <div className="space-y-4 mt-8 relative z-10">
+            <div className="space-y-3 mt-6 relative z-10">
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -130,8 +130,8 @@ export function Hero() {
                     type="text"
                     value={zipCode}
                     onChange={(e) => setZipCode(e.target.value)}
-                    placeholder="Enter your address"
-                    className="w-full pl-11 pr-4 py-3 rounded-lg border-2 border-slate-300 focus:border-[#1a4d9e] focus:ring-2 focus:ring-[#1a4d9e]/20 focus:outline-none text-slate-900 text-base transition-all font-medium hover:border-slate-400"
+                    placeholder="Enter the zip code"
+                    className="w-full pl-11 pr-4 py-2 rounded-lg border-2 border-slate-300 focus:border-[#1a4d9e] focus:ring-2 focus:ring-[#1a4d9e]/20 focus:outline-none text-slate-900 text-sm transition-all font-medium hover:border-slate-400"
                   />
                 </div>
               </motion.div>
@@ -150,7 +150,7 @@ export function Hero() {
                       type="date"
                       value={selectedDate}
                       onChange={(e) => setSelectedDate(e.target.value)}
-                      className="w-full pl-11 pr-4 py-3 rounded-lg border-2 border-slate-300 focus:border-[#1a4d9e] focus:ring-2 focus:ring-[#1a4d9e]/20 focus:outline-none text-slate-900 text-base transition-all font-medium hover:border-slate-400"
+                      className="w-full pl-11 pr-4 py-2 rounded-lg border-2 border-slate-300 focus:border-[#1a4d9e] focus:ring-2 focus:ring-[#1a4d9e]/20 focus:outline-none text-slate-900 text-sm transition-all font-medium hover:border-slate-400 min-h-[40px] md:min-h-[44px]"
                     />
                   </div>
                 </div>
@@ -162,7 +162,7 @@ export function Hero() {
                       type="date"
                       value={removalDate}
                       onChange={(e) => setRemovalDate(e.target.value)}
-                      className="w-full pl-11 pr-4 py-3 rounded-lg border-2 border-slate-300 focus:border-[#1a4d9e] focus:ring-2 focus:ring-[#1a4d9e]/20 focus:outline-none text-slate-900 text-base transition-all font-medium hover:border-slate-400"
+                      className="w-full pl-11 pr-4 py-2 rounded-lg border-2 border-slate-300 focus:border-[#1a4d9e] focus:ring-2 focus:ring-[#1a4d9e]/20 focus:outline-none text-slate-900 text-sm transition-all font-medium hover:border-slate-400 min-h-[40px] md:min-h-[44px]"
                     />
                   </div>
                 </div>
@@ -176,7 +176,7 @@ export function Hero() {
                 <label className="text-xs font-bold text-[#1a4d9e] uppercase tracking-wide">Dumpster Size</label>
                 <div className="mt-2">
                   <Select value={dumpsterSize} onValueChange={setDumpsterSize}>
-                    <SelectTrigger className="h-12 rounded-lg border-2 border-slate-300 focus:border-[#1a4d9e] focus:ring-2 focus:ring-[#1a4d9e]/20 transition-all font-medium text-slate-900 hover:border-slate-400">
+                    <SelectTrigger className="h-auto md:h-auto py-3 md:py-4 rounded-lg border-2 border-slate-300 focus:border-[#1a4d9e] focus:ring-2 focus:ring-[#1a4d9e]/20 transition-all font-medium text-slate-900 hover:border-slate-400 min-h-[44px] md:min-h-[48px]">
                       <SelectValue placeholder="Select dumpster size" />
                     </SelectTrigger>
                     <SelectContent>
@@ -198,19 +198,21 @@ export function Hero() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 1.0 }}
           >
-            <motion.div
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              <Button className="w-full bg-gradient-to-r from-[#ff8c42] to-[#ff7a2d] hover:from-[#ff9555] hover:to-[#ff8d40] text-white py-4 rounded-xl font-bold text-lg shadow-xl hover:shadow-2xl transition-all duration-300">
-                Get Quote & Book Now
-              </Button>
-            </motion.div>
+            <Link href="/checkout">
+              <motion.div
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <Button className="w-full bg-gradient-to-r from-[#ff8c42] to-[#ff7a2d] hover:from-[#ff9555] hover:to-[#ff8d40] text-white py-4 md:py-4 rounded-xl font-bold text-base md:text-lg shadow-xl hover:shadow-2xl transition-all duration-300 min-h-[48px] md:min-h-[56px]">
+                  Check Availability
+                </Button>
+              </motion.div>
+            </Link>
           </motion.div>
 
           {/* Two-Path Buttons */}
           <motion.div 
-            className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3 relative z-10"
+            className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4 relative z-10"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 1.1 }}
@@ -222,7 +224,7 @@ export function Hero() {
                 className="w-full"
               >
                 <Button 
-                  className="w-full border-2 border-[#1a4d9e] bg-white text-[#1a4d9e] hover:bg-[#1a4d9e] hover:text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all duration-300 shadow-md hover:shadow-lg"
+                  className="w-full border-2 border-[#1a4d9e] bg-white text-[#1a4d9e] hover:bg-[#1a4d9e] hover:text-white py-3 md:py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all duration-300 shadow-md hover:shadow-lg min-h-[44px] md:min-h-[48px] text-sm md:text-base"
                 >
                   <motion.span
                     animate={{ rotate: 360 }}
@@ -242,7 +244,7 @@ export function Hero() {
                 className="w-full"
               >
                 <Button 
-                  className="w-full border-2 border-[#1a4d9e] bg-white text-[#1a4d9e] hover:bg-[#1a4d9e] hover:text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all duration-300 shadow-md hover:shadow-lg"
+                  className="w-full border-2 border-[#1a4d9e] bg-white text-[#1a4d9e] hover:bg-[#1a4d9e] hover:text-white py-3 md:py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all duration-300 shadow-md hover:shadow-lg min-h-[44px] md:min-h-[48px] text-sm md:text-base"
                 >
                   <MessageCircle size={18} className="flex-shrink-0" />
                   Help Me Choose

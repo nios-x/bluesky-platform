@@ -1,11 +1,11 @@
 import { Header } from "@/components/header";
 import { Hero } from "@/components/home/hero";
-import CityServices from "@/components/home/city-services";
+import MapSection from "@/components/home/map-section";
 import DumpsterSize from "@/components/home/dumpster-size";
-import CalculateSize from "@/components/home/calculate-size";
-import WhyBlue from "@/components/home/why-blue";
+import CalculateSizeNew from "@/components/home/calculate-size-new";
 import HowItWorks from "@/components/home/how-it-works";
-import FAQSection from "@/components/home/faq-section";
+import FAQSectionNew from "@/components/home/faq-section-new";
+import WhyBlueSky from "@/components/home/why-blue-new";
 import { Footer } from "@/components/footer";
 
 export default function Home() {
@@ -13,12 +13,12 @@ export default function Home() {
     <main className="bg-white">
       <Header />
       <Hero />
-      <CityServices />
+      <MapSection />
       <DumpsterSize />
-      <CalculateSize />
+      <CalculateSizeNew />
       <HowItWorks />
-      <WhyBlue />
-      <FAQSection />
+      <FAQSectionNew />
+      <WhyBlueSky />
       <Footer />
     </main>
   );

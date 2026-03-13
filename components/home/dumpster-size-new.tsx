@@ -129,7 +129,7 @@ export default function DumpsterTypeSelection() {
 
               {/* Button */}
               <div className="p-6 md:p-8 pt-0">
-                <Link href="/checkout">
+                <Link href="/">
                   <motion.div
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
@@ -146,6 +146,50 @@ export default function DumpsterTypeSelection() {
             </motion.div>
           ))}
         </div>
+
+        {/* Comparison Feature */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="bg-blue-50 rounded-2xl p-8 md:p-12 border-2 border-blue-300 text-center"
+        >
+          <h3 className="text-2xl font-bold text-slate-900 mb-4">Can't Decide?</h3>
+          <p className="text-slate-700 mb-6 text-base md:text-lg">
+            Use our size calculator to get a personalized recommendation based on your project type and materials.
+          </p>
+          <Link href="/#calculator">
+            <Button className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 md:px-8 py-3 md:py-4 rounded-lg text-sm md:text-base">
+              Try Calculator
+            </Button>
+          </Link>
+        </motion.div>
+
+        {/* Mobile-Friendly Info */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="mt-12 p-6 md:p-8 bg-gradient-to-r from-blue-100 to-cyan-100 rounded-2xl border-2 border-blue-300"
+        >
+          <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
+            <span className="text-2xl">💡</span> Need Help Choosing?
+          </h3>
+          <ul className="space-y-3 text-slate-700 text-sm md:text-base">
+            <li className="flex items-start gap-2">
+              <Check className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+              <span><strong>Overfill?</strong> We charge per excess weight (usually $0.10/lb)</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <Check className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+              <span><strong>Underfull?</strong> No penalty—keep the dumpster as long as you need</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <Check className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+              <span><strong>Upgrade?</strong> Switch sizes anytime during your rental without extra fees</span>
+            </li>
+          </ul>
+        </motion.div>
       </div>
     </section>
   );

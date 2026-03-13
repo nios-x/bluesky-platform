@@ -16,6 +16,12 @@ export default function RubberWheeledPage() {
       slug: "10-yard",
       price: "$295",
       popular: false,
+      useCases: [
+        "Residential properties",
+        "Apartment complexes",
+        "Landscaping projects",
+        "Surface protection needed"
+      ]
     },
     {
       size: "20 Yard",
@@ -24,6 +30,12 @@ export default function RubberWheeledPage() {
       slug: "20-yard",
       price: "$365",
       popular: true,
+      useCases: [
+        "Property renovations",
+        "Multi-unit buildings",
+        "Retail store cleanout",
+        "Sensitive surfaces"
+      ]
     },
     {
       size: "30 Yard",
@@ -32,6 +44,12 @@ export default function RubberWheeledPage() {
       slug: "30-yard",
       price: "$435",
       popular: false,
+      useCases: [
+        "Large property cleanout",
+        "Commercial renovation",
+        "Parking lot protection",
+        "Bulk debris removal"
+      ]
     }
   ];
 
@@ -160,7 +178,20 @@ export default function RubberWheeledPage() {
                   {dumpster.title}
                 </h3>
                 
-                <p className="text-gray-500 text-sm mb-2">Driveway-safe rubber wheels</p>
+                <p className="text-gray-500 text-sm mb-4">Driveway-safe rubber wheels</p>
+
+                {/* Use Cases */}
+                <div className="mb-6 pb-4 border-b border-gray-200">
+                  <p className="text-xs font-semibold text-gray-600 uppercase mb-3">Ideal for:</p>
+                  <ul className="space-y-2">
+                    {dumpster.useCases.map((useCase, i) => (
+                      <li key={i} className="text-sm text-gray-700 flex items-center gap-2">
+                        <Check className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                        {useCase}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
 
                 {/* Price */}
                 <div className="mb-6">

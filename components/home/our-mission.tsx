@@ -57,11 +57,13 @@ export default function OurMission() {
             whileInView={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8 }}
             viewport={{ once: true }}
-            className="rounded-2xl overflow-hidden shadow-2xl flex items-center"
+            className="rounded-2xl overflow-hidden shadow-2xl w-full h-96"
           >
             <ImageWithFallback
               src="https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?w=800"
               alt="Sustainable recycling and environment"
+              width={800}
+              height={600}
               className="w-full h-full object-cover"
             />
           </motion.div>

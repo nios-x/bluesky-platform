@@ -114,6 +114,8 @@ export default function ProcessTimeline() {
                     <ImageWithFallback
                       src={step.image}
                       alt={step.title}
+                      width={112}
+                      height={112}
                       className="w-full h-full object-cover"
                     />
                   </motion.div>

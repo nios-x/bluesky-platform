@@ -17,6 +17,12 @@ export default function RollOffPage() {
       price: "$320",
       capacity: "4 tons",
       popular: false,
+      useCases: [
+        "Small home renovations",
+        "Yard cleanup projects",
+        "Minor remodeling",
+        "Debris removal"
+      ]
     },
     {
       size: "20 Yard",
@@ -26,6 +32,12 @@ export default function RollOffPage() {
       price: "$380",
       capacity: "6 tons",
       popular: true,
+      useCases: [
+        "Kitchen & bathroom remodels",
+        "Roofing projects",
+        "Deck removal",
+        "General construction debris"
+      ]
     },
     {
       size: "30 Yard",
@@ -35,6 +47,12 @@ export default function RollOffPage() {
       price: "$450",
       capacity: "8 tons",
       popular: false,
+      useCases: [
+        "Large home demolition",
+        "Commercial renovation",
+        "Major construction projects",
+        "Full property cleanout"
+      ]
     }
   ];
 
@@ -163,7 +181,20 @@ export default function RollOffPage() {
                   {dumpster.title}
                 </h3>
                 
-                <p className="text-gray-500 text-sm mb-2">Capacity: {dumpster.capacity}</p>
+                <p className="text-gray-500 text-sm mb-4">Capacity: {dumpster.capacity}</p>
+
+                {/* Use Cases */}
+                <div className="mb-6 pb-4 border-b border-gray-200">
+                  <p className="text-xs font-semibold text-gray-600 uppercase mb-3">Ideal for:</p>
+                  <ul className="space-y-2">
+                    {dumpster.useCases.map((useCase, i) => (
+                      <li key={i} className="text-sm text-gray-700 flex items-center gap-2">
+                        <Check className="w-4 h-4 text-indigo-600 flex-shrink-0" />
+                        {useCase}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
 
                 {/* Price */}
                 <div className="mb-6">

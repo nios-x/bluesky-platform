@@ -27,6 +27,8 @@ export default function WomanLedCompany() {
             <ImageWithFallback
               src="https://images.unsplash.com/photo-1605218427319-bbe105273752?q=80&w=800&auto=format&fit=crop"
               alt="Woman recycling"
+              width={800}
+              height={600}
               className="w-full h-full object-cover"
             />
           </motion.div>
@@ -37,6 +39,8 @@ export default function WomanLedCompany() {
             <ImageWithFallback
               src="https://images.unsplash.com/photo-1542601906990-b4d3fb7d5afa?q=80&w=800&auto=format&fit=crop"
               alt="Dumpsters"
+              width={800}
+              height={600}
               className="w-full h-full object-cover"
             />
           </motion.div>
@@ -47,6 +51,8 @@ export default function WomanLedCompany() {
             <ImageWithFallback
               src="https://images.unsplash.com/photo-1590579491624-f98f36d4c763?q=80&w=800&auto=format&fit=crop"
               alt="Team working"
+              width={800}
+              height={600}
               className="w-full h-full object-cover"
             />
           </motion.div>

@@ -77,6 +77,8 @@ export default function TeamSection() {
                       <ImageWithFallback
                         src={member.image}
                         alt={member.name}
+                        width={128}
+                        height={128}
                         className="w-full h-full object-cover"
                       />
                     </div>

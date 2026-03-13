@@ -30,6 +30,8 @@ export default function FounderSection() {
             <ImageWithFallback
               src="https://www.blueskydisposal.com/wp-content/themes/bluesky/images/migena_photo.jpg"
               alt="Migena Gjonaj"
+              width={400}
+              height={500}
               className="w-full h-full object-cover"
             />
           </div>

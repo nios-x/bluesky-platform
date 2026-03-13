@@ -20,6 +20,12 @@ export default function PermanentPage() {
       price: "$150",
       capacity: "2 tons",
       popular: false,
+      useCases: [
+        "Small office buildings",
+        "Medical clinics",
+        "Professional services",
+        "Light commercial waste"
+      ]
     },
     {
       size: "4 Yard",
@@ -29,6 +35,12 @@ export default function PermanentPage() {
       price: "$250",
       capacity: "4 tons",
       popular: true,
+      useCases: [
+        "Restaurants & cafes",
+        "Retail stores",
+        "Small warehouses",
+        "Regular business waste"
+      ]
     },
     {
       size: "6 Yard",
@@ -38,6 +50,12 @@ export default function PermanentPage() {
       price: "$350",
       capacity: "6 tons",
       popular: false,
+      useCases: [
+        "Large commercial operations",
+        "Manufacturing facilities",
+        "Distribution centers",
+        "High-volume waste needs"
+      ]
     }
   ];
 
@@ -141,9 +159,22 @@ export default function PermanentPage() {
                   {dumpster.title}
                 </h3>
                 <p className="text-3xl font-bold text-indigo-600 mb-2">{dumpster.price}</p>
-                <p className="text-gray-600 text-sm mb-6">
+                <p className="text-gray-600 text-sm mb-4">
                   Capacity: {dumpster.capacity}
                 </p>
+
+                {/* Use Cases */}
+                <div className="mb-6 pb-6 border-b border-gray-200">
+                  <p className="text-xs font-semibold text-gray-600 uppercase mb-3">Ideal for:</p>
+                  <ul className="space-y-2">
+                    {dumpster.useCases.map((useCase, i) => (
+                      <li key={i} className="text-sm text-gray-700 flex items-center gap-2">
+                        <Check className="w-4 h-4 text-indigo-600 flex-shrink-0" />
+                        {useCase}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
 
                 <div className="relative w-full h-40 mb-8 rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center">
                   <img

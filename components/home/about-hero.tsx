@@ -1,6 +1,5 @@
 "use client";
 
-import { ImageWithFallback } from "@/components/ui/image-with-fallback";
 import { motion } from "framer-motion";
 
 const PARTICLES = Array.from({ length: 12 }, (_, i) => ({
@@ -15,20 +14,14 @@ export default function Hero() {
   return (
     <div className="w-full overflow-hidden">
       {/* ---------------- HERO SECTION ---------------- */}
-      <section className="relative h-screen w-full overflow-hidden">
-        {/* Background Image */}
+      <section className="relative h-screen w-full overflow-hidden bg-gradient-to-br from-blue-900 via-blue-800 to-slate-900">
+        {/* Animated Background Gradient */}
         <motion.div
           initial={{ scale: 1.2 }}
           animate={{ scale: 1 }}
           transition={{ duration: 2, ease: "easeOut" }}
-          className="absolute inset-0"
-        >
-          <ImageWithFallback
-            src="https://tse1.mm.bing.net/th/id/OIP.ldjcDITv0FOmCDmhBqqQhwAAAA?cb=ucfimg2ucfimg=1&rs=1&pid=ImgDetMain&o=7&rm=3"
-            alt="Hero Background"
-            className="w-full h-full object-cover"
-          />
-        </motion.div>
+          className="absolute inset-0 bg-gradient-to-br from-blue-600 via-blue-800 to-slate-900"
+        />
 
         {/* Dark Overlay */}
         <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/60 to-black/30" />

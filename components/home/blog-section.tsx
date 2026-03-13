@@ -24,10 +24,12 @@ export default function BlogSection() {
       <div className="max-w-7xl mx-auto">
         <div className="bg-[#1a1a1a] rounded-3xl overflow-hidden shadow-2xl relative">
           {/* Background Image Overlay */}
-          <div className="absolute inset-0 opacity-40">
+          <div className="absolute inset-0 opacity-40 w-full h-96">
             <ImageWithFallback
               src="https://images.unsplash.com/photo-1581094794329-cd1361ddee2d?w=1600&auto=format&fit=crop"
               alt="Background"
+              width={1600}
+              height={400}
               className="w-full h-full object-cover"
             />
           </div>
