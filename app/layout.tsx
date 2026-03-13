@@ -14,12 +14,12 @@ export const metadata: Metadata = {
   generator: 'v0.app',
     icons: {
     icon: [
-      { url: "/images/logo-icon.png", sizes: "32x32", type: "image/png" },
-      { url: "/images/logo-icon.png", sizes: "192x192", type: "image/png" },
-      { url: "/images/logo-icon.png", sizes: "512x512", type: "image/png" },
+      { url: "/images/bluesky_New_logo.jpg", sizes: "32x32", type: "image/png" },
+      { url: "/images/bluesky_New_logo.jpg", sizes: "192x192", type: "image/png" },
+      { url: "/images/bluesky_New_logo.jpg", sizes: "512x512", type: "image/png" },
     ],
-    apple: "/images/logo-icon.png",
-    shortcut: "/images/logo-icon.png",
+    apple: "/images/bluesky_New_logo.jpg",
+    shortcut: "/images/bluesky_New_logo.jpg",
     },
 
 }

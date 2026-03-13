@@ -1,22 +1,26 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabaseServer";
-import { createOrderController } from "@/controllers/order";
+import { getMyOrdersController } from "@/controllers/order";
 
-export async function POST(req) {
+export async function GET() {
   try {
     const supabase = createSupabaseServerClient();
     const {
       data: { user },
-      error: authError,
+      error,
     } = await supabase.auth.getUser();
 
-    if (authError || !user)
+    if (error || !user)
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const body = await req.json();
-    const order = await createOrderController(supabase, user, body);
+    const { data, error: fetchError } = await getMyOrdersController(
+      supabase,
+      user,
+    );
 
-    return NextResponse.json(order, { status: 201 });
+    if (fetchError) throw fetchError;
+
+    return NextResponse.json(data);
   } catch (err) {
     return NextResponse.json({ error: err.message }, { status: 400 });
   }
