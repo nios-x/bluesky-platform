@@ -15,7 +15,9 @@ export default function Home() {
       <Hero />
       <MapSection />
       <DumpsterSize />
-      <CalculateSizeNew />
+      <section id="calculator-section">
+        <CalculateSizeNew />
+      </section>
       <HowItWorks />
       <FAQSectionNew />
       <WhyBlueSky />

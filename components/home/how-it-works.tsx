@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   ClipboardList,
   Calendar,
@@ -71,15 +71,40 @@ const steps = [
 
 export default function HowItWorks() {
   const [currentStep, setCurrentStep] = useState(0);
+  const [isAutoPlay, setIsAutoPlay] = useState(true);
   const itemsPerView = 3;
   const maxSlides = Math.ceil(steps.length / itemsPerView);
 
+  // Auto-advance carousel every 5 seconds
+  useEffect(() => {
+    if (!isAutoPlay) return;
+
+    const interval = setInterval(() => {
+      setCurrentStep((prev) => (prev + 1) % maxSlides);
+    }, 5000); // Auto-advance every 5 seconds
+
+    return () => clearInterval(interval);
+  }, [isAutoPlay, maxSlides]);
+
   const nextSlide = () => {
+    setIsAutoPlay(false); // Stop auto-play when user clicks
     setCurrentStep((prev) => (prev + 1) % maxSlides);
+    // Resume auto-play after 10 seconds of inactivity
+    setTimeout(() => setIsAutoPlay(true), 10000);
   };
 
   const prevSlide = () => {
+    setIsAutoPlay(false); // Stop auto-play when user clicks
     setCurrentStep((prev) => (prev - 1 + maxSlides) % maxSlides);
+    // Resume auto-play after 10 seconds of inactivity
+    setTimeout(() => setIsAutoPlay(true), 10000);
+  };
+
+  const handleIndicatorClick = (idx: number) => {
+    setIsAutoPlay(false); // Stop auto-play when user clicks
+    setCurrentStep(idx);
+    // Resume auto-play after 10 seconds of inactivity
+    setTimeout(() => setIsAutoPlay(true), 10000);
   };
 
   const visibleSteps = steps.slice(
@@ -95,15 +120,15 @@ export default function HowItWorks() {
       </div>
 
       {/* Section Heading */}
-      <div className="text-center mb-16 md:mb-20">
-        <div className="inline-flex items-center gap-2 bg-blue-100 px-4 py-2 rounded-full mb-4">
+      <div className="text-center mb-12 md:mb-14">
+        <div className="inline-flex items-center gap-2 bg-blue-100 px-4 py-2 rounded-full mb-3">
           <CheckCircle className="w-4 h-4 text-blue-600" />
           <span className="text-xs md:text-sm font-semibold text-blue-600">Simple Process</span>
         </div>
-        <h2 className="text-3xl md:text-5xl font-bold mb-4 text-gray-900 tracking-tight">
+        <h2 className="text-2xl md:text-4xl font-bold mb-3 text-gray-900 tracking-tight">
           6 Easy Steps to Your Dumpster
         </h2>
-        <p className="text-base md:text-lg text-gray-600 font-medium max-w-2xl mx-auto">
+        <p className="text-sm md:text-base text-gray-600 font-medium max-w-2xl mx-auto">
           From booking to pickup — we handle the rest
         </p>
       </div>
@@ -118,7 +143,7 @@ export default function HowItWorks() {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
             transition={{ duration: 0.5 }}
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
           >
             {visibleSteps.map((step, index) => {
               const Icon = step.icon;
@@ -133,34 +158,34 @@ export default function HowItWorks() {
                   className="relative group"
                 >
                   {/* Card */}
-                  <div className="h-full bg-white rounded-2xl md:rounded-3xl p-6 md:p-8 border border-gray-100 hover:border-blue-300 shadow-sm hover:shadow-lg transition-all duration-300">
+                  <div className="h-full bg-white rounded-2xl p-5 md:p-6 border border-gray-100 hover:border-blue-300 shadow-sm hover:shadow-lg transition-all duration-300">
                     {/* Step Number Circle */}
-                    <div className="relative mb-6">
+                    <div className="relative mb-4">
                       <motion.div
                         whileHover={{ scale: 1.1, rotate: 5 }}
-                        className="absolute -top-6 -left-3 w-16 h-16 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-full flex items-center justify-center shadow-lg z-10"
+                        className="absolute -top-5 -left-2 w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-full flex items-center justify-center shadow-lg z-10"
                       >
-                        <span className="text-white font-bold text-2xl">{step.number}</span>
+                        <span className="text-white font-bold text-lg">{step.number}</span>
                       </motion.div>
                       
                       {/* Icon */}
-                      <div className="ml-14 w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center">
-                        <Icon className="w-7 h-7 text-blue-600" />
+                      <div className="ml-10 w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center">
+                        <Icon className="w-6 h-6 text-blue-600" />
                       </div>
                     </div>
 
                     {/* Title */}
-                    <h3 className="text-xl md:text-2xl font-bold text-gray-900 mb-3 leading-tight">
+                    <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-2 leading-tight">
                       {step.title}
                     </h3>
 
                     {/* Description */}
-                    <p className="text-gray-600 text-sm md:text-base leading-relaxed mb-5">
+                    <p className="text-gray-600 text-xs md:text-sm leading-relaxed mb-3">
                       {step.description}
                     </p>
 
                     {/* Image */}
-                    <div className="relative w-full h-40 rounded-2xl overflow-hidden bg-gradient-to-br from-blue-50 to-cyan-50 mb-4 group-hover:scale-105 transition-transform duration-300">
+                    <div className="relative w-full h-32 rounded-xl overflow-hidden bg-gradient-to-br from-blue-50 to-cyan-50 mb-3 group-hover:scale-105 transition-transform duration-300">
                       <ImageWithFallback
                         src={step.image}
                         alt={step.title}
@@ -177,14 +202,14 @@ export default function HowItWorks() {
 
           {/* Navigation Buttons */}
           {steps.length > itemsPerView && (
-            <div className="flex items-center justify-between mt-12">
+            <div className="flex items-center justify-between mt-8">
               <motion.button
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={prevSlide}
-                className="p-3 rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-lg transition-all"
+                className="p-2 rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-lg transition-all"
               >
-                <ChevronLeft className="w-6 h-6" />
+                <ChevronLeft className="w-5 h-5" />
               </motion.button>
 
               {/* Slide Indicators */}
@@ -192,7 +217,7 @@ export default function HowItWorks() {
                 {Array.from({ length: maxSlides }).map((_, idx) => (
                   <motion.button
                     key={idx}
-                    onClick={() => setCurrentStep(idx)}
+                    onClick={() => handleIndicatorClick(idx)}
                     className={`h-2 rounded-full transition-all ${
                       currentStep === idx
                         ? "bg-blue-600 w-8"
@@ -207,9 +232,9 @@ export default function HowItWorks() {
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={nextSlide}
-                className="p-3 rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-lg transition-all"
+                className="p-2 rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-lg transition-all"
               >
-                <ChevronRight className="w-6 h-6" />
+                <ChevronRight className="w-5 h-5" />
               </motion.button>
             </div>
           )}
@@ -220,13 +245,13 @@ export default function HowItWorks() {
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="mt-16 md:mt-20 text-center"
+          className="mt-10 md:mt-12 text-center"
         >
-          <div className="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-3xl border border-blue-200 p-8 md:p-12">
-            <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">
+          <div className="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-2xl border border-blue-200 p-6 md:p-8">
+            <h3 className="text-xl md:text-2xl font-bold text-gray-900 mb-3">
               Ready to get started?
             </h3>
-            <p className="text-gray-600 text-base md:text-lg mb-8 max-w-2xl mx-auto">
+            <p className="text-gray-600 text-sm md:text-base mb-6 max-w-2xl mx-auto">
               Begin your dumpster rental journey now. Click below to check availability and book your size.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">

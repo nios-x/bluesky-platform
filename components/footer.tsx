@@ -8,7 +8,7 @@ export function Footer() {
   return (
     <>
       <AIChatbot />
-      <footer className="bg-gradient-to-r from-[#1a4d9e] via-[#2563eb] to-[#1a4d9e] text-slate-100 mt-16 sm:mt-20">
+      <footer className="bg-gradient-to-r from-[#08054C] via-[#0a0660] to-[#0d0780] text-slate-100 mt-16 sm:mt-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-6 sm:gap-8 md:gap-10 mb-8 sm:mb-12">
           {/* Brand */}

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { ArrowRight, CheckCircle } from "lucide-react";
+import { WeightPriceEstimator } from "@/components/home/weight-price-estimator";
 
 export default function ServicesPage() {
   const dumpsterTypes = [
@@ -180,6 +181,27 @@ export default function ServicesPage() {
                 </motion.div>
               ))}
             </div>
+          </div>
+        </section>
+
+        {/* Weight & Price Estimator Section */}
+        <section className="py-16 md:py-24 bg-gradient-to-b from-white to-slate-50">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+              className="text-center mb-16"
+            >
+              <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-4">
+                Get Your Price Instantly
+              </h2>
+              <p className="text-xl text-slate-600 max-w-2xl mx-auto">
+                Use our weight & price estimator to get an accurate quote based on your waste type and dumpster fullness
+              </p>
+            </motion.div>
+
+            <WeightPriceEstimator />
           </div>
         </section>
 

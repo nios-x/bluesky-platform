@@ -1,8 +1,8 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { motion } from "framer-motion";
-import { Calculator, Check, AlertCircle, Lightbulb, ArrowRight, ChevronRight, MapPin, Phone } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Calculator, Check, AlertCircle, Lightbulb, ArrowRight, ChevronRight, MapPin, Phone, Info, Zap } from "lucide-react";
 import { useState } from "react";
 import Link from "next/link";
 
@@ -14,21 +14,23 @@ interface FormStep {
 }
 
 const formSteps: FormStep[] = [
-  {    id: "dumpsterType",
+  {
+    id: "dumpsterType",
     label: "Type",
     question: "What type of dumpster do you need?",
     description: "Choose the dumpster type that suits your project"
   },
-  {    id: "material",
-    label: "Material Type",
-    question: "What are you disposing?",
-    description: "Select the primary material to calculate weight"
+  {
+    id: "material",
+    label: "Material",
+    question: "What material are you disposing?",
+    description: "Select the primary material to calculate weight & price"
   },
   {
     id: "quantity",
-    label: "Amount",
-    question: "How much do you have?",
-    description: "Estimate the quantity or dimensions"
+    label: "Fullness",
+    question: "How full is the dumpster?",
+    description: "Estimate the fullness level to calculate overage fees"
   },
   {
     id: "timeline",
@@ -39,12 +41,12 @@ const formSteps: FormStep[] = [
 ];
 
 const materials = [
-  { value: "drywall", label: "Drywall/Plaster", weight: "Heavy", icon: "🏗️" },
-  { value: "wood", label: "Wood/Lumber", weight: "Medium", icon: "🪵" },
-  { value: "metal", label: "Metal", weight: "Very Heavy", icon: "⚙️" },
-  { value: "carpet", label: "Carpet", weight: "Light", icon: "🏠" },
-  { value: "concrete", label: "Concrete/Rubble", weight: "Very Heavy", icon: "🪨" },
-  { value: "general", label: "General Waste", weight: "Mixed", icon: "♻️" }
+  { value: "household-debris", label: "Household Debris", baseWeight: 2000, pricePerTon: 50, icon: "♻️" },
+  { value: "drywall", label: "Drywall/Plaster", baseWeight: 2500, pricePerTon: 60, icon: "🏗️" },
+  { value: "wood", label: "Wood/Lumber", baseWeight: 3000, pricePerTon: 40, icon: "🪵" },
+  { value: "metal", label: "Metal", baseWeight: 5000, pricePerTon: 100, icon: "⚙️" },
+  { value: "carpet", label: "Carpet", baseWeight: 1500, pricePerTon: 35, icon: "🏠" },
+  { value: "concrete", label: "Concrete/Rubble", baseWeight: 6000, pricePerTon: 120, icon: "🪨" }
 ];
 
 const dumpsterTypes = [
@@ -82,7 +84,7 @@ export default function CalculateSizeNew() {
   const [formData, setFormData] = useState({
     dumpsterType: "",
     material: "",
-    quantity: "",
+    quantity: "", // Now fullness percentage (0-100)
     timeline: ""
   });
   const [showResults, setShowResults] = useState(false);
@@ -93,6 +95,38 @@ export default function CalculateSizeNew() {
     phone: ""
   });
   const [showBookingForm, setShowBookingForm] = useState(false);
+
+  // Weight & Price Calculation Logic
+  const getMaterialData = (materialValue: string) => {
+    return materials.find(m => m.value === materialValue);
+  };
+
+  const calculateWeightAndPrice = () => {
+    if (!formData.material) return null;
+    
+    const materialData = getMaterialData(formData.material);
+    if (!materialData) return null;
+
+    const fullnessPercent = (parseInt(formData.quantity) || 50) / 100;
+    const includedWeight = materialData.baseWeight;
+    const estimatedWeight = Math.round(includedWeight * fullnessPercent);
+    const overage = Math.max(0, estimatedWeight - includedWeight);
+    
+    const basePrice = 399;
+    const overagePrice = (overage / 2000) * materialData.pricePerTon;
+    const totalPrice = Math.round(basePrice + overagePrice);
+
+    return {
+      includedWeight,
+      estimatedWeight,
+      overage,
+      basePrice,
+      overagePrice,
+      totalPrice,
+      materialName: materialData.label,
+      pricePerTon: materialData.pricePerTon
+    };
+  };
 
   const progressPercentage = Math.round(((currentStep + 1) / formSteps.length) * 100);
   const completedFields = Object.values(formData).filter(v => v).length;
@@ -188,8 +222,8 @@ export default function CalculateSizeNew() {
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-2xl font-bold">Smart Assessment</h3>
                 <div className="text-right">
-                  <div className="text-3xl font-bold">{completionPercentage}%</div>
-                  <div className="text-sm text-blue-100">Complete</div>
+                  <div className="text-3xl font-bold">{progressPercentage}%</div>
+                  <div className="text-sm text-blue-100">Step {currentStep + 1} of {formSteps.length}</div>
                 </div>
               </div>
 
@@ -197,7 +231,7 @@ export default function CalculateSizeNew() {
               <div className="relative h-3 bg-white/20 rounded-full overflow-hidden">
                 <motion.div
                   initial={{ width: 0 }}
-                  animate={{ width: `${completionPercentage}%` }}
+                  animate={{ width: `${progressPercentage}%` }}
                   transition={{ duration: 0.5, ease: "easeOut" }}
                   className="h-full bg-gradient-to-r from-white to-blue-200 rounded-full"
                 />
@@ -252,29 +286,39 @@ export default function CalculateSizeNew() {
                       </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        {dumpsterTypes.map(type => (
+                        {dumpsterTypes.map((type, idx) => (
                           <motion.button
                             key={type.value}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: idx * 0.1 }}
                             onClick={() => handleDumpsterTypeSelect(type.value)}
-                            whileHover={{ scale: 1.05 }}
+                            whileHover={{ scale: 1.05, y: -5 }}
                             whileTap={{ scale: 0.98 }}
-                            className={`p-6 rounded-2xl border-2 transition-all text-left ${
+                            className={`p-6 rounded-2xl border-2 transition-all text-left relative overflow-hidden group ${
                               formData.dumpsterType === type.value
-                                ? "border-blue-600 bg-blue-50"
-                                : "border-gray-200 bg-white hover:border-gray-300"
+                                ? "border-blue-600 bg-blue-50 shadow-lg"
+                                : "border-gray-200 bg-white hover:border-blue-300"
                             }`}
                           >
-                            <div className="text-4xl mb-3">{type.icon}</div>
-                            <h4 className="font-bold text-gray-900 text-lg">{type.label}</h4>
-                            <p className="text-sm text-gray-600 mt-2">
-                              {type.description}
-                            </p>
-                            {formData.dumpsterType === type.value && (
-                              <div className="mt-3 flex items-center gap-2 text-blue-600 text-sm font-semibold">
-                                <Check className="w-4 h-4" />
-                                Selected
-                              </div>
-                            )}
+                            <div className="absolute top-0 right-0 w-24 h-24 bg-blue-100/50 rounded-full -mr-12 -mt-12 group-hover:scale-150 transition-transform duration-300" />
+                            <div className="relative z-10">
+                              <div className="text-4xl mb-3">{type.icon}</div>
+                              <h4 className="font-bold text-gray-900 text-lg">{type.label}</h4>
+                              <p className="text-sm text-gray-600 mt-2">
+                                {type.description}
+                              </p>
+                              {formData.dumpsterType === type.value && (
+                                <motion.div 
+                                  initial={{ scale: 0 }}
+                                  animate={{ scale: 1 }}
+                                  className="mt-3 flex items-center gap-2 text-blue-600 text-sm font-semibold"
+                                >
+                                  <Check className="w-4 h-4" />
+                                  Selected
+                                </motion.div>
+                              )}
+                            </div>
                           </motion.button>
                         ))}
                       </div>
@@ -293,37 +337,59 @@ export default function CalculateSizeNew() {
                         </p>
                       </div>
 
+                      {/* Weight indicator hint */}
+                      <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="p-3 bg-cyan-50 border border-cyan-200 rounded-lg flex gap-2 text-xs text-cyan-700"
+                      >
+                        <Info className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                        <span>Heavy materials need larger dumpsters. We'll recommend the perfect size!</span>
+                      </motion.div>
+
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {materials.map(material => (
+                        {materials.map((material, idx) => (
                           <motion.button
                             key={material.value}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: idx * 0.08 }}
                             onClick={() => handleMaterialSelect(material.value)}
-                            whileHover={{ scale: 1.05 }}
+                            whileHover={{ scale: 1.05, y: -3 }}
                             whileTap={{ scale: 0.98 }}
-                            className={`p-4 rounded-2xl border-2 transition-all text-left ${
+                            className={`p-5 rounded-2xl border-2 transition-all text-left relative group ${
                               formData.material === material.value
-                                ? "border-blue-600 bg-blue-50"
-                                : "border-gray-200 bg-white hover:border-gray-300"
+                                ? "border-blue-600 bg-blue-50 shadow-md"
+                                : "border-gray-200 bg-white hover:border-blue-300"
                             }`}
                           >
-                            <div className="text-3xl mb-2">{material.icon}</div>
-                            <h4 className="font-bold text-gray-900">{material.label}</h4>
-                            <p className="text-xs text-gray-600 mt-1">
-                              <span className="font-semibold">{material.weight}</span> material
-                            </p>
-                            {formData.material === material.value && (
-                              <div className="mt-2 flex items-center gap-2 text-blue-600 text-sm font-semibold">
-                                <Check className="w-4 h-4" />
-                                Selected
+                            <div className="absolute top-0 right-0 w-16 h-16 bg-blue-100/40 rounded-full -mr-8 -mt-8 group-hover:scale-125 transition-transform" />
+                            <div className="relative z-10">
+                              <div className="text-3xl mb-2">{material.icon}</div>
+                              <h4 className="font-bold text-gray-900 text-sm">{material.label}</h4>
+                              <div className="flex items-center gap-2 mt-2">
+                                <span className="text-xs px-2 py-1 bg-amber-100 text-amber-700 rounded font-semibold">
+                                  {(material.baseWeight / 2000).toFixed(1)} tons
+                                </span>
                               </div>
-                            )}
+                              {formData.material === material.value && (
+                                <motion.div 
+                                  initial={{ scale: 0 }}
+                                  animate={{ scale: 1 }}
+                                  className="mt-2 flex items-center gap-2 text-blue-600 text-xs font-bold"
+                                >
+                                  <Check className="w-3 h-3" />
+                                  Selected
+                                </motion.div>
+                              )}
+                            </div>
                           </motion.button>
                         ))}
                       </div>
                     </div>
                   )}
 
-                  {/* Quantity Input */}
+                  {/* Fullness Slider & Weight Calculator */}
                   {currentStep === 2 && (
                     <div className="space-y-6">
                       <div>
@@ -335,52 +401,92 @@ export default function CalculateSizeNew() {
                         </p>
                       </div>
 
-                      <div className="space-y-4">
-                        <div>
-                          <label className="block text-sm font-bold text-gray-900 mb-3">
-                            Estimate in square feet or cubic yards
-                          </label>
-                          <div className="relative">
+                      {formData.material && (
+                        <motion.div
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="space-y-6"
+                        >
+                          {/* Fullness Slider */}
+                          <div className="bg-blue-50 border-2 border-blue-200 rounded-2xl p-8 space-y-6">
+                            <div className="flex items-center justify-between">
+                              <label className="text-lg font-bold text-gray-900">How full is the dumpster?</label>
+                              <span className="text-3xl font-bold text-blue-600">{formData.quantity || 50}%</span>
+                            </div>
+
                             <input
-                              type="number"
-                              value={formData.quantity}
-                              onChange={(e) => handleQuantityChange(e.target.value)}
-                              placeholder="Enter amount..."
-                              className="w-full px-6 py-4 border-2 border-gray-300 rounded-2xl focus:border-blue-600 focus:ring-2 focus:ring-blue-200 outline-none text-lg font-semibold transition-all"
+                              type="range"
+                              min="0"
+                              max="100"
+                              value={formData.quantity || 50}
+                              onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
+                              className="w-full h-4 bg-gradient-to-r from-slate-300 to-blue-300 rounded-full appearance-none cursor-pointer accent-blue-600"
                             />
-                            <span className="absolute right-6 top-1/2 -translate-y-1/2 text-gray-600 font-semibold">
-                              sq ft
-                            </span>
+
+                            <div className="flex justify-between text-xs font-semibold text-gray-600">
+                              <span>1/4 Full</span>
+                              <span>1/2 Full</span>
+                              <span>3/4 Full</span>
+                              <span>Full</span>
+                            </div>
                           </div>
-                        </div>
 
-                        {/* Quick suggestions */}
-                        <div className="grid grid-cols-3 gap-2">
-                          {[10, 25, 50].map(val => (
-                            <button
-                              key={val}
-                              onClick={() => handleQuantityChange(val.toString())}
-                              className={`py-2 rounded-lg font-semibold transition-all border ${
-                                formData.quantity === val.toString()
-                                  ? "border-blue-600 bg-blue-50 text-blue-600"
-                                  : "border-gray-300 bg-white text-gray-600 hover:border-gray-400"
-                              }`}
-                            >
-                              ~{val} sq ft
-                            </button>
-                          ))}
-                        </div>
-                      </div>
+                          {/* Weight & Price Breakdown */}
+                          {(() => {
+                            const calc = calculateWeightAndPrice();
+                            return calc ? (
+                              <motion.div
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="bg-white border-2 border-slate-200 rounded-2xl p-6 space-y-4"
+                              >
+                                <h4 className="font-bold text-gray-900 flex items-center gap-2">
+                                  <Zap className="w-5 h-5 text-yellow-500" />
+                                  Real-Time Estimate
+                                </h4>
 
-                      {/* Next Button */}
-                      <button
-                        onClick={() => setCurrentStep(currentStep + 1)}
-                        disabled={!formData.quantity}
-                        className="w-full py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 text-white font-bold rounded-xl transition-all flex items-center justify-center gap-2"
-                      >
-                        Continue
-                        <ArrowRight className="w-5 h-5" />
-                      </button>
+                                <div className="grid grid-cols-2 gap-4">
+                                  <div className="bg-slate-50 rounded-lg p-3">
+                                    <p className="text-xs text-gray-600 mb-1">Included Weight</p>
+                                    <p className="text-xl font-bold text-gray-900">{(calc.includedWeight / 2000).toFixed(1)} tons</p>
+                                  </div>
+                                  <div className="bg-blue-50 rounded-lg p-3">
+                                    <p className="text-xs text-gray-600 mb-1">Estimated Weight</p>
+                                    <p className="text-xl font-bold text-blue-600">{(calc.estimatedWeight / 2000).toFixed(1)} tons</p>
+                                  </div>
+                                </div>
+
+                                <div className="bg-orange-50 border-l-4 border-orange-500 rounded-lg p-3">
+                                  <p className="text-xs text-gray-600 mb-1">Overage</p>
+                                  <p className={`text-lg font-bold ${calc.overage > 0 ? "text-orange-600" : "text-green-600"}`}>
+                                    {calc.overage > 0 ? `+${(calc.overage / 2000).toFixed(1)} tons` : "None"}
+                                  </p>
+                                </div>
+
+                                <div className="bg-gradient-to-r from-amber-400 to-orange-500 text-white rounded-2xl p-6">
+                                  <p className="text-sm text-orange-100 mb-2">Estimated Total for {calc.materialName}</p>
+                                  <div className="flex items-end justify-between">
+                                    <div>
+                                      <p className="text-xs text-orange-100">Base rental</p>
+                                      <p className="text-lg font-bold">${calc.basePrice}</p>
+                                    </div>
+                                    {calc.overage > 0 && (
+                                      <div className="text-right">
+                                        <p className="text-xs text-orange-100">Overage fee</p>
+                                        <p className="text-lg font-bold">+${Math.round(calc.overagePrice)}</p>
+                                      </div>
+                                    )}
+                                    <div className="text-right">
+                                      <p className="text-5xl font-black">${calc.totalPrice}</p>
+                                      <p className="text-xs text-orange-100 mt-1">*Varies by location</p>
+                                    </div>
+                                  </div>
+                                </div>
+                              </motion.div>
+                            ) : null;
+                          })()}
+                        </motion.div>
+                      )}
                     </div>
                   )}
 
@@ -725,9 +831,4 @@ export default function CalculateSizeNew() {
       </div>
     </section>
   );
-}
-
-// AnimatePresence component (needed for the conditional animations)
-function AnimatePresence({ children, mode }: any) {
-  return <>{children}</>;
 }
