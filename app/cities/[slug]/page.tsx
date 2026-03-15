@@ -29,8 +29,9 @@ const cityData: Record<string, { name: string; description: string }> = {
   }
 };
 
-export default function CityPage({ params }: { params: { slug: string } }) {
-  const city = cityData[params.slug];
+export default async function CityPage({ params }: { params: { slug: string } }) {
+  const resolvedParams = await params;
+  const city = cityData[resolvedParams.slug];
 
   if (!city) {
     notFound();

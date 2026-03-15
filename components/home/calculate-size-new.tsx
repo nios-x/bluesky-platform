@@ -61,21 +61,21 @@ const dumpsters = [
     price: "$299",
     capacity: "2,500-3,500 lbs",
     best: "Small projects",
-    color: "from-blue-500 to-cyan-500"
+    color: "from-[#0a1e63] to-[#FFD700]"
   },
   {
     name: "20-Yard",
     price: "$399",
     capacity: "6,000-8,000 lbs",
     best: "Medium projects",
-    color: "from-green-500 to-emerald-500"
+    color: "from-[#0a1e63] to-[#FFD700]"
   },
   {
     name: "30-Yard",
     price: "$449",
     capacity: "9,000-12,000 lbs",
     best: "Large projects",
-    color: "from-orange-500 to-red-500"
+    color: "from-[#0a1e63] to-[#FFD700]"
   }
 ];
 
@@ -185,10 +185,10 @@ export default function CalculateSizeNew() {
   const isFormComplete = formData.dumpsterType && formData.material && formData.quantity && formData.timeline;
 
   return (
-    <section id="calculator-section" className="py-20 md:py-28 px-4 bg-gradient-to-b from-white via-slate-50 to-white relative overflow-hidden">
+    <section id="calculator-section" className="py-20 md:py-28 px-4 bg-gradient-to-b from-white via-[#0a1e63]/10 to-white relative overflow-hidden">
       {/* Background Decorations */}
-      <div className="absolute top-0 right-0 w-96 h-96 bg-blue-100/30 rounded-full blur-3xl -z-10" />
-      <div className="absolute bottom-0 left-0 w-96 h-96 bg-cyan-100/30 rounded-full blur-3xl -z-10" />
+      <div className="absolute top-0 right-0 w-96 h-96 bg-[#0a1e63]/30 rounded-full blur-3xl -z-10" />
+      <div className="absolute bottom-0 left-0 w-96 h-96 bg-[#FFD700]/20 rounded-full blur-3xl -z-10" />
 
       <div className="max-w-5xl mx-auto">
         {/* Header */}
@@ -198,14 +198,14 @@ export default function CalculateSizeNew() {
           viewport={{ once: true }}
           className="text-center mb-16"
         >
-          <div className="inline-flex items-center gap-2 bg-blue-100 px-4 py-2 rounded-full mb-4">
-            <Calculator className="w-4 h-4 text-blue-600" />
-            <span className="text-sm font-semibold text-blue-600">Smart Calculator</span>
+          <div className="inline-flex items-center gap-2 bg-[#0a1e63]/10 px-4 py-2 rounded-full mb-4">
+            <Calculator className="w-4 h-4 text-[#0a1e63]" />
+            <span className="text-sm font-semibold text-[#0a1e63]">Smart Calculator</span>
           </div>
-          <h2 className="text-3xl md:text-5xl font-bold text-gray-900 mb-4">
+          <h2 className="text-3xl md:text-5xl font-bold text-[#0a1e63] mb-4">
             Find Your Perfect Dumpster
           </h2>
-          <p className="text-gray-600 text-lg max-w-2xl mx-auto">
+          <p className="text-[#0a1e63] text-lg max-w-2xl mx-auto">
             Answer a few quick questions and get a personalized recommendation tailored to your project.
           </p>
         </motion.div>
@@ -215,25 +215,25 @@ export default function CalculateSizeNew() {
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="bg-white rounded-3xl shadow-2xl border border-gray-200 overflow-hidden"
+            className="bg-white rounded-3xl shadow-2xl border border-[#0a1e63]/20 overflow-hidden"
           >
             {/* Progress Header */}
-            <div className="bg-gradient-to-r from-blue-600 to-cyan-600 p-6 md:p-8 text-white">
+            <div className="bg-gradient-to-r from-[#0a1e63] via-[#0a1e63] to-[#efc73f] p-6 md:p-8 text-white">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-2xl font-bold">Smart Assessment</h3>
                 <div className="text-right">
-                  <div className="text-3xl font-bold">{progressPercentage}%</div>
-                  <div className="text-sm text-blue-100">Step {currentStep + 1} of {formSteps.length}</div>
+                  <div className="text-3xl font-bold text-[#0a1e63] drop-shadow-sm bg-white/70 px-2 py-1 rounded-lg">{progressPercentage}%</div>
+                  <div className="text-sm text-white">Step {currentStep + 1} of {formSteps.length}</div>
                 </div>
               </div>
 
               {/* Progress Bar */}
-              <div className="relative h-3 bg-white/20 rounded-full overflow-hidden">
+              <div className="relative h-3 bg-[#FFD700]/20 rounded-full overflow-hidden">
                 <motion.div
                   initial={{ width: 0 }}
                   animate={{ width: `${progressPercentage}%` }}
                   transition={{ duration: 0.5, ease: "easeOut" }}
-                  className="h-full bg-gradient-to-r from-white to-blue-200 rounded-full"
+                  className="h-full bg-gradient-to-r from-white to-[#FFD700] rounded-full"
                 />
               </div>
 

@@ -27,32 +27,6 @@ const faqs = [
   {
     question: "What items are prohibited?",
     answer: "Hazardous materials, batteries, tires, electronics, paints, and asbestos are restricted. Please review our detailed prohibited items list before booking. Contact us if you're unsure about specific materials."
-  },
-  {
-    question: "Can I change dumpster sizes after booking?",
-    answer: "Absolutely! You can upgrade or downgrade your dumpster size anytime during your rental without extra fees. Just let us know, and we'll handle the switch."
-  },
-  {
-    question: "Do you deliver same-day?",
-    answer: "Yes! We offer same-day delivery in most areas for urgent projects. Flexible scheduling available to fit your timeline."
-  }
-];
-
-const helpCards = [
-  {
-    icon: Truck,
-    title: "Overfill?",
-    description: "We charge per excess weight (usually $0.10/lb). Not a deal-breaker!"
-  },
-  {
-    icon: Clock,
-    title: "Underfull?",
-    description: "No penalty—keep the dumpster as long as you need at no extra charge"
-  },
-  {
-    icon: Zap,
-    title: "Upgrade?",
-    description: "Switch sizes anytime during your rental without extra fees"
   }
 ];
 
@@ -65,77 +39,8 @@ export default function FAQSectionNew() {
   };
 
   return (
-    <section className="py-20 md:py-28 px-4 bg-gradient-to-b from-white via-slate-50 to-white relative overflow-hidden">
-      {/* Background Decorations */}
-      <div className="absolute top-0 left-0 w-96 h-96 bg-blue-100/20 rounded-full blur-3xl -z-10" />
-      <div className="absolute bottom-0 right-0 w-96 h-96 bg-cyan-100/20 rounded-full blur-3xl -z-10" />
-
+    <section id="faq-section" className="py-20 md:py-28 px-4 bg-gradient-to-b from-white via-slate-50 to-white relative overflow-hidden">
       <div className="max-w-6xl mx-auto">
-        {/* Quick Help Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="mb-20"
-        >
-          <div className="text-center mb-12">
-            <div className="inline-flex items-center gap-2 bg-cyan-100 px-4 py-2 rounded-full mb-4">
-              <HelpCircle className="w-4 h-4 text-cyan-600" />
-              <span className="text-sm font-semibold text-cyan-600">No-Worry Guarantee</span>
-            </div>
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              Worried About Your Choice?
-            </h2>
-            <p className="text-gray-600 text-lg max-w-2xl mx-auto">
-              We make it easy to adjust your order. No penalties, no extra fees, just flexibility.
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-6">
-            {helpCards.map((card, idx) => {
-              const Icon = card.icon;
-              return (
-                <motion.div
-                  key={idx}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: idx * 0.1 }}
-                  className="bg-white rounded-2xl p-8 border-2 border-gray-100 hover:border-cyan-300 shadow-sm hover:shadow-lg transition-all"
-                >
-                  <div className="w-14 h-14 bg-gradient-to-br from-cyan-100 to-blue-100 rounded-2xl flex items-center justify-center mb-4">
-                    <Icon className="w-7 h-7 text-cyan-600" />
-                  </div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">{card.title}</h3>
-                  <p className="text-gray-600 leading-relaxed">{card.description}</p>
-                </motion.div>
-              );
-            })}
-          </div>
-        </motion.div>
-
-        {/* Trust Badges */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-3xl border-2 border-blue-200 p-8 md:p-12 mb-20"
-        >
-          <div className="grid md:grid-cols-3 gap-8">
-            {[
-              { number: "1000+", label: "Happy Customers" },
-              { number: "6+", label: "Cities Served" },
-              { number: "4.9★", label: "Average Rating" }
-            ].map((badge, idx) => (
-              <div key={idx} className="text-center">
-                <div className="text-4xl md:text-5xl font-black text-blue-600 mb-2">{badge.number}</div>
-                <p className="text-gray-600 font-semibold">{badge.label}</p>
-              </div>
-            ))}
-          </div>
-        </motion.div>
-
-        {/* FAQ Section */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}

@@ -19,8 +19,8 @@ export default function Home() {
         <CalculateSizeNew />
       </section>
       <HowItWorks />
-      <FAQSectionNew />
       <WhyBlueSky />
+      <FAQSectionNew />
       <Footer />
     </main>
   );

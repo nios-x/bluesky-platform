@@ -28,14 +28,30 @@ export function Header() {
 
   const navLinks = [
     { href: "/", label: "Home" },
-    { href: "/services/dumpster-rental", label: "Services" },
+    { href: "/#dumpster-services", label: "Dumpster Services" },
+    { href: "/#calculator-section", label: "Dumpster Calculator" },
+    { href: "/#faq-section", label: "FAQ" },
     { href: "/size-guide", label: "Size Guide" },
     { href: "/partners", label: "Partners" },
     { href: "/about", label: "About" },
     { href: "/contact", label: "Contact" },
   ];
 
-  const isActive = (path: string) => pathname === path;
+  // For anchor links, check if pathname is home and hash matches (client-side)
+  const [activeHash, setActiveHash] = useState("");
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const onHashChange = () => setActiveHash(window.location.hash);
+      window.addEventListener('hashchange', onHashChange);
+      setActiveHash(window.location.hash);
+      return () => window.removeEventListener('hashchange', onHashChange);
+    }
+  }, []);
+  const isActive = (path: string) => {
+    if (path === "/") return pathname === "/" && (!activeHash || activeHash === "#");
+    if (path.startsWith("/#")) return pathname === "/" && activeHash === path.replace("/", "");
+    return pathname === path;
+  };
 
   return (
     <>
@@ -60,7 +76,16 @@ export function Header() {
 
             <nav className="hidden md:flex items-center space-x-8">
               {navLinks.map((link) => (
-                <Link key={link.href} href={link.href} className={cn("text-sm font-semibold transition-all pb-1 border-b-2", isActive(link.href) ? "text-white border-white" : "text-white/80 hover:text-white border-transparent hover:border-white/50")}>
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={cn(
+                    "text-sm font-semibold transition-all pb-1 border-b-2",
+                    isActive(link.href)
+                      ? "text-white border-[#FFD700]" // Gold underline
+                      : "text-white/80 hover:text-white border-transparent hover:border-[#FFD700]/60"
+                  )}
+                >
                   {link.label}
                 </Link>
               ))}
@@ -124,7 +149,7 @@ export function Header() {
                   )}
                 </div>
               ) : (
-                <Button onClick={() => setShowAuthModal(true)} className="bg-white text-slate-900 hover:bg-slate-100" size="sm">
+                <Button onClick={() => setShowAuthModal(true)} className="bg-[#FFD700] text-slate-900 hover:bg-yellow-400" size="sm">
                   Sign In
                 </Button>
               )}
@@ -147,7 +172,17 @@ export function Header() {
           <div className="md:hidden border-t border-slate-700 bg-slate-900">
             <nav className="px-4 py-4 space-y-2">
               {navLinks.map((link) => (
-                <Link key={link.href} href={link.href} className={cn("block px-4 py-2 rounded-lg text-sm font-semibold transition-colors", isActive(link.href) ? "bg-slate-700 text-white" : "text-white/80 hover:bg-slate-700 hover:text-white")} onClick={() => setIsMobileMenuOpen(false)}>
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={cn(
+                    "block px-4 py-2 rounded-lg text-sm font-semibold transition-colors border-b-2",
+                    isActive(link.href)
+                      ? "text-white border-[#FFD700]"
+                      : "text-white/80 hover:bg-slate-700 hover:text-white border-transparent hover:border-[#FFD700]/60"
+                  )}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
                   {link.label}
                 </Link>
               ))}

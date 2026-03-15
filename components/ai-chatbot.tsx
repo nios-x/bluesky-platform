@@ -4,11 +4,13 @@ import { useState, useRef, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { X, Send, MessageCircle } from 'lucide-react'
 
+
 interface Message {
   id: string
   text: string
   sender: 'user' | 'bot'
   timestamp: Date
+  options?: string[]
 }
 
 export function AIChatbot() {
@@ -16,13 +18,15 @@ export function AIChatbot() {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
-      text: 'Hello! 👋 Welcome to Blue Sky Disposal. How can I assist you today?',
+      text: 'Hello! 👋 Welcome to Blue Sky Disposal. How can I assist you today? You can say things like "I want to book a dumpster" or ask for help.',
       sender: 'bot',
       timestamp: new Date(),
     },
   ])
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [bookingStep, setBookingStep] = useState<null | number>(null)
+  const [bookingData, setBookingData] = useState<any>({})
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const scrollToBottom = () => {
@@ -33,10 +37,49 @@ export function AIChatbot() {
     scrollToBottom()
   }, [messages])
 
+
+  // Booking flow steps
+  const cityOptions = [
+    'Detroit',
+    'Warren',
+    'Sterling Heights',
+    'Livonia',
+    'Troy',
+    'Dearborn'
+  ];
+
+  const bookingSteps = [
+    {
+      key: 'type',
+      text: 'What type of dumpster do you need?',
+      options: ['Roll-Off', 'Rubber-Wheeled', 'Permanent']
+    },
+    {
+      key: 'size',
+      text: 'What size dumpster do you need?',
+      options: ['10 Yard', '15 Yard', '20 Yard', '30 Yard']
+    },
+    {
+      key: 'location',
+      text: 'Where do you need the dumpster delivered? (Select your city)',
+      options: cityOptions
+    },
+    {
+      key: 'date',
+      text: 'When do you need the dumpster? (Pick a date)',
+      options: null // Will show calendar picker
+    },
+    {
+      key: 'confirm',
+      text: 'Thank you! Here is your booking summary. Would you like to proceed?',
+      options: ['Yes, book now', 'No, start over']
+    }
+  ];
+
   const botResponses: { [key: string]: string } = {
     'pricing': 'Our pricing varies based on dumpster size and rental duration. For specific quotes, please contact us or check our calculator on the Size Guide page.',
     'sizes': 'We offer dumpsters in various sizes: 10 yard, 15 yard, 20 yard, and 30 yard. Choose Roll Off, Rubber Wheeled, or Permanent dumpsters based on your needs.',
-    'book': 'You can book a dumpster directly through our website by clicking "Book Now" on any of our dumpster type cards or visiting our Services page.',
+    'book': 'Let’s get started with your booking! I’ll ask you a few quick questions.',
     'contact': 'You can reach us through our Contact page, or call us at (123) 456-7890 for immediate assistance.',
     'area': 'We provide service in 50+ cities. Please check our coverage area on the Services page or contact us directly.',
     'rental': 'Our rental periods are flexible. Typically, we offer daily, weekly, and monthly rental options. Please contact us for specific details.',
@@ -44,27 +87,102 @@ export function AIChatbot() {
     'delivery': 'Yes, we provide delivery and pickup services as part of our dumpster rental. Delivery time depends on your address.',
     'hello': 'Hello! How can I help you with Blue Sky Disposal services today?',
     'hi': 'Hi there! What can I help you with?',
-    'help': 'I can help you with information about our dumpster rentals, pricing, booking, services, and more. What would you like to know?',
+    'help': 'I can help you with information about our dumpster rentals, pricing, booking, services, and more. What would you like to know? You can also type "book a dumpster" to start the booking process.',
   }
 
-  const generateBotResponse = (userMessage: string): string => {
+
+  // Booking flow logic
+  const startBooking = () => {
+    setBookingStep(0)
+    setBookingData({})
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: Date.now().toString(),
+        text: bookingSteps[0].text,
+        sender: 'bot',
+        timestamp: new Date(),
+        options: bookingSteps[0].options || undefined
+      }
+    ])
+  }
+
+  // Calendar picker state
+  const [showCalendar, setShowCalendar] = useState(false);
+  const [calendarStep, setCalendarStep] = useState<null | number>(null);
+
+  const handleBookingStep = (value: string) => {
+    const step = bookingStep ?? 0;
+    const stepData = bookingSteps[step];
+    const newBookingData = { ...bookingData, [stepData.key]: value };
+    setBookingData(newBookingData);
+
+    // If next step is date, show calendar picker
+    if (bookingSteps[step + 1] && bookingSteps[step + 1].key === 'date') {
+      setShowCalendar(true);
+      setCalendarStep(step + 1);
+      setBookingStep(step + 1);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now().toString(),
+          text: bookingSteps[step + 1].text,
+          sender: 'bot',
+          timestamp: new Date(),
+        }
+      ]);
+      return;
+    }
+
+    if (step < bookingSteps.length - 1) {
+      setBookingStep(step + 1);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now().toString(),
+          text: bookingSteps[step + 1].key === 'confirm'
+            ? `Type: ${newBookingData.type || '-'}\nSize: ${newBookingData.size || '-'}\nLocation: ${newBookingData.location || '-'}\nDate: ${newBookingData.date || '-'}`
+            : bookingSteps[step + 1].text,
+          sender: 'bot',
+          timestamp: new Date(),
+          options: bookingSteps[step + 1].options || undefined
+        }
+      ]);
+    } else {
+      setBookingStep(null);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now().toString(),
+          text: 'Booking complete! Our team will contact you soon. If you want to start over, type "book a dumpster".',
+          sender: 'bot',
+          timestamp: new Date(),
+        }
+      ]);
+    }
+  };
+
+  const generateBotResponse = (userMessage: string): string | null => {
     const lowerMessage = userMessage.toLowerCase()
-    
+    if (lowerMessage.includes('book')) {
+      startBooking()
+      return null
+    }
     for (const [key, response] of Object.entries(botResponses)) {
       if (lowerMessage.includes(key)) {
         return response
       }
     }
-    
     return 'Thank you for your message! For more specific information, please visit our FAQ page, contact us directly, or call us at (123) 456-7890. Our team is here to help!'
   }
 
-  const handleSendMessage = async () => {
-    if (!input.trim()) return
+  const handleSendMessage = async (optionValue?: string) => {
+    if (!input.trim() && !optionValue) return
 
+    const userText = optionValue || input
     const userMessage: Message = {
       id: Date.now().toString(),
-      text: input,
+      text: userText,
       sender: 'user',
       timestamp: new Date(),
     }
@@ -73,15 +191,25 @@ export function AIChatbot() {
     setInput('')
     setIsLoading(true)
 
-    // Simulate bot thinking time
     setTimeout(() => {
-      const botResponse: Message = {
-        id: (Date.now() + 1).toString(),
-        text: generateBotResponse(input),
-        sender: 'bot',
-        timestamp: new Date(),
+      // If in booking flow, handle step
+      if (bookingStep !== null) {
+        handleBookingStep(userText)
+        setIsLoading(false)
+        return
       }
-      setMessages((prev) => [...prev, botResponse])
+      const botResponse = generateBotResponse(userText)
+      if (botResponse) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: (Date.now() + 1).toString(),
+            text: botResponse,
+            sender: 'bot',
+            timestamp: new Date(),
+          }
+        ])
+      }
       setIsLoading(false)
     }, 500)
   }
@@ -110,7 +238,7 @@ export function AIChatbot() {
 
           {/* Messages */}
           <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-50">
-            {messages.map((message) => (
+            {messages.map((message, idx) => (
               <div
                 key={message.id}
                 className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
@@ -118,21 +246,50 @@ export function AIChatbot() {
                 <div
                   className={`max-w-xs px-4 py-2 rounded-lg text-sm ${
                     message.sender === 'user'
-                      ? 'bg-blue-600 text-white rounded-br-none'
-                      : 'bg-white text-slate-900 border border-slate-200 rounded-bl-none'
+                      ? 'bg-[#0a1e63] text-white rounded-br-none'
+                      : 'bg-white text-[#0a1e63] border border-[#efc73f]/40 rounded-bl-none'
                   }`}
                 >
-                  {message.text}
+                  {message.text.split('\n').map((line, i) => (
+                    <div key={i}>{line}</div>
+                  ))}
+                  {/* Quick reply options */}
+                  {message.options && (
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {message.options.map((opt) => (
+                        <button
+                          key={opt}
+                          onClick={() => handleSendMessage(opt)}
+                          className="bg-[#efc73f] hover:bg-[#0a1e63] hover:text-white text-[#0a1e63] font-semibold px-3 py-1 rounded-full text-xs border border-[#efc73f] transition"
+                        >
+                          {opt}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  {/* Calendar picker for date step */}
+                  {showCalendar && bookingStep === calendarStep && message.sender === 'bot' && bookingSteps[bookingStep]?.key === 'date' && (
+                    <div className="mt-2">
+                      <input
+                        type="date"
+                        className="border border-[#efc73f]/40 rounded-lg px-2 py-1 text-[#0a1e63]"
+                        onChange={e => {
+                          setShowCalendar(false);
+                          handleSendMessage(e.target.value);
+                        }}
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
             {isLoading && (
               <div className="flex justify-start">
-                <div className="bg-white text-slate-900 px-4 py-2 rounded-lg border border-slate-200 rounded-bl-none">
+                <div className="bg-white text-[#0a1e63] px-4 py-2 rounded-lg border border-[#efc73f]/40 rounded-bl-none">
                   <div className="flex gap-1">
-                    <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce"></div>
-                    <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce delay-100"></div>
-                    <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce delay-200"></div>
+                    <div className="w-2 h-2 bg-[#efc73f] rounded-full animate-bounce"></div>
+                    <div className="w-2 h-2 bg-[#efc73f] rounded-full animate-bounce delay-100"></div>
+                    <div className="w-2 h-2 bg-[#efc73f] rounded-full animate-bounce delay-200"></div>
                   </div>
                 </div>
               </div>
@@ -149,12 +306,12 @@ export function AIChatbot() {
                 onChange={(e) => setInput(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
                 placeholder="Type your question..."
-                className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="flex-1 px-3 py-2 border border-[#efc73f]/40 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#efc73f] focus:border-transparent"
               />
               <button
-                onClick={handleSendMessage}
+                onClick={() => handleSendMessage()}
                 disabled={!input.trim() || isLoading}
-                className="bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 text-white p-2 rounded-lg transition"
+                className="bg-[#efc73f] hover:bg-[#0a1e63] hover:text-white disabled:bg-slate-300 text-[#0a1e63] p-2 rounded-lg transition"
               >
                 <Send className="w-4 h-4" />
               </button>
@@ -167,7 +324,7 @@ export function AIChatbot() {
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
-          className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all duration-300 transform hover:scale-110"
+          className="bg-gradient-to-r from-[#0a1e63] to-[#efc73f] hover:from-[#0a1e63] hover:to-[#efc73f]/80 text-white w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all duration-300 transform hover:scale-110"
         >
           <MessageCircle className="w-6 h-6" />
         </button>

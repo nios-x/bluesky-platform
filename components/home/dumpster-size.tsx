@@ -61,92 +61,154 @@ const dumpsterSizes = [
   }
 ];
 
+import { Star } from "lucide-react";
+
+const dumpsterTypes = [
+  {
+    type: "roll-off",
+    title: "Roll-off Dumpsters",
+    color: "blue",
+    image: "/images/roll-off-dumpster.png",
+    border: "border-blue-300",
+    text: "text-blue-900",
+    price: "$295",
+    priceBg: "bg-blue-600",
+    priceText: "text-white",
+    sizes: [
+      { label: "10 Yard", slug: "10-yard" },
+      { label: "15 Yard", slug: "15-yard" },
+      { label: "20 Yard", slug: "20-yard" },
+      { label: "30 Yard", slug: "30-yard" },
+      { label: "40 Yard", slug: "40-yard" }
+    ],
+    features: [
+      "Heavy-duty construction",
+      "Easy loading from ground level",
+      "Ideal for construction debris"
+    ],
+    detailsUrl: "/services/dumpster-rental/roll-off"
+  },
+  {
+    type: "rubber-wheeled",
+    title: "Rubber-wheeled Dumpsters",
+    color: "cyan",
+    image: "/images/rubber-wheel-dumpster.png",
+    border: "border-cyan-300",
+    text: "text-cyan-900",
+    price: "$350",
+    priceBg: "bg-cyan-600",
+    priceText: "text-white",
+    sizes: [
+      { label: "10 Yard", slug: "10-yard" },
+      { label: "15 Yard", slug: "15-yard" },
+      { label: "20 Yard", slug: "20-yard" }
+    ],
+    features: [
+      "Surface-friendly rubber wheels",
+      "Perfect for asphalt & concrete",
+      "Residential-friendly design"
+    ],
+    detailsUrl: "/services/dumpster-rental/rubber-wheeled"
+  },
+  {
+    type: "permanent",
+    title: "Permanent Dumpsters",
+    color: "purple",
+    image: "/images/permanent-dumpster.png",
+    border: "border-purple-300",
+    text: "text-purple-900",
+    price: "$125/month",
+    priceBg: "bg-purple-600",
+    priceText: "text-white",
+    sizes: [
+      { label: "2 Yard", slug: "2-yard" },
+      { label: "4 Yard", slug: "4-yard" },
+      { label: "6 Yard", slug: "6-yard" },
+      { label: "8 Yard", slug: "8-yard" }
+    ],
+    features: [
+      "Commercial-grade durability",
+      "Regular pickup schedules",
+      "Lockable lids available"
+    ],
+    detailsUrl: "/services/dumpster-rental/permanent"
+  }
+];
+
 export default function DumpsterTypeSelection() {
   return (
-    <section className="py-16 md:py-20 px-4 bg-gradient-to-b from-white via-blue-50 to-white">
+    <section id="dumpster-services" className="py-16 md:py-20 px-4 bg-gradient-to-b from-white via-blue-50 to-white">
       <div className="max-w-7xl mx-auto">
-        {/* Section Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="text-center mb-12"
-        >
+        <div className="text-center mb-12">
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-slate-900 mb-4">
-            Dumpster Sizes to Fit Your Needs
+            Choose Your Dumpster Type
           </h2>
           <p className="text-slate-600 text-base md:text-lg max-w-3xl mx-auto">
-            Choose from four convenient sizes. All rentals include delivery, pickup, and professional customer support.
+            Select the perfect dumpster for your project needs
           </p>
-        </motion.div>
-
-        {/* Grid of Dumpster Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-          {dumpsterSizes.map((dumpster, index) => (
-            <motion.div
-              key={index}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: index * 0.1, duration: 0.6 }}
-              className={`relative bg-gradient-to-br ${dumpster.color} rounded-2xl md:rounded-3xl overflow-hidden border-2 ${dumpster.borderColor} shadow-lg hover:shadow-xl transition-all flex flex-col hover:scale-105`}
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {dumpsterTypes.map((type, idx) => (
+            <div
+              key={type.title}
+              className={`rounded-2xl border-2 ${type.border} bg-white shadow-lg flex flex-col overflow-hidden relative p-6`}
+              style={{ minHeight: 520 }}
             >
-              {/* Badge */}
-              {dumpster.badge && (
-                <div className="absolute top-4 right-4 bg-amber-500 text-white px-3 py-1 rounded-full text-xs font-bold">
-                  {dumpster.badge}
-                </div>
-              )}
-
-              {/* Header Section */}
-              <div className="p-6 md:p-8 pb-4 border-b-2" style={{ borderColor: 'currentColor' }}>
-                <h3 className="text-2xl md:text-3xl font-bold text-slate-900 mb-2">{dumpster.size}</h3>
-                <p className="text-slate-700 font-semibold text-sm md:text-base mb-4">{dumpster.dimensions}</p>
-                <div className="text-3xl md:text-4xl font-bold text-slate-900 mb-1">
-                  <span className="text-2xl text-slate-600">Starts at </span>
-                  {dumpster.price}
-                </div>
-                <p className="text-xs md:text-sm text-slate-600">All fees included</p>
+              {/* Image */}
+              <div className="flex justify-center mb-4">
+                <img src={type.image} alt={type.title} className="h-28 object-contain" />
               </div>
-
-              {/* Features Section */}
-              <div className="p-6 md:p-8 flex-1 flex flex-col space-y-4">
-                {dumpster.features.map((feature, featureIdx) => {
-                  const Icon = feature.icon;
-                  return (
-                    <div key={featureIdx} className="flex items-start gap-3">
-                      <div className="flex-shrink-0 mt-1">
-                        <Icon className="w-5 h-5 text-slate-700" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-bold text-slate-900 text-sm md:text-base">{feature.label}</p>
-                        <p className="text-xs md:text-sm text-slate-600 leading-tight">{feature.detail}</p>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Button */}
-              <div className="p-6 md:p-8 pt-0">
-                <Link href="/checkout">
-                  <motion.div
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    className="w-full"
-                  >
-                    <Button
-                      className={`w-full ${dumpster.buttonColor} text-white font-bold py-3 rounded-lg transition-all shadow-md hover:shadow-lg text-sm md:text-base`}
+              <h3 className={`text-2xl font-bold mb-2 ${type.text}`}>{type.title}</h3>
+              <p className="text-gray-700 mb-2">
+                {idx === 0 && "Perfect for large construction projects, home renovations, and commercial waste disposal"}
+                {idx === 1 && "Ideal for residential driveways and areas where surface protection is essential"}
+                {idx === 2 && "Long-term waste management solutions for businesses and multi-unit properties"}
+              </p>
+              <div className="mb-2">
+                <span className={`font-semibold ${type.text}`}>Available Sizes:</span>
+                <div className="flex gap-2 flex-wrap mt-2">
+                  {type.sizes.map((size) => (
+                    <a
+                      key={size.slug}
+                      href={`/services/dumpster-rental/${type.type}/${size.slug}`}
+                      className={`px-4 py-1 rounded-full font-bold text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors
+                        ${type.color === "blue" ? "bg-blue-100 text-blue-800 hover:bg-blue-200" : ""}
+                        ${type.color === "cyan" ? "bg-cyan-100 text-cyan-800 hover:bg-cyan-200" : ""}
+                        ${type.color === "purple" ? "bg-purple-100 text-purple-800 hover:bg-purple-200" : ""}
+                        hover:scale-105 shadow-sm border border-transparent hover:border-gray-200`
+                      }
                     >
-                      Select & Book
-                    </Button>
-                  </motion.div>
-                </Link>
+                      {size.label}
+                    </a>
+                  ))}
+                </div>
               </div>
-            </motion.div>
+              <ul className="my-4 space-y-2">
+                {type.features.map((feature) => (
+                  <li key={feature} className="flex items-center text-base text-gray-800">
+                    <Star className={`w-5 h-5 mr-2 ${type.color === "blue" ? "text-blue-400" : type.color === "cyan" ? "text-cyan-400" : "text-purple-400"}`} fill="currentColor" />
+                    {feature}
+                  </li>
+                ))}
+              </ul>
+              <div className="mt-auto pt-4">
+                <a
+                  href={type.detailsUrl}
+                  className={`w-full flex items-center justify-center gap-2 rounded-lg font-bold py-3 text-base transition-colors
+                    ${type.color === "blue" ? "bg-blue-600 hover:bg-blue-700 text-white" : ""}
+                    ${type.color === "cyan" ? "bg-cyan-600 hover:bg-cyan-700 text-white" : ""}
+                    ${type.color === "purple" ? "bg-purple-600 hover:bg-purple-700 text-white" : ""}
+                  `}
+                >
+                  View Details <span aria-hidden>→</span>
+                </a>
+              </div>
+            </div>
           ))}
         </div>
       </div>
     </section>
   );
 }
+
+

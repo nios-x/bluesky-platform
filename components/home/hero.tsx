@@ -1,43 +1,23 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { motion } from "framer-motion";
-import { useMemo, useState, useEffect } from "react";
-import { Search, Package } from "lucide-react";
-import Link from "next/link";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import { Calendar } from "lucide-react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 export function Hero() {
   const [zipCode, setZipCode] = useState("");
   const [dumpsterSize, setDumpsterSize] = useState("");
   const [projectType, setProjectType] = useState("");
-  const [displayedWords, setDisplayedWords] = useState<string[]>([]);
-  const [isResetting, setIsResetting] = useState(false);
+  const [deliveryDate, setDeliveryDate] = useState("");
+  const [removalDate, setRemovalDate] = useState("");
+  const [natureOfWork, setNatureOfWork] = useState("");
+  // Removed word-by-word animation state
   const [searchError, setSearchError] = useState("");
   const router = useRouter();
 
-  const subheadingText = "Instantly Compare Sizes, Get an Estimate, & Schedule Delivery.";
-  const words = useMemo(() => subheadingText.split(" "), [subheadingText]);
-
-  // Word-by-word animation with loop
-  useEffect(() => {
-    if (isResetting) return;
-
-    if (displayedWords.length < words.length) {
-      const timer = setTimeout(() => {
-        setDisplayedWords((prev) => [...prev, words[prev.length]]);
-      }, 200);
-      return () => clearTimeout(timer);
-    }
-
-    const pauseTimer = setTimeout(() => {
-      setIsResetting(true);
-      setDisplayedWords([]);
-      setTimeout(() => setIsResetting(false), 300);
-    }, 1200);
-
-    return () => clearTimeout(pauseTimer);
-  }, [displayedWords.length, isResetting, words]);
+  // Removed word-by-word animation logic
 
   const scrollToCalculator = () => {
     const calculatorElement = document.getElementById('calculator-section');
@@ -133,185 +113,133 @@ export function Hero() {
           className="w-full h-full object-cover object-[center_75%]"
           loading="eager"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-[#1a4d9e]/70 via-[#1a4d9e]/55 to-[#1a4d9e]/80" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#0a1e63]/70 via-[#0a1e63]/40 to-[#efc73f]/10" />
       </div>
 
       {/* Content */}
       <div className="relative z-10 w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
         {/* Main Heading */}
-        <motion.h1
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          className="text-5xl sm:text-6xl lg:text-7xl font-bold text-white mb-4 drop-shadow-2xl"
-        >
-          Book Dumpster Rentals in Michigan
-        </motion.h1>
+        <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-white mb-4 drop-shadow-2xl">
+          Book a Dumpster in Seconds
+        </h1>
 
-        {/* Description - Word by Word Animation */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.2 }}
-          className="text-xl text-white/95 mb-12 drop-shadow-lg min-h-[32px] flex flex-wrap justify-center gap-2"
-        >
-          {displayedWords.map((word, index) => (
-            <motion.span
-              key={index}
-              initial={{ opacity: 0, x: 16 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.3 }}
-              className="inline-block"
-            >
-              {word}
-            </motion.span>
-          ))}
-        </motion.div>
+        <div className="text-xl text-white mb-12 drop-shadow-lg min-h-[32px] flex flex-wrap justify-center gap-2">
+          Instantly compare dumpster types and sizes, get an estimate, and schedule delivery.
+        </div>
 
-        {/* Search & Booking Box */}
-        <motion.div
-          initial={{ opacity: 0, y: 50, scale: 0.95 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
-          whileHover={{ y: -5 }}
-          className="max-w-2xl mx-auto mb-12"
-        >
-          <div className="relative bg-white rounded-3xl shadow-2xl p-6 sm:p-8 text-left overflow-hidden border-2 border-white">
-            {/* Animated top gradient bar */}
-            <motion.div 
-              className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#1a4d9e] via-[#ff8c42] to-[#1a4d9e]"
-              animate={{ backgroundPosition: ["0% center", "100% center"] }}
-              transition={{ duration: 3, repeat: Infinity }}
-            />
-            
-            {/* Search Input with Icon */}
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.5 }}
-              className="relative z-10 mb-6"
-            >
-              <div className="relative flex items-center">
-                <input
-                  type="text"
-                  value={zipCode}
-                  onChange={(e) => {
-                    setZipCode(e.target.value);
-                    setSearchError("");
-                  }}
-                  onKeyPress={handleKeyPress}
-                  placeholder="Enter zip code or address"
-                  className="w-full pr-12 pl-4 py-3 rounded-xl border-2 border-slate-300 focus:border-[#1a4d9e] focus:ring-2 focus:ring-[#1a4d9e]/20 focus:outline-none text-slate-900 text-base transition-all font-medium hover:border-slate-400"
-                />
-                <button 
-                  onClick={handleSearch}
-                  className="absolute right-3 bg-[#1a4d9e] hover:bg-[#0f3366] text-white p-2 rounded-lg transition-colors"
-                >
-                  <Search className="w-5 h-5" />
-                </button>
+        {/* Booking Box with Type and Size Selectors */}
+        <div className="max-w-2xl mx-auto mb-12">
+          <div className="relative bg-gradient-to-br from-white via-blue-50 to-[#FFD700]/10 rounded-3xl shadow-2xl p-6 sm:p-8 text-left overflow-hidden border-2 border-blue-200">
+            {/* Zip Code and Project Type Side by Side */}
+            <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-bold text-blue-900 mb-2">Delivery Address</label>
+                <Select value={zipCode} onValueChange={setZipCode}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select zip code" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {["48001", "48002", "48003", "48004", "48005"].map((zip) => (
+                      <SelectItem key={zip} value={zip}>{zip}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-              {searchError && (
-                <motion.p
-                  initial={{ opacity: 0, y: -5 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="text-red-600 text-sm mt-2 font-medium"
-                >
-                  {searchError}
-                </motion.p>
-              )}
-            </motion.div>
-
-            {/* Dumpster Size Selector */}
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.6 }}
-              className="relative z-10 mb-6"
-            >
-              <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-xl border-2 border-blue-200">
-                <Package className="w-5 h-5 text-[#1a4d9e]" />
-                <span className="font-bold text-[#1a4d9e] text-sm">Select Dumpster</span>
+              <div>
+                <label className="block text-sm font-bold text-blue-900 mb-2">Project Type</label>
+                <Select value={natureOfWork} onValueChange={setNatureOfWork}>
+                  <SelectTrigger className="border-blue-300 focus:border-[#FFD700] focus:ring-[#FFD700]/20">
+                    <SelectValue placeholder="Select project type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {[
+                      '🏠 Home Cleanout',
+                      '🏗️ Construction',
+                      '🧱 Roofing',
+                      '🌿 Landscaping',
+                      '🚧 Concrete',
+                      '🚜 Dirt Removal'
+                    ].map((type) => (
+                      <SelectItem key={type} value={type}>{type}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-              <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-2">
-                {dumpsterSizes.map((size) => (
-                  <motion.button
-                    key={size}
-                    onClick={() => setDumpsterSize(size)}
-                    whileHover={{ scale: 1.05 }}
-                    className={`py-2 px-3 rounded-lg font-semibold text-sm transition-all ${
-                      dumpsterSize === size
-                        ? "bg-[#1a4d9e] text-white"
-                        : "bg-slate-100 text-slate-700 hover:bg-slate-200"
-                    }`}
-                  >
-                    {size}
-                  </motion.button>
-                ))}
+            </div>
+            {/* Delivery/Removal Date Pickers */}
+            <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-bold text-[#1a4d9e] mb-2">Delivery Date</label>
+                <div className="relative">
+                  <input
+                    type="date"
+                    value={deliveryDate}
+                    onChange={e => setDeliveryDate(e.target.value)}
+                    className="w-full rounded-lg border-2 border-blue-300 px-3 py-2 text-sm focus:border-[#FFD700] focus:ring-2 focus:ring-[#FFD700]/20"
+                  />
+                  <Calendar className="absolute right-3 top-3 w-4 h-4 text-[#FFD700] pointer-events-none" />
+                </div>
               </div>
-            </motion.div>
-
-            {/* Project Type Selector */}
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.7 }}
-              className="relative z-10 mb-6"
-            >
-              <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-xl border-2 border-blue-200 mb-3">
-                <span className="font-bold text-[#1a4d9e] text-sm">Type of Project</span>
+              <div>
+                <label className="block text-sm font-bold text-blue-900 mb-2">Removal Date</label>
+                <div className="relative">
+                  <input
+                    type="date"
+                    value={removalDate}
+                    onChange={e => setRemovalDate(e.target.value)}
+                    className="w-full rounded-lg border-2 border-blue-300 px-3 py-2 text-sm focus:border-[#FFD700] focus:ring-2 focus:ring-[#FFD700]/20"
+                  />
+                  <Calendar className="absolute right-3 top-3 w-4 h-4 text-[#FFD700] pointer-events-none" />
+                </div>
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                {projectTypes.map((type) => (
-                  <motion.button
-                    key={type.label}
-                    onClick={() => setProjectType(type.label)}
-                    whileHover={{ scale: 1.05 }}
-                    className={`py-3 px-2 rounded-lg font-semibold text-sm flex items-center justify-center gap-1 transition-all ${
-                      projectType === type.label
-                        ? "bg-[#1a4d9e] text-white"
-                        : "bg-slate-100 text-slate-700 hover:bg-slate-200"
-                    }`}
-                  >
-                    <span className="text-lg">{type.icon}</span>
-                    <span className="hidden sm:inline">{type.label}</span>
-                  </motion.button>
-                ))}
+            </div>
+            {/* Type and Size of Dumpster Dropdowns Side by Side */}
+            <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-bold text-[#1a4d9e] mb-2">Type of Dumpster</label>
+                <Select value={projectType} onValueChange={setProjectType}>
+                  <SelectTrigger className="border-blue-300 focus:border-[#FFD700] focus:ring-[#FFD700]/20">
+                    <SelectValue placeholder="Select type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {['Roll-off', 'Rubber-wheeled', 'Permanent'].map((type) => (
+                      <SelectItem key={type} value={type}>{type}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-            </motion.div>
+              <div>
+                <label className="block text-sm font-bold text-[#1a4d9e] mb-2">Size of Dumpster</label>
+                <Select value={dumpsterSize} onValueChange={setDumpsterSize}>
+                  <SelectTrigger className="border-blue-300 focus:border-[#FFD700] focus:ring-[#FFD700]/20">
+                    <SelectValue placeholder="Select size" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {dumpsterSizes.map((size) => (
+                      <SelectItem key={size} value={size}>{size}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
 
             {/* Action Buttons */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {/* Book Now Button */}
-              <motion.button
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.8 }}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
+              <button
                 onClick={handleBookNow}
-                className="bg-gradient-to-r from-[#ff9f1c] via-[#ff8c42] to-[#ff7a24] hover:from-[#e08a0a] hover:via-[#e67a2d] hover:to-[#e66a15] text-white font-bold py-3 rounded-xl transition-all shadow-lg text-lg"
+                className="bg-gradient-to-r from-blue-900 via-[#FFD700] to-blue-700 hover:from-blue-800 hover:via-[#FFD700] hover:to-blue-600 text-white font-bold py-3 rounded-xl transition-all shadow-lg text-lg"
               >
                 Book Now
-              </motion.button>
-
-              {/* Help Me Choose Button */}
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.8 }}
+              </button>
+              <button
+                onClick={scrollToCalculator}
+                className="w-full bg-white border-2 border-[#1a4d9e] text-[#1a4d9e] font-bold py-3 rounded-xl transition-all shadow-lg text-lg hover:bg-blue-50"
               >
-                <motion.button
-                  onClick={scrollToCalculator}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="w-full bg-white border-2 border-[#1a4d9e] text-[#1a4d9e] font-bold py-3 rounded-xl transition-all shadow-lg text-lg hover:bg-blue-50"
-                >
-                  Help Me Choose
-                </motion.button>
-              </motion.div>
+                Help Me Choose
+              </button>
             </div>
           </div>
-        </motion.div>
+        </div>
       </div>
     </section>
   );
