@@ -6,19 +6,21 @@
 
 :root {
   --brand-blue: #1a4d9e;
+  --navy: #142A52;
+  --gold: #C89B2B;
   --background: oklch(0.985 0.001 0);
   --foreground: oklch(0.11 0.02 250);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.11 0.02 250);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.11 0.02 250);
-  --primary: #1a4d9e;
+  --primary: #142A52;
   --primary-foreground: oklch(0.99 0 0);
-  --secondary: oklch(0.58 0.2 195);
+  --secondary: #C89B2B;
   --secondary-foreground: oklch(1 0 0);
   --muted: oklch(0.92 0.01 0);
   --muted-foreground: oklch(0.45 0.01 0);
-  --accent: #ff8c42;
+  --accent: #C89B2B;
   --accent-foreground: oklch(1 0 0);
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(0.577 0.245 27.325);

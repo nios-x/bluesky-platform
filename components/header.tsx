@@ -28,11 +28,9 @@ export function Header() {
 
   const navLinks = [
     { href: "/", label: "Home" },
-    { href: "/#dumpster-services", label: "Dumpster Services" },
-    { href: "/#calculator-section", label: "Dumpster Calculator" },
+    { href: "/#dumpster-services", label: "Dumpster Sizes & Calculator" },
+    { href: "/cities", label: "Cities We Service" },
     { href: "/#faq-section", label: "FAQ" },
-    { href: "/size-guide", label: "Size Guide" },
-    { href: "/partners", label: "Partners" },
     { href: "/about", label: "About" },
     { href: "/contact", label: "Contact" },
   ];
@@ -78,9 +76,9 @@ export function Header() {
               <Image
                 src="/images/bluesky_New_logo.jpg"
                   alt="Blue Sky Disposal"
-                  width={160}
-                  height={40}
-                  className="h-10 w-auto object-contain"
+                  width={200}
+                  height={50}
+                  className="h-14 w-auto object-contain"
                   priority
                 />
             </Link>

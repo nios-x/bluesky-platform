@@ -185,28 +185,43 @@ export default function CalculateSizeNew() {
   const isFormComplete = formData.dumpsterType && formData.material && formData.quantity && formData.timeline;
 
   return (
-    <section id="calculator-section" className="py-20 md:py-28 px-4 bg-gradient-to-b from-white via-[#0a1e63]/10 to-white relative overflow-hidden">
+    <section id="calculator-section" className="py-24 md:py-32 px-4 bg-gradient-to-b from-[#142A52]/5 via-white to-[#C89B2B]/5 relative overflow-hidden">
       {/* Background Decorations */}
-      <div className="absolute top-0 right-0 w-96 h-96 bg-[#0a1e63]/30 rounded-full blur-3xl -z-10" />
-      <div className="absolute bottom-0 left-0 w-96 h-96 bg-[#FFD700]/20 rounded-full blur-3xl -z-10" />
+      <div className="absolute top-40 right-0 w-96 h-96 bg-[#C89B2B]/10 rounded-full blur-3xl -z-10" />
+      <div className="absolute bottom-0 left-0 w-96 h-96 bg-[#142A52]/10 rounded-full blur-3xl -z-10" />
 
-      <div className="max-w-5xl mx-auto">
+      <div className="max-w-6xl mx-auto">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-center mb-16"
+          className="text-center mb-20"
         >
-          <div className="inline-flex items-center gap-2 bg-[#0a1e63]/10 px-4 py-2 rounded-full mb-4">
-            <Calculator className="w-4 h-4 text-[#0a1e63]" />
-            <span className="text-sm font-semibold text-[#0a1e63]">Smart Calculator</span>
-          </div>
-          <h2 className="text-3xl md:text-5xl font-bold text-[#0a1e63] mb-4">
-            Find Your Perfect Dumpster
+          <motion.div 
+            className="inline-flex items-center gap-3 bg-gradient-to-r from-[#C89B2B]/30 to-[#142A52]/30 px-6 py-3 rounded-full mb-8 border border-[#C89B2B]/40 backdrop-blur-sm"
+            whileHover={{ scale: 1.05 }}
+            transition={{ type: "spring", stiffness: 300 }}
+          >
+            <Lightbulb className="w-6 h-6 text-[#C89B2B]" />
+            <span className="text-sm font-bold text-[#142A52] uppercase tracking-wider">Get Your Perfect Match</span>
+          </motion.div>
+          
+          <h2 className="text-5xl md:text-7xl font-bold text-[#142A52] mb-6">
+            Smart <span className="text-[#C89B2B] relative inline-block">
+              Dumpster
+              <motion.div
+                className="absolute bottom-0 left-0 h-1 bg-gradient-to-r from-[#C89B2B] to-transparent rounded-full"
+                initial={{ width: 0 }}
+                whileInView={{ width: "100%" }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.3, duration: 0.8 }}
+              />
+            </span>
           </h2>
-          <p className="text-[#0a1e63] text-lg max-w-2xl mx-auto">
-            Answer a few quick questions and get a personalized recommendation tailored to your project.
+          
+          <p className="text-[#142A52]/70 text-lg md:text-xl max-w-3xl mx-auto leading-relaxed mt-6">
+            Answer 4 quick questions and get an instant recommendation with personalized pricing for your project
           </p>
         </motion.div>
 
@@ -215,56 +230,123 @@ export default function CalculateSizeNew() {
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="bg-white rounded-3xl shadow-2xl border border-[#0a1e63]/20 overflow-hidden"
+            className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start"
           >
-            {/* Progress Header */}
-            <div className="bg-gradient-to-r from-[#0a1e63] via-[#0a1e63] to-[#efc73f] p-6 md:p-8 text-white">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-2xl font-bold">Smart Assessment</h3>
-                <div className="text-right">
-                  <div className="text-3xl font-bold text-[#0a1e63] drop-shadow-sm bg-white/70 px-2 py-1 rounded-lg">{progressPercentage}%</div>
-                  <div className="text-sm text-white">Step {currentStep + 1} of {formSteps.length}</div>
-                </div>
-              </div>
-
-              {/* Progress Bar */}
-              <div className="relative h-3 bg-[#FFD700]/20 rounded-full overflow-hidden">
+            {/* Left Column - Progress Sidebar */}
+            <motion.div
+              className="lg:sticky lg:top-8 lg:col-span-1 h-fit"
+              initial={{ opacity: 0, x: -20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+            >
+              <div className="bg-gradient-to-br from-[#142A52] to-[#0a1838] rounded-2xl shadow-xl p-8 text-white space-y-8 border border-[#C89B2B]/20">
+                {/* Progress Circle */}
                 <motion.div
-                  initial={{ width: 0 }}
-                  animate={{ width: `${progressPercentage}%` }}
-                  transition={{ duration: 0.5, ease: "easeOut" }}
-                  className="h-full bg-gradient-to-r from-white to-[#FFD700] rounded-full"
-                />
-              </div>
+                  className="flex flex-col items-center justify-center py-6"
+                  animate={{ scale: progressPercentage === 100 ? [1, 1.05, 1] : 1 }}
+                  transition={{ repeat: progressPercentage === 100 ? Infinity : 0, duration: 0.6 }}
+                >
+                  <div className="relative w-32 h-32 flex items-center justify-center">
+                    <svg className="absolute inset-0 transform -rotate-90" viewBox="0 0 130 130" style={{ overflow: "visible" }}>
+                      <circle cx="65" cy="65" r="60" fill="none" stroke="white" strokeWidth="8" opacity="0.1" />
+                      <motion.circle
+                        cx="65"
+                        cy="65"
+                        r="60"
+                        fill="none"
+                        stroke="url(#progressGradient)"
+                        strokeWidth="8"
+                        strokeLinecap="round"
+                        initial={{ strokeDasharray: "377, 377" }}
+                        animate={{ strokeDasharray: `${(progressPercentage / 100) * 377}, 377` }}
+                        transition={{ duration: 0.8, ease: "easeOut" }}
+                      />
+                      <defs>
+                        <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                          <stop offset="0%" stopColor="#C89B2B" />
+                          <stop offset="100%" stopColor="#FFD700" />
+                        </linearGradient>
+                      </defs>
+                    </svg>
+                    <motion.div className="text-center z-10">
+                      <motion.div className="text-5xl font-bold text-[#C89B2B]" key={progressPercentage}>
+                        {progressPercentage}<span className="text-2xl">%</span>
+                      </motion.div>
+                      <div className="text-xs text-white/70 mt-1 uppercase font-bold tracking-widest">Complete</div>
+                    </motion.div>
+                  </div>
+                </motion.div>
 
-              {/* Step Indicator */}
-              <div className="mt-6 flex gap-2">
-                {formSteps.map((step, idx) => (
-                  <motion.div
-                    key={step.id}
-                    className={`flex-1 px-3 py-2 rounded-lg text-xs md:text-sm font-semibold transition-all ${
-                      idx <= currentStep
-                        ? "bg-white/30 text-white"
-                        : "bg-white/10 text-white/50"
-                    }`}
-                  >
-                    <div className="flex items-center gap-1">
-                      <span>
-                        {idx < currentStep ? (
-                          <Check className="w-4 h-4" />
-                        ) : (
-                          <span>{idx + 1}</span>
+                {/* Step List */}
+                <div className="space-y-3">
+                  {formSteps.map((step, idx) => (
+                    <motion.button
+                      key={step.id}
+                      onClick={() => idx < currentStep && setCurrentStep(idx)}
+                      className={`w-full text-left p-4 rounded-xl transition-all font-bold text-sm uppercase tracking-wider ${
+                        idx <= currentStep
+                          ? idx === currentStep
+                            ? "bg-[#C89B2B] text-white shadow-lg scale-105"
+                            : "bg-white/20 text-white hover:bg-white/30"
+                          : "bg-white/10 text-white/50 cursor-not-allowed"
+                      }`}
+                      disabled={idx > currentStep}
+                      whileHover={idx < currentStep ? { scale: 1.02 } : {}}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="flex items-center gap-3">
+                          <motion.div
+                            className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                              idx < currentStep
+                                ? "bg-green-400 text-[#142A52]"
+                                : "bg-white/30"
+                            }`}
+                          >
+                            {idx < currentStep ? <Check className="w-4 h-4" /> : idx + 1}
+                          </motion.div>
+                          {step.label}
+                        </span>
+                        {idx === currentStep && (
+                          <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 2 }}>
+                            <Zap className="w-4 h-4" />
+                          </motion.div>
                         )}
-                      </span>
-                      <span className="hidden sm:inline">{step.label}</span>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            </div>
+                      </div>
+                    </motion.button>
+                  ))}
+                </div>
 
-            {/* Form Content */}
-            <div className="p-8 md:p-12">
+                {/* Remaining Steps */}
+                <motion.div className="text-center py-4 border-t border-white/20">
+                  <div className="text-3xl font-bold text-[#C89B2B]">{formSteps.length - currentStep}</div>
+                  <div className="text-xs text-white/70 uppercase tracking-widest">Step{formSteps.length - currentStep !== 1 ? 's' : ''} Left</div>
+                </motion.div>
+              </div>
+            </motion.div>
+
+            {/* Right Column - Form Content */}
+            <motion.div
+              className="lg:col-span-2"
+              initial={{ opacity: 0, x: 20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+            >
+              <div className="bg-white rounded-3xl shadow-2xl border-2 border-[#C89B2B]/20 overflow-hidden backdrop-blur-sm">
+                {/* Form Header Bar */}
+                <div className="bg-gradient-to-r from-[#142A52] to-[#1a3a6f] px-8 py-6 flex items-center justify-between">
+                  <div>
+                    <h3 className="text-sm uppercase font-bold text-[#C89B2B] tracking-wider">Step {currentStep + 1} of {formSteps.length}</h3>
+                    <p className="text-white text-lg font-bold mt-1">{currentFormStep.question}</p>
+                  </div>
+                  <motion.div className="hidden md:block">
+                    <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 2 }}>
+                      <Zap className="w-6 h-6 text-[#C89B2B]" />
+                    </motion.div>
+                  </motion.div>
+                </div>
+
+                {/* Form Content */}
+                <div className="p-8 md:p-10">
               <AnimatePresence mode="wait">
                 <motion.div
                   key={currentFormStep.id}
@@ -272,120 +354,105 @@ export default function CalculateSizeNew() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20 }}
                   transition={{ duration: 0.3 }}
+                  className="space-y-8"
                 >
                   {/* Dumpster Type Selection */}
                   {currentStep === 0 && (
-                    <div className="space-y-6">
-                      <div>
-                        <h3 className="text-2xl font-bold text-gray-900 mb-2">
-                          {currentFormStep.question}
-                        </h3>
-                        <p className="text-gray-600">
-                          {currentFormStep.description}
-                        </p>
-                      </div>
+                    <div className="space-y-7">
+                      <p className="text-gray-600 text-lg leading-relaxed">
+                        {currentFormStep.description}
+                      </p>
 
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        {dumpsterTypes.map((type, idx) => (
-                          <motion.button
-                            key={type.value}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: idx * 0.1 }}
-                            onClick={() => handleDumpsterTypeSelect(type.value)}
-                            whileHover={{ scale: 1.05, y: -5 }}
-                            whileTap={{ scale: 0.98 }}
-                            className={`p-6 rounded-2xl border-2 transition-all text-left relative overflow-hidden group ${
-                              formData.dumpsterType === type.value
-                                ? "border-blue-600 bg-blue-50 shadow-lg"
-                                : "border-gray-200 bg-white hover:border-blue-300"
-                            }`}
+                      <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="space-y-4"
+                      >
+                        <label className="block text-sm font-bold text-gray-900 mb-4 uppercase tracking-wider">Select Dumpster Type</label>
+                        <div className="relative">
+                          <select
+                            value={formData.dumpsterType}
+                            onChange={(e) => handleDumpsterTypeSelect(e.target.value)}
+                            className="w-full px-5 py-5 border-2 border-gray-300 rounded-xl focus:border-[#C89B2B] focus:ring-2 focus:ring-[#C89B2B]/30 outline-none bg-white text-gray-900 font-bold text-base md:text-lg appearance-none cursor-pointer transition-all hover:border-gray-400 shadow-sm"
                           >
-                            <div className="absolute top-0 right-0 w-24 h-24 bg-blue-100/50 rounded-full -mr-12 -mt-12 group-hover:scale-150 transition-transform duration-300" />
-                            <div className="relative z-10">
-                              <div className="text-4xl mb-3">{type.icon}</div>
-                              <h4 className="font-bold text-gray-900 text-lg">{type.label}</h4>
-                              <p className="text-sm text-gray-600 mt-2">
-                                {type.description}
-                              </p>
-                              {formData.dumpsterType === type.value && (
-                                <motion.div 
-                                  initial={{ scale: 0 }}
-                                  animate={{ scale: 1 }}
-                                  className="mt-3 flex items-center gap-2 text-blue-600 text-sm font-semibold"
-                                >
-                                  <Check className="w-4 h-4" />
-                                  Selected
-                                </motion.div>
-                              )}
-                            </div>
-                          </motion.button>
-                        ))}
-                      </div>
+                            <option value="">🔽 Choose a dumpster type...</option>
+                            {dumpsterTypes.map((type) => (
+                              <option key={type.value} value={type.value}>
+                                {type.icon} {type.label} - {type.description}
+                              </option>
+                            ))}
+                          </select>
+                          <ChevronRight className="absolute right-4 top-1/2 transform -translate-y-1/2 pointer-events-none text-[#C89B2B] w-6 h-6" />
+                        </div>
+
+                        {formData.dumpsterType && (
+                          <motion.div
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="p-4 bg-green-50 border-2 border-green-300 rounded-xl flex items-center gap-3 text-green-700 font-bold"
+                          >
+                            <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ repeat: Infinity, duration: 0.6 }}>
+                              <Check className="w-6 h-6" />
+                            </motion.div>
+                            <span>{dumpsterTypes.find(t => t.value === formData.dumpsterType)?.label} selected</span>
+                          </motion.div>
+                        )}
+                      </motion.div>
                     </div>
                   )}
 
                   {/* Material Selection */}
                   {currentStep === 1 && (
-                    <div className="space-y-6">
-                      <div>
-                        <h3 className="text-2xl font-bold text-gray-900 mb-2">
-                          {currentFormStep.question}
-                        </h3>
-                        <p className="text-gray-600">
-                          {currentFormStep.description}
-                        </p>
-                      </div>
+                    <div className="space-y-7">
+                      <p className="text-gray-600 text-lg leading-relaxed">
+                        {currentFormStep.description}
+                      </p>
 
                       {/* Weight indicator hint */}
                       <motion.div
                         initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="p-3 bg-cyan-50 border border-cyan-200 rounded-lg flex gap-2 text-xs text-cyan-700"
+                        className="p-5 bg-gradient-to-r from-blue-50 to-blue-100 border-2 border-blue-300 rounded-xl flex gap-3 text-sm text-blue-800"
                       >
-                        <Info className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                        <span>Heavy materials need larger dumpsters. We'll recommend the perfect size!</span>
+                        <Lightbulb className="w-5 h-5 flex-shrink-0 mt-0.5 text-blue-600" />
+                        <span>💡 Heavy materials need larger dumpsters. We'll automatically recommend the perfect fit!</span>
                       </motion.div>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {materials.map((material, idx) => (
-                          <motion.button
-                            key={material.value}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: idx * 0.08 }}
-                            onClick={() => handleMaterialSelect(material.value)}
-                            whileHover={{ scale: 1.05, y: -3 }}
-                            whileTap={{ scale: 0.98 }}
-                            className={`p-5 rounded-2xl border-2 transition-all text-left relative group ${
-                              formData.material === material.value
-                                ? "border-blue-600 bg-blue-50 shadow-md"
-                                : "border-gray-200 bg-white hover:border-blue-300"
-                            }`}
+                      <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="space-y-4"
+                      >
+                        <label className="block text-sm font-bold text-gray-900 mb-4 uppercase tracking-wider">Select Material Type</label>
+                        <div className="relative">
+                          <select
+                            value={formData.material}
+                            onChange={(e) => handleMaterialSelect(e.target.value)}
+                            className="w-full px-5 py-5 border-2 border-gray-300 rounded-xl focus:border-[#C89B2B] focus:ring-2 focus:ring-[#C89B2B]/30 outline-none bg-white text-gray-900 font-bold text-base md:text-lg appearance-none cursor-pointer transition-all hover:border-gray-400 shadow-sm"
                           >
-                            <div className="absolute top-0 right-0 w-16 h-16 bg-blue-100/40 rounded-full -mr-8 -mt-8 group-hover:scale-125 transition-transform" />
-                            <div className="relative z-10">
-                              <div className="text-3xl mb-2">{material.icon}</div>
-                              <h4 className="font-bold text-gray-900 text-sm">{material.label}</h4>
-                              <div className="flex items-center gap-2 mt-2">
-                                <span className="text-xs px-2 py-1 bg-amber-100 text-amber-700 rounded font-semibold">
-                                  {(material.baseWeight / 2000).toFixed(1)} tons
-                                </span>
-                              </div>
-                              {formData.material === material.value && (
-                                <motion.div 
-                                  initial={{ scale: 0 }}
-                                  animate={{ scale: 1 }}
-                                  className="mt-2 flex items-center gap-2 text-blue-600 text-xs font-bold"
-                                >
-                                  <Check className="w-3 h-3" />
-                                  Selected
-                                </motion.div>
-                              )}
-                            </div>
-                          </motion.button>
-                        ))}
-                      </div>
+                            <option value="">🔽 Choose material type...</option>
+                            {materials.map((material) => (
+                              <option key={material.value} value={material.value}>
+                                {material.icon} {material.label}
+                              </option>
+                            ))}
+                          </select>
+                          <ChevronRight className="absolute right-4 top-1/2 transform -translate-y-1/2 pointer-events-none text-[#C89B2B] w-6 h-6" />
+                        </div>
+
+                        {formData.material && (
+                          <motion.div
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="p-4 bg-green-50 border-2 border-green-300 rounded-xl flex items-center gap-3 text-green-700 font-bold"
+                          >
+                            <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ repeat: Infinity, duration: 0.6 }}>
+                              <Check className="w-6 h-6" />
+                            </motion.div>
+                            <span>{materials.find(m => m.value === formData.material)?.label} selected</span>
+                          </motion.div>
+                        )}
+                      </motion.div>
                     </div>
                   )}
 
@@ -535,41 +602,58 @@ export default function CalculateSizeNew() {
               </AnimatePresence>
 
               {/* Action Buttons */}
-              <div className="mt-12 flex gap-4 flex-col sm:flex-row">
+              <div className="mt-12 flex gap-4 flex-col sm:flex-row pt-8 border-t border-gray-200">
                 {currentStep > 0 && (
-                  <button
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
                     onClick={() => setCurrentStep(currentStep - 1)}
-                    className="flex-1 py-3 border-2 border-gray-300 text-gray-900 font-bold rounded-xl hover:bg-gray-50 transition-all"
+                    className="flex-1 py-4 border-2 border-[#142A52] text-[#142A52] font-bold rounded-xl hover:bg-[#142A52]/10 transition-all flex items-center justify-center gap-2 hover:shadow-lg"
                   >
-                    Back
-                  </button>
+                    ← Previous Step
+                  </motion.button>
                 )}
-                {currentStep < formSteps.length - 1 && currentStep > 0 && (
-                  <button
+                {currentStep < formSteps.length - 1 && (
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
                     onClick={() => setCurrentStep(currentStep + 1)}
                     disabled={
+                      (currentStep === 0 && !formData.dumpsterType) ||
                       (currentStep === 1 && !formData.material) ||
                       (currentStep === 2 && !formData.quantity)
                     }
-                    className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 text-white font-bold rounded-xl transition-all flex items-center justify-center gap-2"
+                    className="flex-1 py-4 bg-gradient-to-r from-[#142A52] to-[#1a3a6f] hover:from-[#0f1f3a] hover:to-[#142A52] disabled:from-gray-300 disabled:to-gray-400 text-white font-bold rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg hover:shadow-xl"
                   >
-                    Next
-                    <ArrowRight className="w-5 h-5" />
-                  </button>
+                    Next Step <ArrowRight className="w-5 h-5" />
+                  </motion.button>
                 )}
                 {currentStep === formSteps.length - 1 && (
-                  <button
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
                     onClick={handleCalculate}
                     disabled={!isFormComplete}
-                    className="flex-1 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 disabled:from-gray-300 disabled:to-gray-400 text-white font-bold rounded-xl transition-all flex items-center justify-center gap-2 text-lg"
+                    className="flex-1 py-5 bg-gradient-to-r from-[#142A52] via-[#C89B2B] to-[#142A52] hover:from-[#0f1f3a] hover:via-[#d4a835] hover:to-[#0f1f3a] disabled:from-gray-300 disabled:via-gray-300 disabled:to-gray-400 text-white font-bold rounded-xl transition-all flex items-center justify-center gap-2 text-lg shadow-xl hover:shadow-2xl disabled:shadow-none"
                   >
+                    <motion.span
+                      animate={isFormComplete ? { rotate: 360 } : {}}
+                      transition={{ repeat: isFormComplete ? Infinity : 0, duration: 2 }}
+                    >
+                      <Zap className="w-5 h-5" />
+                    </motion.span>
                     Get Recommendation
-                    <Lightbulb className="w-5 h-5" />
-                  </button>
+                    <motion.span
+                      animate={isFormComplete ? { x: [0, 4, 0] } : {}}
+                      transition={{ repeat: isFormComplete ? Infinity : 0, duration: 0.8 }}
+                    >
+                      <ArrowRight className="w-5 h-5" />
+                    </motion.span>
+                  </motion.button>
                 )}
               </div>
+            </motion.div>
             </div>
-          </motion.div>
         ) : (
           /* Results Screen */
           <motion.div

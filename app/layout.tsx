@@ -4,13 +4,14 @@ import { Geist, Geist_Mono } from 'next/font/google'
 import React from "react"
 import './globals.css'
 import { AuthProvider } from "@/contexts/auth-context"
+import { BookingProvider } from "@/contexts/booking-context"
 
 const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: 'Best Dumpster Rental Service in Michigan: Blue Sky Disposal',
-  description: 'Professional waste management and dumpster rental services in Michigan. Woman-owned company with 15+ years of experience serving residential and commercial needs.',
+  title: 'Book a Dumpster in Seconds — Anywhere in Michigan | Blue Sky Disposal',
+  description: 'Professional dumpster rental services in Michigan. Woman-owned company with 15+ years of experience. Fast booking, competitive pricing, same-day service available.',
   generator: 'v0.app',
     icons: {
     icon: [
@@ -34,7 +35,9 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={`font-sans antialiased`} suppressHydrationWarning>
         <AuthProvider>
-          {children}
+          <BookingProvider>
+            {children}
+          </BookingProvider>
         </AuthProvider>
         <Analytics />
       </body>
