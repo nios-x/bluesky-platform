@@ -38,16 +38,27 @@ export function Header() {
   ];
 
   // For anchor links, check if pathname is home and hash matches (client-side)
-  const [activeHash, setActiveHash] = useState("");
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const onHashChange = () => setActiveHash(window.location.hash);
-      window.addEventListener('hashchange', onHashChange);
-      setActiveHash(window.location.hash);
-      return () => window.removeEventListener('hashchange', onHashChange);
+  const [activeHash, setActiveHash] = useState<string>(() => {
+    // Safe check for Next.js (prevents SSR crash)
+    if (typeof window !== "undefined") {
+      return window.location.hash;
     }
+    return "";
+  });
+
+  useEffect(() => {
+    // Handler must be stable
+    const onHashChange = () => {
+      setActiveHash(window.location.hash);
+    };
+
+    window.addEventListener("hashchange", onHashChange);
+
+    return () => {
+      window.removeEventListener("hashchange", onHashChange);
+    };
   }, []);
-  const isActive = (path: string) => {
+    const isActive = (path: string) => {
     if (path === "/") return pathname === "/" && (!activeHash || activeHash === "#");
     if (path.startsWith("/#")) return pathname === "/" && activeHash === path.replace("/", "");
     return pathname === path;

@@ -32,7 +32,13 @@ create type if not exists admin_role_enum as enum (
   'OPS',
   'SUPPORT'
 );
-
+-- Order Status (used by admin dropdown)
+-- REQUESTED   → order created
+-- CONFIRMED   → approved by admin
+-- IN_TRANSIT  → dumpster on the way
+-- DELIVERED   → dropped at site
+-- COMPLETED   → pickup done
+-- CANCELLED   → cancelledr
 create type if not exists order_status_enum as enum (
   'REQUESTED',
   'PAID',
@@ -53,6 +59,11 @@ create type if not exists payment_gateway_enum as enum (
   'AUTHORIZE'
 );
 
+-- Payment Status (automatic / backend-driven)
+-- PENDING   → payment link sent
+-- PAID      → success
+-- FAILED    → failed attempt
+-- REFUNDED  → refunded
 create type if not exists payment_status_enum as enum (
   'PAID',
   'FAILED'
