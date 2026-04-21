@@ -3,27 +3,78 @@
 import { Button } from "@/components/ui/button";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Calendar } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useBooking } from "@/contexts/booking-context";
 import { PROJECT_TYPES, MATERIAL_TYPES } from "@/lib/constants/booking";
 
+const dumpsterTypes = [
+  {
+    id: "roll-off",
+    name: "Roll-off Dumpsters",
+    description: "Perfect for large construction projects, home renovations",
+    image: "/images/roll-off-dumpster.png",
+    sizes: [
+      { value: 10, label: "10 Yard", price: 435 },
+      { value: 20, label: "20 Yard", price: 455 },
+      { value: 30, label: "30 Yard", price: 475 },
+      { value: 40, label: "40 Yard", price: 555 }
+    ]
+  },
+  {
+    id: "rubber-wheel",
+    name: "Rubber-wheeled Dumpsters",
+    description: "Ideal for residential driveways and surface protection",
+    image: "/images/rubber-wheel-dumpster.png",
+    sizes: [
+      { value: 10, label: "10 Yard", price: 445 },
+      { value: 20, label: "20 Yard", price: 525 },
+      { value: 30, label: "30 Yard", price: 655 }
+    ]
+  },
+  {
+    id: "front-load",
+    name: "Front Load Dumpsters",
+    description: "Commercial-grade for businesses and multi-unit properties",
+    image: "/images/permanent-dumpster.png",
+    sizes: [
+      { value: 2, label: "2 Yard", price: 250 },
+      { value: 4, label: "4 Yard", price: 350 },
+      { value: 6, label: "6 Yard", price: 450 },
+      { value: 8, label: "8 Yard", price: 550 }
+    ]
+  }
+];
+
 export function Hero() {
   const [zipCode, setZipCode] = useState("");
-  const [projectType, setProjectType] = useState("");
-  const [materialType, setMaterialType] = useState("");
+  const [dumpsterType, setDumpsterType] = useState("");
+  const [dumpsterSize, setDumpsterSize] = useState<number | null>(null);
   const [deliveryDate, setDeliveryDate] = useState("");
-  const [rentalPeriod, setRentalPeriod] = useState("7");
+  const [removalDate, setRemovalDate] = useState("");
   const [searchError, setSearchError] = useState("");
-  const [showMaterialOptions, setShowMaterialOptions] = useState(false);
   const router = useRouter();
   const { updateBooking } = useBooking();
 
-  const rentalOptions = [
-    { value: "7", label: "7 Days" },
-    { value: "14", label: "14 Days" },
-    { value: "30", label: "30 Days" },
-  ];
+  // Calculate removal date when delivery date changes
+  useEffect(() => {
+    if (deliveryDate) {
+      const delivery = new Date(deliveryDate);
+      const removal = new Date(delivery);
+      removal.setDate(removal.getDate() + 7);
+      
+      // Skip weekends for removal date
+      if (removal.getDay() === 0) { // Sunday
+        removal.setDate(removal.getDate() + 1);
+      } else if (removal.getDay() === 6) { // Saturday
+        removal.setDate(removal.getDate() + 2);
+      }
+      
+      setRemovalDate(removal.toISOString().split("T")[0]);
+    } else {
+      setRemovalDate("");
+    }
+  }, [deliveryDate]);
 
   const getAvailableDates = () => {
     const dates = [];
@@ -38,6 +89,9 @@ export function Hero() {
     return dates;
   };
 
+  const selectedDumpsterType = dumpsterTypes.find(type => type.id === dumpsterType);
+  const selectedSize = selectedDumpsterType?.sizes.find(size => size.value === dumpsterSize);
+
   const handleStartBooking = () => {
     setSearchError("");
 
@@ -46,13 +100,13 @@ export function Hero() {
       return;
     }
 
-    if (!projectType) {
-      setSearchError("Please select a project type");
+    if (!dumpsterType) {
+      setSearchError("Please select a dumpster type");
       return;
     }
 
-    if (!materialType) {
-      setSearchError("Please select a material type");
+    if (!dumpsterSize) {
+      setSearchError("Please select a dumpster size");
       return;
     }
 
@@ -64,10 +118,12 @@ export function Hero() {
     // Update booking context
     updateBooking({
       zipCode,
-      projectType,
-      materialType,
+      dumpsterType,
+      dumpsterSize,
       deliveryDate,
-      rentalPeriod: parseInt(rentalPeriod),
+      rentalPeriod: 7, // Default 7 days
+      basePrice: selectedSize?.price || 0,
+      totalPrice: selectedSize?.price || 0,
     });
 
     // Navigate to booking page
@@ -117,92 +173,104 @@ export function Hero() {
           <div className="bg-white rounded-2xl shadow-2xl p-6 sm:p-10 text-left border-4 border-[#C89B2B]">
             <h2 className="text-2xl font-bold text-[#142A52] mb-6">Get a Quote in 60 Seconds</h2>
 
-            {/* Zip Code & Project Type */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-              <div>
-                <label className="block text-sm font-bold text-[#142A52] mb-2">ZIP Code or Address</label>
-                <input
-                  type="text"
-                  value={zipCode}
-                  onChange={(e) => setZipCode(e.target.value)}
-                  placeholder="e.g., 48001 or full address"
-                  className="w-full px-4 py-3 border-2 border-[#142A52]/30 rounded-lg focus:border-[#C89B2B] focus:ring-2 focus:ring-[#C89B2B]/20 outline-none transition"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-bold text-[#142A52] mb-2">Project Type</label>
-                <Select value={projectType} onValueChange={setProjectType}>
-                  <SelectTrigger className="w-full border-2 border-[#142A52]/30 focus:border-[#C89B2B]">
-                    <SelectValue placeholder="Select project type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {PROJECT_TYPES.map((type) => (
-                      <SelectItem key={type} value={type}>
-                        {type}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            {/* Material Type & Delivery Date */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-              <div>
-                <label className="block text-sm font-bold text-[#142A52] mb-2">Material Type</label>
-                <Select value={materialType} onValueChange={setMaterialType}>
-                  <SelectTrigger className="w-full border-2 border-[#142A52]/30 focus:border-[#C89B2B]">
-                    <SelectValue placeholder="Select material type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {MATERIAL_TYPES.map((type) => (
-                      <SelectItem key={type} value={type}>
-                        {type}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <label className="block text-sm font-bold text-[#142A52] mb-2">Delivery Date</label>
-                <Select value={deliveryDate} onValueChange={setDeliveryDate}>
-                  <SelectTrigger className="w-full border-2 border-[#142A52]/30 focus:border-[#C89B2B]">
-                    <SelectValue placeholder="Select delivery date" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {getAvailableDates().map((date) => (
-                      <SelectItem key={date} value={date}>
-                        {new Date(date).toLocaleDateString("en-US", {
-                          weekday: "short",
-                          month: "short",
-                          day: "numeric",
-                        })}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            {/* Rental Period */}
+            {/* Zip Code */}
             <div className="mb-6">
-              <label className="block text-sm font-bold text-[#142A52] mb-3">How Long Do You Need It?</label>
-              <div className="grid grid-cols-3 gap-3">
-                {rentalOptions.map((option) => (
+              <label className="block text-sm font-bold text-[#142A52] mb-2">1. ZIP Code or Address</label>
+              <input
+                type="text"
+                value={zipCode}
+                onChange={(e) => setZipCode(e.target.value)}
+                placeholder="e.g., 48001 or full address"
+                className="w-full px-4 py-3 border-2 border-[#142A52]/30 rounded-lg focus:border-[#C89B2B] focus:ring-2 focus:ring-[#C89B2B]/20 outline-none transition"
+              />
+            </div>
+
+            {/* Dumpster Type Selection */}
+            <div className="mb-6">
+              <label className="block text-sm font-bold text-[#142A52] mb-3">2. Type of Dumpster</label>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {dumpsterTypes.map((type) => (
                   <button
-                    key={option.value}
-                    onClick={() => setRentalPeriod(option.value)}
-                    className={`py-3 rounded-lg font-bold transition ${
-                      rentalPeriod === option.value
-                        ? "bg-[#C89B2B] text-white"
-                        : "bg-[#142A52]/10 text-[#142A52] border-2 border-[#142A52]/30 hover:border-[#C89B2B]"
+                    key={type.id}
+                    onClick={() => {
+                      setDumpsterType(type.id);
+                      setDumpsterSize(null); // Reset size when type changes
+                    }}
+                    className={`p-4 rounded-lg border-2 transition-all text-left ${
+                      dumpsterType === type.id
+                        ? "border-[#C89B2B] bg-[#C89B2B]/10"
+                        : "border-[#142A52]/30 hover:border-[#C89B2B]/50"
                     }`}
                   >
-                    {option.label}
+                    <img
+                      src={type.image}
+                      alt={type.name}
+                      className="w-full h-20 object-cover rounded mb-2"
+                    />
+                    <h3 className="font-bold text-[#142A52] text-sm">{type.name}</h3>
+                    <p className="text-xs text-[#142A52]/70">{type.description}</p>
                   </button>
                 ))}
               </div>
             </div>
+
+            {/* Dumpster Size Selection */}
+            {dumpsterType && (
+              <div className="mb-6">
+                <label className="block text-sm font-bold text-[#142A52] mb-3">3. Size of Dumpster</label>
+                <Select value={dumpsterSize?.toString()} onValueChange={(value) => setDumpsterSize(parseInt(value))}>
+                  <SelectTrigger className="w-full border-2 border-[#142A52]/30 focus:border-[#C89B2B]">
+                    <SelectValue placeholder="Select dumpster size" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {selectedDumpsterType?.sizes.map((size) => (
+                      <SelectItem key={size.value} value={size.value.toString()}>
+                        {size.label} - Starting at ${size.price}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {/* Delivery Date */}
+            <div className="mb-6">
+              <label className="block text-sm font-bold text-[#142A52] mb-2">4. Delivery Date</label>
+              <Select value={deliveryDate} onValueChange={setDeliveryDate}>
+                <SelectTrigger className="w-full border-2 border-[#142A52]/30 focus:border-[#C89B2B]">
+                  <SelectValue placeholder="Select delivery date" />
+                </SelectTrigger>
+                <SelectContent>
+                  {getAvailableDates().map((date) => (
+                    <SelectItem key={date} value={date}>
+                      {new Date(date).toLocaleDateString("en-US", {
+                        weekday: "short",
+                        month: "short",
+                        day: "numeric",
+                      })}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Removal Date - Auto calculated */}
+            {removalDate && (
+              <div className="mb-6">
+                <label className="block text-sm font-bold text-[#142A52] mb-2">5. Removal Date (7 days free, $25/day after)</label>
+                <div className="w-full px-4 py-3 border-2 border-[#142A52]/30 rounded-lg bg-gray-50 text-[#142A52]/70">
+                  {new Date(removalDate).toLocaleDateString("en-US", {
+                    weekday: "long",
+                    month: "long",
+                    day: "numeric",
+                    year: "numeric"
+                  })}
+                </div>
+                <p className="text-xs text-[#142A52]/60 mt-1">
+                  7 days free rental included. Additional days: $25 per day.
+                </p>
+              </div>
+            )}
 
             {/* Error Message */}
             {searchError && (

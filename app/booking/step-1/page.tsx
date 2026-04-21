@@ -1,390 +1,338 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { useBooking } from "@/contexts/booking-context";
-import { DUMPSTER_TYPES, DUMPSTER_SIZES, PRICING, HEAVY_MATERIALS, HEAVY_MATERIAL_SURCHARGE } from "@/lib/constants/booking";
-import { ChevronRight, CheckCircle2, AlertCircle, Zap, ArrowLeft } from "lucide-react";
-import { motion } from "framer-motion";
+import { ACCOUNT_DISCOUNT } from "@/lib/constants/booking";
+import { ChevronLeft, CheckCircle2, Mail, Phone } from "lucide-react";
 
 export default function BookingStep1() {
   const router = useRouter();
   const { booking, updateBooking } = useBooking();
-  const [selectedDumpsterType, setSelectedDumpsterType] = useState(booking.dumpsterType || DUMPSTER_TYPES.ROLL_OFF);
-  const [selectedSize, setSelectedSize] = useState(booking.dumpsterSize || 20);
+  const [formData, setFormData] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+    company: "",
+    placementInstructions: "",
+    agreeToTerms: false,
+  });
+  const [accountCreation, setAccountCreation] = useState(false);
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const sizes = DUMPSTER_SIZES[selectedDumpsterType as keyof typeof DUMPSTER_SIZES];
-  const basePrice = PRICING[selectedDumpsterType as keyof typeof PRICING]?.[selectedSize as keyof typeof PRICING[string]] || 435;
-
-  // Check if heavy material restrictions apply
-  const isHeavyMaterial = booking.materialType && HEAVY_MATERIALS.includes(booking.materialType);
-  const isHeavyMaterialWithRubberWheel = isHeavyMaterial && selectedDumpsterType === DUMPSTER_TYPES.RUBBER_WHEEL;
-
-  // Heavy materials only allow 10 yd roll-off
-  const allowedSizes = isHeavyMaterial && selectedDumpsterType === DUMPSTER_TYPES.ROLL_OFF 
-    ? sizes.filter((s) => s.size === 10)
-    : sizes;
-
-  const handleDumpsterTypeChange = (type: string) => {
-    setSelectedDumpsterType(type);
+  const calculateFinalPrice = () => {
+    let finalPrice = booking.totalPrice || 0;
     
-    // If heavy material and rubber wheel selected, show warning
-    if (isHeavyMaterial && type === DUMPSTER_TYPES.RUBBER_WHEEL) {
-      setError("⚠️ Rubber wheel dumpsters cannot be used for concrete, brick, dirt, or rock. Please select Roll-Off.");
-      return;
+    // Add rental period cost (7 days is base, 14 days might have different pricing)
+    if (booking.rentalPeriod && booking.rentalPeriod > 14) {
+      const extraDays = booking.rentalPeriod - 14;
+      finalPrice += extraDays * 25; // $25 per extra day
     }
+
+    // Apply account discount if creating account
+    if (accountCreation) {
+      finalPrice -= ACCOUNT_DISCOUNT;
+    }
+
+    return Math.max(finalPrice, 0);
+  };
+
+  const finalPrice = calculateFinalPrice();
+
+  const handleInputChange = (field: string, value: string | boolean) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
     setError("");
+  };
 
-    // Reset size to first available
-    if (allowedSizes.length > 0) {
-      setSelectedSize(allowedSizes[0].size);
+  const validateForm = () => {
+    if (!formData.firstName.trim()) {
+      setError("First name is required");
+      return false;
+    }
+    if (!formData.lastName.trim()) {
+      setError("Last name is required");
+      return false;
+    }
+    if (!formData.email.includes("@")) {
+      setError("Valid email is required");
+      return false;
+    }
+    if (!formData.phone.replace(/\D/g, "").match(/^\d{10}$/)) {
+      setError("Valid 10-digit phone number is required");
+      return false;
+    }
+    if (!formData.agreeToTerms) {
+      setError("You must agree to Terms & Conditions");
+      return false;
+    }
+    return true;
+  };
+
+  const handleSubmit = async () => {
+    if (!validateForm()) return;
+
+    setLoading(true);
+    try {
+      // Update booking with contact info
+      updateBooking({
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        phone: formData.phone,
+        company: formData.company,
+        placementInstructions: formData.placementInstructions,
+        accountDiscount: accountCreation ? ACCOUNT_DISCOUNT : 0,
+      });
+
+      // Navigate to payment step
+      router.push("/booking/step-2");
+    } catch (err: any) {
+      setError(err.message || "An error occurred. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleSizeChange = (size: number) => {
-    setSelectedSize(size);
-    setError("");
+  const handleGooglePayError = (error: any) => {
+    console.error("Google Pay error:", error);
+    setError("Google Pay payment failed. Please try again or use a different payment method.");
   };
 
-  const calculateSurcharges = () => {
-    let surcharge = 0;
-    if (isHeavyMaterial && selectedDumpsterType === DUMPSTER_TYPES.ROLL_OFF) {
-      surcharge += HEAVY_MATERIAL_SURCHARGE;
-    }
-    return surcharge;
-  };
-
-  const surcharges = calculateSurcharges();
-  const totalPrice = basePrice + surcharges;
-
-  const handleContinue = () => {
-    if (isHeavyMaterialWithRubberWheel) {
-      setError("Cannot use rubber wheel dumpster for this material type.");
-      return;
-    }
-
-    updateBooking({
-      dumpsterType: selectedDumpsterType,
-      dumpsterSize: selectedSize,
-      basePrice,
-      surcharges,
-      totalPrice,
-    });
-
-    router.push("/booking/step-2");
-  };
+  useEffect(() => {
+    // Google Pay is now handled by the GPayButton component
+  }, []);
 
   return (
-    <main className="bg-gradient-to-b from-white via-[#142A52]/5 to-white min-h-screen flex flex-col">
+    <main className="bg-white min-h-screen flex flex-col">
       <Header />
 
-      <div className="flex-1 py-16 px-4">
-        <div className="max-w-7xl mx-auto">
-          {/* Header Section */}
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-16 text-center"
-          >
-            <h1 className="text-5xl md:text-6xl font-bold text-[#142A52] mb-4">
-              What's Your <span className="text-[#C89B2B]">Project?</span>
-            </h1>
-            <p className="text-xl text-[#142A52]/70 max-w-2xl mx-auto">
-              Choose your dumpster type and size based on your project needs. We'll calculate the perfect pricing for you.
-            </p>
-          </motion.div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start">
-            {/* Left Sidebar - Summary */}
-            <motion.div
-              className="lg:sticky lg:top-8 lg:col-span-1 h-fit"
-              initial={{ opacity: 0, x: -20 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-            >
-              <div className="bg-gradient-to-br from-[#142A52] to-[#0a1838] rounded-2xl shadow-xl p-6 text-white space-y-6 border border-[#C89B2B]/20">
-                {/* Step Counter */}
-                <div className="text-center py-4 border-b border-white/20">
-                  <div className="text-sm uppercase font-bold text-[#C89B2B] tracking-wider mb-1">Progress</div>
-                  <div className="text-4xl font-bold">Step 1 of 2</div>
-                </div>
-
-                {/* Summary */}
-                <div className="space-y-4">
-                  <div className="bg-white/10 rounded-lg p-4">
-                    <p className="text-xs text-white/70 uppercase tracking-wider mb-1">ZIP Code</p>
-                    <p className="font-bold text-lg">{booking.zipCode || "—"}</p>
+      <div className="flex-1 py-12 px-4">
+        <div className="max-w-4xl mx-auto">
+          {/* Progress */}
+          <div className="mb-12">
+            <div className="flex items-center justify-between">
+              {[1, 2].map((step, idx) => (
+                <div key={step} className="flex items-center">
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${
+                    step <= 1 ? "bg-[#142A52] text-white" : "bg-[#142A52]/20 text-[#142A52]"
+                  }`}>
+                    {step < 2 ? <CheckCircle2 size={20} /> : step}
                   </div>
-                  <div className="bg-white/10 rounded-lg p-4">
-                    <p className="text-xs text-white/70 uppercase tracking-wider mb-1">Project</p>
-                    <p className="font-bold text-lg">{booking.projectType || "—"}</p>
-                  </div>
-                  <div className="bg-white/10 rounded-lg p-4">
-                    <p className="text-xs text-white/70 uppercase tracking-wider mb-1">Material</p>
-                    <p className="font-bold text-lg">{booking.materialType || "—"}</p>
-                  </div>
-                  <div className="bg-white/10 rounded-lg p-4">
-                    <p className="text-xs text-white/70 uppercase tracking-wider mb-1">Delivery</p>
-                    <p className="font-bold text-lg">
-                      {booking.deliveryDate 
-                        ? new Date(booking.deliveryDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })
-                        : "—"}
-                    </p>
-                  </div>
+                  {idx < 2 && <div className={`flex-1 h-1 mx-2 ${step < 2 ? "bg-[#142A52]" : "bg-[#142A52]/20"}`}></div>}
                 </div>
-              </div>
-            </motion.div>
+              ))}
+            </div>
+            <div className="flex justify-between mt-2 text-sm">
+              <span className="font-bold text-[#142A52]">Step 1: Contact Info</span>
+              <span className="text-[#142A52]/60">Step 2: Payment and Confirmation</span>
+            </div>
+          </div>
 
-            {/* Right Content - Form */}
-            <motion.div
-              className="lg:col-span-3 space-y-10"
-              initial={{ opacity: 0, x: 20 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-            >
-              {/* Dumpster Type Section */}
-              <div className="space-y-6">
-                <div>
-                  <h2 className="text-3xl font-bold text-[#142A52] mb-2">Choose Your Dumpster Type</h2>
-                  <p className="text-[#142A52]/70">Select the type that works best for your project</p>
-                </div>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Main Form */}
+            <div className="lg:col-span-2">
+              {/* Contact Information */}
+              <div className="mb-8">
+                <h2 className="text-2xl font-bold text-[#142A52] mb-6">Your Information</h2>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {/* Roll-Off */}
-                  <motion.button
-                    whileHover={{ scale: 1.02, y: -4 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => handleDumpsterTypeChange(DUMPSTER_TYPES.ROLL_OFF)}
-                    className={`relative group p-8 rounded-2xl border-3 transition-all ${
-                      selectedDumpsterType === DUMPSTER_TYPES.ROLL_OFF
-                        ? "border-[#C89B2B] bg-gradient-to-br from-[#C89B2B]/20 to-[#142A52]/10 shadow-xl"
-                        : "border-[#142A52]/20 hover:border-[#C89B2B] bg-white hover:shadow-lg"
-                    }`}
-                  >
-                    <div className="text-5xl mb-4">📦</div>
-                    <h3 className="font-bold text-[#142A52] text-xl mb-2">Roll-Off Dumpster</h3>
-                    <p className="text-sm text-[#142A52]/70 mb-4 leading-relaxed">Perfect for construction, renovations, and large cleanouts</p>
-                    <div className="space-y-1 text-xs text-[#142A52]/60">
-                      <p>✓ 10 - 40 yard options</p>
-                      <p>✓ Heavy materials allowed</p>
-                    </div>
-                    {selectedDumpsterType === DUMPSTER_TYPES.ROLL_OFF && (
-                      <motion.div className="absolute top-4 right-4 bg-[#C89B2B] rounded-full p-2">
-                        <CheckCircle2 className="w-5 h-5 text-white" />
-                      </motion.div>
-                    )}
-                  </motion.button>
-
-                  {/* Rubber Wheel */}
-                  <motion.button
-                    whileHover={!isHeavyMaterial ? { scale: 1.02, y: -4 } : {}}
-                    whileTap={!isHeavyMaterial ? { scale: 0.98 } : {}}
-                    onClick={() => handleDumpsterTypeChange(DUMPSTER_TYPES.RUBBER_WHEEL)}
-                    disabled={isHeavyMaterial}
-                    className={`relative group p-8 rounded-2xl border-3 transition-all ${
-                      selectedDumpsterType === DUMPSTER_TYPES.RUBBER_WHEEL && !isHeavyMaterial
-                        ? "border-[#C89B2B] bg-gradient-to-br from-[#C89B2B]/20 to-[#142A52]/10 shadow-xl"
-                        : isHeavyMaterial
-                        ? "border-red-300 bg-red-50 opacity-60 cursor-not-allowed"
-                        : "border-[#142A52]/20 hover:border-[#C89B2B] bg-white hover:shadow-lg"
-                    }`}
-                  >
-                    <div className="text-5xl mb-4">🛞</div>
-                    <h3 className="font-bold text-[#142A52] text-xl mb-2">Rubber Wheel Dumpster</h3>
-                    <p className="text-sm text-[#142A52]/70 mb-4 leading-relaxed">Ideal for urban areas and tight spaces</p>
-                    <div className="space-y-1 text-xs text-[#142A52]/60">
-                      <p>✓ 10 - 30 yard options</p>
-                      <p>✓ Small footprint</p>
-                    </div>
-                    {isHeavyMaterial && (
-                      <motion.div className="absolute inset-0 flex items-center justify-center bg-red-50/80 rounded-2xl">
-                        <div className="text-center">
-                          <AlertCircle className="w-8 h-8 text-red-600 mx-auto mb-2" />
-                          <p className="text-xs font-bold text-red-600">Not for heavy materials</p>
-                        </div>
-                      </motion.div>
-                    )}
-                    {selectedDumpsterType === DUMPSTER_TYPES.RUBBER_WHEEL && !isHeavyMaterial && (
-                      <motion.div className="absolute top-4 right-4 bg-[#C89B2B] rounded-full p-2">
-                        <CheckCircle2 className="w-5 h-5 text-white" />
-                      </motion.div>
-                    )}
-                  </motion.button>
-
-                  {/* Front Load */}
-                  <motion.button
-                    whileHover={{ scale: 1.02, y: -4 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => handleDumpsterTypeChange(DUMPSTER_TYPES.FRONT_LOAD)}
-                    className={`relative group p-8 rounded-2xl border-3 transition-all ${
-                      selectedDumpsterType === DUMPSTER_TYPES.FRONT_LOAD
-                        ? "border-[#C89B2B] bg-gradient-to-br from-[#C89B2B]/20 to-[#142A52]/10 shadow-xl"
-                        : "border-[#142A52]/20 hover:border-[#C89B2B] bg-white hover:shadow-lg"
-                    }`}
-                  >
-                    <div className="text-5xl mb-4">🏗️</div>
-                    <h3 className="font-bold text-[#142A52] text-xl mb-2">Front Load Dumpster</h3>
-                    <p className="text-sm text-[#142A52]/70 mb-4 leading-relaxed">Monthly service for businesses and apartments</p>
-                    <div className="space-y-1 text-xs text-[#142A52]/60">
-                      <p>✓ 2 - 8 yard options</p>
-                      <p>✓ Recurring billing</p>
-                    </div>
-                    {selectedDumpsterType === DUMPSTER_TYPES.FRONT_LOAD && (
-                      <motion.div className="absolute top-4 right-4 bg-[#C89B2B] rounded-full p-2">
-                        <CheckCircle2 className="w-5 h-5 text-white" />
-                      </motion.div>
-                    )}
-                  </motion.button>
-                </div>
-
-                {error && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="flex items-center gap-3 p-4 bg-red-50 border-2 border-red-300 rounded-xl text-red-700 font-bold"
-                  >
-                    <AlertCircle className="w-5 h-5" />
-                    {error}
-                  </motion.div>
-                )}
-              </div>
-
-              {/* Heavy Material Warning */}
-              {isHeavyMaterial && selectedDumpsterType === DUMPSTER_TYPES.ROLL_OFF && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="flex items-start gap-4 p-6 bg-yellow-50 border-2 border-yellow-300 rounded-xl"
-                >
-                  <Zap className="w-6 h-6 text-yellow-600 flex-shrink-0 mt-0.5" />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                   <div>
-                    <p className="font-bold text-yellow-800">Heavy Material Surcharge</p>
-                    <p className="text-sm text-yellow-700 mt-1">
-                      A ${HEAVY_MATERIAL_SURCHARGE} surcharge applies for concrete, brick, dirt, or rock. Only 10 yd roll-off dumpsters are available for these materials.
-                    </p>
+                    <label className="block text-sm font-bold text-[#142A52] mb-2">First Name *</label>
+                    <input
+                      type="text"
+                      value={formData.firstName}
+                      onChange={(e) => handleInputChange("firstName", e.target.value)}
+                      className="w-full px-4 py-3 border-2 border-[#142A52]/30 rounded-lg focus:border-[#C89B2B] focus:ring-2 focus:ring-[#C89B2B]/20 outline-none"
+                      placeholder="John"
+                    />
                   </div>
-                </motion.div>
+                  <div>
+                    <label className="block text-sm font-bold text-[#142A52] mb-2">Last Name *</label>
+                    <input
+                      type="text"
+                      value={formData.lastName}
+                      onChange={(e) => handleInputChange("lastName", e.target.value)}
+                      className="w-full px-4 py-3 border-2 border-[#142A52]/30 rounded-lg focus:border-[#C89B2B] focus:ring-2 focus:ring-[#C89B2B]/20 outline-none"
+                      placeholder="Doe"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                  <div>
+                    <label className="block text-sm font-bold text-[#142A52] mb-2 flex items-center gap-2">guard to avoid using the Google 
+                      <Mail size={16} /> Email *
+                    </label>
+                    <input
+                      type="email"
+                      value={formData.email}
+                      onChange={(e) => handleInputChange("email", e.target.value)}
+                      className="w-full px-4 py-3 border-2 border-[#142A52]/30 rounded-lg focus:border-[#C89B2B] focus:ring-2 focus:ring-[#C89B2B]/20 outline-none"
+                      placeholder="john@example.com"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-[#142A52] mb-2 flex items-center gap-2">
+                      <Phone size={16} /> Phone *
+                    </label>
+                    <input
+                      type="tel"
+                      value={formData.phone}
+                      onChange={(e) => handleInputChange("phone", e.target.value)}
+                      className="w-full px-4 py-3 border-2 border-[#142A52]/30 rounded-lg focus:border-[#C89B2B] focus:ring-2 focus:ring-[#C89B2B]/20 outline-none"
+                      placeholder="(586) 412-3762"
+                    />
+                  </div>
+                </div>
+
+                <div className="mb-6">
+                  <label className="block text-sm font-bold text-[#142A52] mb-2">Company (Optional)</label>
+                  <input
+                    type="text"
+                    value={formData.company}
+                    onChange={(e) => handleInputChange("company", e.target.value)}
+                    className="w-full px-4 py-3 border-2 border-[#142A52]/30 rounded-lg focus:border-[#C89B2B] focus:ring-2 focus:ring-[#C89B2B]/20 outline-none"
+                    placeholder="Your company name"
+                  />
+                </div>
+
+                <div className="mb-6">
+                  <label className="block text-sm font-bold text-[#142A52] mb-2">Placement Instructions (Optional)</label>
+                  <textarea
+                    value={formData.placementInstructions}
+                    onChange={(e) => handleInputChange("placementInstructions", e.target.value)}
+                    className="w-full px-4 py-3 border-2 border-[#142A52]/30 rounded-lg focus:border-[#C89B2B] focus:ring-2 focus:ring-[#C89B2B]/20 outline-none"
+                    placeholder="e.g., Driveway, back yard, side entrance..."
+                    rows={3}
+                  />
+                </div>
+              </div>
+
+              {/* Account Creation Option */}
+              <div className="bg-[#C89B2B]/10 border-2 border-[#C89B2B] rounded-lg p-6 mb-8">
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={accountCreation}
+                    onChange={(e) => handleInputChange("accountCreation", e.target.checked)}
+                    className="w-5 h-5 accent-[#C89B2B]"
+                  />
+                  <span className="font-bold text-[#142A52]">
+                    Create an account & save ${ACCOUNT_DISCOUNT} on this order
+                  </span>
+                </label>
+                <p className="text-sm text-[#142A52]/70 mt-2 ml-8">
+                  Save cards, track orders, and get exclusive deals
+                </p>
+              </div>
+
+              {/* Terms Acceptance */}
+              <div className="mb-8">
+                <label className="flex items-start gap-3">
+                  <input
+                    type="checkbox"
+                    checked={formData.agreeToTerms}
+                    onChange={(e) => handleInputChange("agreeToTerms", e.target.checked)}
+                    className="w-5 h-5 accent-[#C89B2B] mt-1"
+                  />
+                  <span className="text-sm text-[#142A52]">
+                    I agree to the <button className="text-[#C89B2B] hover:underline font-bold">Terms & Conditions</button> and <button className="text-[#C89B2B] hover:underline font-bold">Privacy Policy</button>
+                  </span>
+                </label>
+              </div>
+
+              {/* Error */}
+              {error && (
+                <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-6 text-red-700 font-bold">
+                  {error}
+                </div>
               )}
 
-              {/* Size Selection */}
-              <div className="space-y-6 pt-8 border-t-2 border-[#142A52]/10">
-                <div>
-                  <h2 className="text-3xl font-bold text-[#142A52] mb-2">Select Size</h2>
-                  <p className="text-[#142A52]/70">Choose the perfect size for your project</p>
-                </div>
-
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                  {allowedSizes.map((sizeObj, idx) => (
-                    <motion.button
-                      key={sizeObj.size}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: idx * 0.05 }}
-                      whileHover={{ scale: 1.05, y: -4 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={() => handleSizeChange(sizeObj.size)}
-                      className={`relative p-6 rounded-xl border-2 transition-all text-center group ${
-                        selectedSize === sizeObj.size
-                          ? "border-[#C89B2B] bg-gradient-to-br from-[#C89B2B]/20 to-[#142A52]/10 shadow-lg"
-                          : "border-[#142A52]/20 hover:border-[#C89B2B] bg-white hover:shadow-lg"
-                      }`}
-                    >
-                      <div className="text-4xl font-bold text-[#142A52] mb-1">{sizeObj.size}</div>
-                      <p className="text-xs text-[#142A52]/60 mb-3">Yard</p>
-                      <p className="text-xs text-[#142A52]/70 mb-3">{sizeObj.dimensions}</p>
-                      <div className="pt-3 border-t border-[#142A52]/10">
-                        <p className="font-bold text-[#C89B2B] text-lg">
-                          ${PRICING[selectedDumpsterType as keyof typeof PRICING]?.[sizeObj.size as keyof typeof PRICING[string]] || 0}
-                        </p>
-                        <p className="text-xs text-[#142A52]/60 mt-1">Base price</p>
-                      </div>
-                      {selectedSize === sizeObj.size && (
-                        <motion.div className="absolute -top-3 -right-3 bg-[#C89B2B] text-white rounded-full p-2 shadow-lg">
-                          <CheckCircle2 className="w-5 h-5" />
-                        </motion.div>
-                      )}
-                    </motion.button>
-                  ))}
-                </div>
-
-                {allowedSizes.length === 0 && (
-                  <div className="flex items-center gap-3 p-4 bg-red-50 border-2 border-red-300 rounded-xl text-red-700 font-bold">
-                    <AlertCircle className="w-5 h-5" />
-                    No sizes available for this combination
-                  </div>
-                )}
-              </div>
-
-              {/* Pricing Summary Card */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-gradient-to-br from-[#142A52] via-[#1a3a6f] to-[#0f1f3a] text-white rounded-2xl shadow-xl p-8 border border-[#C89B2B]/30"
-              >
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-2xl font-bold">Order Summary</h3>
-                  <Zap className="w-6 h-6 text-[#C89B2B]" />
-                </div>
-
-                <div className="space-y-4 mb-6 pb-6 border-b border-white/20">
-                  <div className="flex justify-between items-center">
-                    <span className="text-white/80">{selectedSize} yd {selectedDumpsterType}</span>
-                    <span className="font-bold text-lg">${basePrice}</span>
-                  </div>
-                  {surcharges > 0 && (
-                    <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      className="flex justify-between items-center text-yellow-300 font-bold"
-                    >
-                      <span className="flex items-center gap-2">
-                        <Zap className="w-4 h-4" />
-                        Heavy Material Surcharge
-                      </span>
-                      <span>+${surcharges}</span>
-                    </motion.div>
-                  )}
-                </div>
-
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.2 }}
-                  className="flex justify-between items-center"
-                >
-                  <span className="text-xl font-bold">Total (Base Price)</span>
-                  <span className="text-3xl font-bold text-[#C89B2B]">${totalPrice}</span>
-                </motion.div>
-                <p className="text-xs text-white/60 mt-4">
-                  💡 Rental period and special requests may adjust final price
-                </p>
-              </motion.div>
-
               {/* Action Buttons */}
-              <div className="flex flex-col sm:flex-row gap-4 pt-4">
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <button
                   onClick={() => router.back()}
-                  className="flex-1 px-6 py-4 border-2 border-[#142A52] text-[#142A52] font-bold rounded-xl hover:bg-[#142A52]/5 transition-all flex items-center justify-center gap-2"
+                  className="px-6 py-3 border-2 border-[#142A52] text-[#142A52] font-bold rounded-lg hover:bg-[#142A52]/5 transition flex items-center justify-center gap-2"
                 >
-                  <ArrowLeft className="w-5 h-5" />
-                  Go Back
-                </motion.button>
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={handleContinue}
-                  className="flex-1 px-6 py-4 bg-gradient-to-r from-[#142A52] to-[#C89B2B] hover:from-[#0f1f3a] hover:to-[#d4a835] text-white font-bold rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg hover:shadow-xl"
+                  <ChevronLeft size={20} /> Back
+                </button>
+                <button
+                  onClick={handleSubmit}
+                  disabled={loading}
+                  className={`px-6 py-3 bg-gradient-to-r from-[#142A52] to-[#C89B2B] text-white font-bold rounded-lg transition flex items-center justify-center gap-2 ${
+                    loading ? "opacity-50 cursor-not-allowed" : "hover:from-[#1a3a6e] hover:to-[#d4a835]"
+                  }`}
                 >
-                  Continue to Details
-                  <ChevronRight className="w-5 h-5" />
-                </motion.button>
+                  {loading ? "Processing..." : "Complete Booking"}
+                </button>
               </div>
-            </motion.div>
+            </div>
+
+            {/* Order Summary Sidebar */}
+            <div className="lg:col-span-1">
+              <div className="sticky top-24 bg-gradient-to-b from-[#142A52] to-[#142A52]/80 text-white rounded-lg p-6 shadow-lg">
+                <h3 className="text-xl font-bold mb-6 pb-4 border-b border-white/20">Order Summary</h3>
+
+                <div className="space-y-4 mb-6">
+                  <div>
+                    <p className="text-white/70 text-sm">Dumpster Type</p>
+                    <p className="font-bold">{booking.dumpsterSize} yd {booking.dumpsterType}</p>
+                  </div>
+                  <div>
+                    <p className="text-white/70 text-sm">Rental Period</p>
+                    <p className="font-bold">{booking.rentalPeriod} days</p>
+                  </div>
+                  <div>
+                    <p className="text-white/70 text-sm">Location</p>
+                    <p className="font-bold">{booking.zipCode}</p>
+                  </div>
+                  <div>
+                    <p className="text-white/70 text-sm">Delivery</p>
+                    <p className="font-bold">
+                      {booking.deliveryDate &&
+                        new Date(booking.deliveryDate).toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                        })}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="border-t border-white/20 pt-6 space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-white/70">Base Price</span>
+                    <span>${booking.basePrice}</span>
+                  </div>
+                  {booking.surcharges > 0 && (
+                    <div className="flex justify-between text-yellow-300">
+                      <span>Surcharges</span>
+                      <span>${booking.surcharges}</span>
+                    </div>
+                  )}
+                  {booking.rentalPeriod && booking.rentalPeriod > 14 && (
+                    <div className="flex justify-between text-yellow-300">
+                      <span>Extra Days ({booking.rentalPeriod - 14})</span>
+                      <span>${(booking.rentalPeriod - 14) * 25}</span>
+                    </div>
+                  )}
+                  {accountCreation && (
+                    <div className="flex justify-between text-green-300">
+                      <span>Account Discount</span>
+                      <span>-${ACCOUNT_DISCOUNT}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between text-[#C89B2B] border-t border-white/20 pt-3 text-lg font-bold">
+                    <span>Total</span>
+                    <span>${finalPrice.toFixed(2)}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
