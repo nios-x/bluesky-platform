@@ -77,14 +77,14 @@ export function Hero() {
       const delivery = new Date(deliveryDate);
       const defaultRemoval = new Date(delivery);
       defaultRemoval.setDate(defaultRemoval.getDate() + 7);
-      
+
       // Skip weekends for removal date
       if (defaultRemoval.getDay() === 0) { // Sunday
         defaultRemoval.setDate(defaultRemoval.getDate() + 1);
       } else if (defaultRemoval.getDay() === 6) { // Saturday
         defaultRemoval.setDate(defaultRemoval.getDate() + 2);
       }
-      
+
       setRemovalDateObj(defaultRemoval);
       setRemovalDate(defaultRemoval.toISOString().split("T")[0]);
     }
@@ -127,23 +127,24 @@ export function Hero() {
     }
 
     // Update booking context
-    updateBooking({
+    updateBooking(0, {
       zipCode,
       dumpsterType,
-      dumpsterSize,
+      dumpsterSize: dumpsterSize!,
       deliveryDate,
-      rentalPeriod: 7, // Default 7 days
+      rentalPeriod: 7,
+      projectType,
       basePrice: selectedSize?.price || 0,
-      totalPrice: selectedSize?.price || 0,
+      totalPrice: totalPrice,
     });
-
+    
     // Navigate to booking page
     router.push("/booking/step-1");
   };
 
   const handleHelpMeChoose = () => {
     setSearchError("");
-    
+
     if (!zipCode.trim()) {
       setSearchError("Please enter a zip code");
       return;
@@ -192,7 +193,7 @@ export function Hero() {
                 value={zipCode}
                 onChange={(e) => setZipCode(e.target.value)}
                 placeholder="e.g., 48001 or full address"
-                style={{"scrollbarColor":"transparent"}}
+                style={{ "scrollbarColor": "transparent" }}
                 className="w-full px-4 py-3 border-2 border-[#142A52]/30 rounded-lg focus:border-[#C89B2B] focus:ring-2 focus:ring-[#C89B2B]/20 outline-none transition"
               />
             </div>
@@ -208,11 +209,10 @@ export function Hero() {
                       setDumpsterType(type.id);
                       setDumpsterSize(null); // Reset size when type changes
                     }}
-                    className={`p-4 rounded-lg border-2 transition-all text-left ${
-                      dumpsterType === type.id
+                    className={`p-4 rounded-lg border-2 transition-all text-left ${dumpsterType === type.id
                         ? "border-[#C89B2B] bg-[#C89B2B]/10"
                         : "border-[#142A52]/30 hover:border-[#C89B2B]/50"
-                    }`}
+                      }`}
                   >
                     <img
                       src={type.image}
@@ -226,8 +226,8 @@ export function Hero() {
               </div>
             </div>
             <div className="flex justify-between flex-wrap gap-6">
-            {/* Dumpster Size Selection */}
-            
+              {/* Dumpster Size Selection */}
+
               <div className="mb-6 w-[48%]">
                 <label className="block text-sm font-bold text-[#142A52] mb-2">3. Size of Dumpster</label>
                 <Select value={dumpsterSize?.toString()} onValueChange={(value) => setDumpsterSize(parseInt(value))}>
@@ -243,53 +243,70 @@ export function Hero() {
                   </SelectContent>
                 </Select>
               </div>
-                      
-            {/* Delivery Date */}
-            <div className="mb-6 w-[48%]">
-              <label className="block text-sm font-bold text-[#142A52] mb-2">{dumpsterType?"4":"3"}. Delivery Date</label>
-              <Popover open={showDeliveryCalendar} onOpenChange={setShowDeliveryCalendar}>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className="w-full justify-start text-left font-normal border-2 border-[#142A52]/30 hover:border-[#C89B2B] h-10"
-                  >
-                    {deliveryDate ? new Date(deliveryDate).toLocaleDateString("en-US", {
-                      weekday: "short",
-                      month: "short",
-                      day: "numeric",
-                    }) : "Select delivery date"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar 
-                    mode="single" 
-                    selected={deliveryDateObj} 
-                    onSelect={(selectedDate) => {
-                      if (selectedDate) {
-                        setDeliveryDateObj(selectedDate);
-                        setDeliveryDate(selectedDate.toISOString().split("T")[0]);
-                        setShowDeliveryCalendar(false);
-                        // Reset removal date when delivery date changes
-                        setRemovalDateObj(undefined);
-                        setRemovalDate("");
-                      }
-                    }} 
-                    className="rounded-lg border"
-                    disabled={(date) => {
-                      // Disable dates before today
-                      const today = new Date();
-                      today.setHours(0, 0, 0, 0);
-                      if (date < today) return true;
-                      
-                      const dayOfWeek = date.getDay();
-                      return dayOfWeek === 0 || dayOfWeek === 6; // Disable weekends
-                    }}
-                  />
-                </PopoverContent>
-              </Popover>
+
+              <div className="mb-6 w-[48%]">
+                <label className="block text-sm font-bold text-[#142A52] mb-2">4. Project Type</label>
+                <Select value={projectType} onValueChange={setProjectType}>
+                  <SelectTrigger className="w-full border-2 border-[#142A52]/30 focus:border-[#C89B2B]">
+                    <SelectValue placeholder="Select project type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PROJECT_TYPES.map((type) => (
+                      <SelectItem key={type} value={type}>
+                        {type}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
             </div>
-          </div>
             <div className="flex justify-between flex-wrap gap-6">
+              {/* Delivery Date */}
+              <div className="mb-6 w-[48%]">
+
+                <label className="block text-sm font-bold text-[#142A52] mb-2">4. Delivery Date</label>
+                <Popover open={showDeliveryCalendar} onOpenChange={setShowDeliveryCalendar}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start text-left font-normal border-2 border-[#142A52]/30 hover:border-[#C89B2B] h-10"
+                    >
+                      {deliveryDate ? new Date(deliveryDate).toLocaleDateString("en-US", {
+                        weekday: "short",
+                        month: "short",
+                        day: "numeric",
+                      }) : "Select delivery date"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={deliveryDateObj}
+                      onSelect={(selectedDate) => {
+                        if (selectedDate) {
+                          setDeliveryDateObj(selectedDate);
+                          setDeliveryDate(selectedDate.toISOString().split("T")[0]);
+                          setShowDeliveryCalendar(false);
+                          // Reset removal date when delivery date changes
+                          setRemovalDateObj(undefined);
+                          setRemovalDate("");
+                        }
+                      }}
+                      className="rounded-lg border"
+                      disabled={(date) => {
+                        // Disable dates before today
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+                        if (date < today) return true;
+
+                        const dayOfWeek = date.getDay();
+                        return dayOfWeek === 0 || dayOfWeek === 6; // Disable weekends
+                      }}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
               <div className="mb-6 w-[48%]">
                 <label className="block text-sm font-bold text-[#142A52] mb-2">5. Removal Date (7 days free, $25/day after)</label>
                 <Popover open={showRemovalCalendar} onOpenChange={setShowRemovalCalendar}>
@@ -306,16 +323,16 @@ export function Hero() {
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar 
-                      mode="single" 
-                      selected={removalDateObj} 
+                    <Calendar
+                      mode="single"
+                      selected={removalDateObj}
                       onSelect={(selectedDate) => {
                         if (selectedDate) {
                           setRemovalDateObj(selectedDate);
                           setRemovalDate(selectedDate.toISOString().split("T")[0]);
                           setShowRemovalCalendar(false);
                         }
-                      }} 
+                      }}
                       className="rounded-lg border"
                       disabled={(date) => {
                         const dayOfWeek = date.getDay();
@@ -339,21 +356,7 @@ export function Hero() {
                   7 days free rental included. Additional days: $25 per day.
                 </p>
               </div>
-              <div className="mb-6 w-[48%]">
-                <label className="block text-sm font-bold text-[#142A52] mb-2">Project Type</label>
-                <Select value={projectType} onValueChange={setProjectType}>
-                  <SelectTrigger className="w-full border-2 border-[#142A52]/30 focus:border-[#C89B2B]">
-                    <SelectValue placeholder="Select project type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {PROJECT_TYPES.map((type) => (
-                      <SelectItem key={type} value={type}>
-                        {type}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+
             </div>
 
             {/* Price Breakdown */}
