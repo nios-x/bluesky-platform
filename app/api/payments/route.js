@@ -39,6 +39,12 @@ export async function POST(request) {
         id: 'pi_paypal_' + Date.now(),
         status: 'succeeded',
       };
+    } else if (paymentMethod === 'apple-pay') {
+      // For demo, simulate Apple Pay
+      paymentIntent = {
+        id: 'pi_applepay_' + Date.now(),
+        status: 'succeeded',
+      };
     } else {
       throw new Error('Unsupported payment method');
     }

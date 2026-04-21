@@ -14,6 +14,7 @@ import { motion } from "framer-motion";
 import { Lock } from "lucide-react";
 import GPayButton from "@/components/payments/gpay";
 import ProductInfoSection from "@/components/whats-included";
+import PayPalButton from "./paypal";
 import ItemsAdder from "@/components/order/ItemsAdder";
 
 export default function BookingStep1() {
@@ -109,6 +110,7 @@ export default function BookingStep1() {
         company: formData.company,
         placementInstructions: formData.placementInstructions,
         accountDiscount: accountCreation ? ACCOUNT_DISCOUNT : 0,
+        paymentMethod: paymentMethod,
       });
 
       // Navigate to payment step
@@ -297,6 +299,26 @@ export default function BookingStep1() {
     }
   };
 
+  const handlePayPalPayment = async (details: any) => {
+    setLoading(true);
+    setError("");
+
+    try {
+      updateBooking(0, {
+        paymentMethod: 'paypal',
+        paymentIntentId: details.id,
+        paymentStatus: 'completed',
+      });
+
+      // Since PayPal handled the transaction directly, skip intermediate steps
+      router.push('/booking/confirmation');
+    } catch (err: any) {
+      setError('Payment processing failed: ' + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSubmit2 = async () => {
 
     setLoading(true);
@@ -311,8 +333,8 @@ export default function BookingStep1() {
         body: JSON.stringify({
           amount: totalPrice,
           currency: 'USD',
-          paymentMethod: 'credit-card',
-          cardData,
+          paymentMethod: paymentMethod,
+          cardData: paymentMethod === 'credit-card' ? cardData : undefined,
         }),
       });
 
@@ -320,7 +342,7 @@ export default function BookingStep1() {
 
       if (data.success) {
         updateBooking(0, {
-          paymentMethod: 'credit-card',
+          paymentMethod: paymentMethod,
           paymentIntentId: data.paymentIntentId,
           paymentStatus: 'completed',
         });
@@ -683,6 +705,36 @@ export default function BookingStep1() {
                       <span className="font-bold text-[#142A52]">Credit/Debit Card</span>
                     </div>
                   </motion.button>
+
+                <motion.button
+                  onClick={() => setPaymentMethod('apple-pay')}
+                  className={`w-full p-4 border-2 rounded-lg cursor-pointer transition-all ${paymentMethod === 'apple-pay'
+                    ? "border-black bg-black/10"
+                    : "border-[#142A52]/20 hover:border-black"
+                    }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <svg className="w-6 h-6" viewBox="0 0 384 512" fill="currentColor">
+                      <path d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zm-56.6-164.2c27.3-32.4 24.8-61.9 24-72.5-24.1 1.4-52 16.4-67.9 34.9-17.5 19.8-27.8 44.3-25.6 71.9 26.1 2 49.9-11.4 69.5-34.3z"/>
+                    </svg>
+                    <span className="font-bold text-[#142A52]">Pay with Apple Pay</span>
+                  </div>
+                </motion.button>
+
+                <motion.button
+                  onClick={() => setPaymentMethod('paypal')}
+                  className={`w-full p-4 border-2 rounded-lg cursor-pointer transition-all ${paymentMethod === 'paypal'
+                    ? "border-[#003087] bg-[#003087]/10"
+                    : "border-[#142A52]/20 hover:border-[#003087]"
+                    }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <svg className="w-6 h-6" viewBox="0 0 384 512" fill="#003087">
+                       <path d="M111.4 295.9l-35.4 0c-5.8 0-10.5-4.7-10.5-10.5L34.1 48.5c0-5.8 4.7-10.5 10.5-10.5l147.8 0c48.1 0 78.4 23.3 78.4 62.4 0 43.1-33 73.1-78.4 73.1l-40.8 0c-5.8 0-10.5 4.7-10.5 10.5l-29.7 111.9zm13.1-131.6l32.1 0c26.2 0 43.3-13.8 43.3-36.9 0-21-14.8-31.9-43.3-31.9l-45.7 0c-2.4 0-4.5 1.7-4.9 4l-15.6 60.8c-.4 2.3 1.3 4.4 3.7 4.4z"/>
+                    </svg>
+                    <span className="font-bold text-[#142A52]">Pay with PayPal</span>
+                  </div>
+                </motion.button>
                 </div>
 
                 {paymentMethod === "google-pay" && (
@@ -779,9 +831,33 @@ export default function BookingStep1() {
                   </motion.div>
                 )}
 
+              {paymentMethod === "apple-pay" && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-black/5 border-2 border-black/20 rounded-lg p-6 mb-4 text-center"
+                >
+                  <p className="font-bold text-[#142A52]">You will complete your payment using Apple Pay.</p>
+                </motion.div>
+              )}
+
+              {paymentMethod === "paypal" && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mb-4"
+                >
+                  <PayPalButton
+                    amount={totalPrice}
+                    onSuccess={(details) => handlePayPalPayment(details)}
+                    onError={(error) => setError('PayPal error: ' + error.message)}
+                  />
+                </motion.div>
+              )}
+
                 {error && <div className="text-red-500 mt-4 text-center font-bold">{error}</div>}
 
-                {paymentMethod === "credit-card" && (
+              {(paymentMethod === "credit-card" || paymentMethod === "apple-pay") && (
                   <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
