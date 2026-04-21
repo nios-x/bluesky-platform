@@ -652,8 +652,10 @@ export default function CalculateSizeNew() {
                   </motion.button>
                 )}
               </div>
+                </div>
+              </div>
             </motion.div>
-            </div>
+            </motion.div>
         ) : (
           /* Results Screen */
           <motion.div

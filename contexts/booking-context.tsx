@@ -31,6 +31,11 @@ export interface BookingData {
   accountDiscount: number;
   totalPrice: number;
 
+  // Payment Info
+  paymentMethod?: 'google-pay' | 'credit-card';
+  paymentIntentId?: string;
+  paymentStatus?: 'completed' | 'pending' | 'failed';
+
   // Additional Info
   addMattress?: boolean;
   mattressCount?: number;
@@ -63,6 +68,7 @@ const defaultBooking: Partial<BookingData> = {
   surcharges: 0,
   accountDiscount: 0,
   totalPrice: 455,
+  paymentStatus: "pending",
 };
 
 const BookingContext = createContext<BookingContextType | undefined>(undefined);
