@@ -7,7 +7,7 @@ import { CheckCircle2, Mail, Phone, MapPin, Calendar, Package } from "lucide-rea
 import Link from "next/link";
 
 export default function BookingConfirmation() {
-  const { booking } = useBooking();
+  const { bookings } = useBooking();
 
   return (
     <main className="bg-gradient-to-b from-green-50 to-white min-h-screen flex flex-col">
@@ -45,7 +45,7 @@ export default function BookingConfirmation() {
                     <div>
                       <p className="text-sm text-[#142A52]/70">Dumpster</p>
                       <p className="font-bold text-[#142A52]">
-                        {booking.dumpsterSize} yd {booking.dumpsterType}
+                        {bookings[0]?.dumpsterSize} yd {bookings[0]?.dumpsterType}
                       </p>
                     </div>
                   </div>
@@ -55,8 +55,8 @@ export default function BookingConfirmation() {
                     <div>
                       <p className="text-sm text-[#142A52]/70">Delivery Date</p>
                       <p className="font-bold text-[#142A52]">
-                        {booking.deliveryDate &&
-                          new Date(booking.deliveryDate).toLocaleDateString("en-US", {
+                        {bookings[0]?.deliveryDate &&
+                          new Date(bookings[0].deliveryDate).toLocaleDateString("en-US", {
                             weekday: "long",
                             month: "long",
                             day: "numeric",
@@ -70,7 +70,7 @@ export default function BookingConfirmation() {
                     <MapPin className="text-[#C89B2B] mt-1" size={20} />
                     <div>
                       <p className="text-sm text-[#142A52]/70">Location</p>
-                      <p className="font-bold text-[#142A52]">{booking.zipCode}</p>
+                      <p className="font-bold text-[#142A52]">{bookings[0]?.zipCode}</p>
                     </div>
                   </div>
 
@@ -78,7 +78,7 @@ export default function BookingConfirmation() {
                     <Package className="text-[#C89B2B] mt-1" size={20} />
                     <div>
                       <p className="text-sm text-[#142A52]/70">Project Type</p>
-                      <p className="font-bold text-[#142A52]">{booking.projectType}</p>
+                      <p className="font-bold text-[#142A52]">{bookings[0]?.projectType}</p>
                     </div>
                   </div>
                 </div>
@@ -93,7 +93,7 @@ export default function BookingConfirmation() {
                     <Mail className="text-[#C89B2B] mt-1" size={20} />
                     <div>
                       <p className="text-sm text-[#142A52]/70">Email</p>
-                      <p className="font-bold text-[#142A52]">{booking.email}</p>
+                      <p className="font-bold text-[#142A52]">{bookings[0]?.email}</p>
                     </div>
                   </div>
 
@@ -101,14 +101,14 @@ export default function BookingConfirmation() {
                     <Phone className="text-[#C89B2B] mt-1" size={20} />
                     <div>
                       <p className="text-sm text-[#142A52]/70">Phone</p>
-                      <p className="font-bold text-[#142A52]">{booking.phone}</p>
+                      <p className="font-bold text-[#142A52]">{bookings[0]?.phone}</p>
                     </div>
                   </div>
 
-                  {booking.company && (
+                  {bookings[0]?.company && (
                     <div>
                       <p className="text-sm text-[#142A52]/70">Company</p>
-                      <p className="font-bold text-[#142A52]">{booking.company}</p>
+                      <p className="font-bold text-[#142A52]">{bookings[0]?.company}</p>
                     </div>
                   )}
                 </div>
@@ -120,7 +120,7 @@ export default function BookingConfirmation() {
               <div className="flex justify-between items-center">
                 <span className="text-lg font-bold text-[#142A52]">Total Amount</span>
                 <span className="text-3xl font-bold text-[#C89B2B]">
-                  ${booking.totalPrice ? booking.totalPrice.toFixed(2) : "0.00"}
+                  ${bookings[0]?.totalPrice ? bookings[0].totalPrice.toFixed(2) : "0.00"}
                 </span>
               </div>
               <p className="text-sm text-[#142A52]/60 mt-2">

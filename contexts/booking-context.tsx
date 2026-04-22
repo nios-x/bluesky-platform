@@ -3,93 +3,92 @@
 import React, { createContext, useContext, useState } from "react";
 
 export interface BookingData {
-  // Address & Delivery
   address: string;
   zipCode: string;
   deliveryDate: string;
-  rentalPeriod: number; // days
+  rentalPeriod: number;
 
-  // Project Details
   projectType: string;
   materialType: string;
 
-  // Dumpster Selection
   dumpsterType: string;
   dumpsterSize: number;
 
-  // Contact Info
-  firstName: string;
-  lastName: string;
+  fullName: string;
   email: string;
   phone: string;
   company?: string;
   placementInstructions?: string;
 
-  // Pricing
   basePrice: number;
   surcharges: number;
   accountDiscount: number;
   totalPrice: number;
 
-  // Payment Info
-  paymentMethod?: 'google-pay' | 'credit-card';
+  paymentMethod?: "google-pay" | "credit-card";
   paymentIntentId?: string;
-  paymentStatus?: 'completed' | 'pending' | 'failed';
+  paymentStatus?: "completed" | "pending" | "failed";
 
-  // Additional Info
   addMattress?: boolean;
   mattressCount?: number;
   specialRequests?: string;
 }
 
 interface BookingContextType {
-  booking: Partial<BookingData>;
-  updateBooking: (data: Partial<BookingData>) => void;
-  resetBooking: () => void;
-  getOrderSummary: () => Partial<BookingData>;
+  bookings: BookingData[];
+  addBooking: (data: BookingData) => void;
+  updateBooking: (index: number, data: Partial<BookingData>) => void;
+  removeBooking: (index: number) => void;
+  resetBookings: () => void;
+  getOrderSummary: (index: number) => BookingData | undefined;
 }
 
-const defaultBooking: Partial<BookingData> = {
-  address: "",
-  zipCode: "",
-  deliveryDate: "",
-  rentalPeriod: 7,
-  projectType: "",
-  materialType: "",
-  dumpsterType: "roll-off",
-  dumpsterSize: 20,
-  firstName: "",
-  lastName: "",
-  email: "",
-  phone: "",
-  company: "",
-  placementInstructions: "",
-  basePrice: 455,
-  surcharges: 0,
-  accountDiscount: 0,
-  totalPrice: 455,
-  paymentStatus: "pending",
-};
 
-const BookingContext = createContext<BookingContextType | undefined>(undefined);
+const BookingContext = createContext<any>(undefined);
 
 export function BookingProvider({ children }: { children: React.ReactNode }) {
-  const [booking, setBooking] = useState<Partial<BookingData>>(defaultBooking);
+  const [bookings, setBookings] = useState<BookingData[]>([{ address: "", zipCode: "", deliveryDate: "", rentalPeriod: 0, projectType: "", materialType: "", dumpsterType: "", dumpsterSize: 0, fullName: "", email: "", phone: "", basePrice: 0, surcharges: 0, accountDiscount: 0, totalPrice: 0 }]);
 
-  const updateBooking = (data: Partial<BookingData>) => {
-    setBooking((prev) => ({ ...prev, ...data }));
+  // Add new booking
+  const addBooking = (data: BookingData) => {
+    setBookings((prev) => [...prev, data]);
   };
 
-  const resetBooking = () => {
-    setBooking(defaultBooking);
+  // Update specific booking
+  const updateBooking = (index: number, data: Partial<BookingData>) => {
+    setBookings((prev) =>
+      prev.map((item, i) =>
+        i === index ? { ...item, ...data } : item
+      )
+    );
   };
 
-  const getOrderSummary = () => {
-    return booking;
+  // Remove booking
+  const removeBooking = (index: number) => {
+    setBookings((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  // Reset
+  const resetBookings = () => {
+    setBookings([]);
+  };
+
+  // Get one booking
+  const getOrderSummary = (index: number) => {
+    return bookings[index];
   };
 
   return (
-    <BookingContext.Provider value={{ booking, updateBooking, resetBooking, getOrderSummary }}>
+    <BookingContext.Provider
+      value={{
+        bookings,
+        addBooking,
+        updateBooking,
+        removeBooking,
+        resetBookings,
+        getOrderSummary,
+      }}
+    >
       {children}
     </BookingContext.Provider>
   );
@@ -102,3 +101,5 @@ export function useBooking() {
   }
   return context;
 }
+
+export default BookingProvider;
