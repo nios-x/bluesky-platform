@@ -97,7 +97,8 @@ export default function BookingStep1() {
     return true;
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (methodOverride?: string | React.MouseEvent) => {
+    const methodToUse = typeof methodOverride === 'string' ? methodOverride : paymentMethod;
     if (!validateForm()) return;
 
     setLoading(true);
@@ -110,7 +111,7 @@ export default function BookingStep1() {
         company: formData.company,
         placementInstructions: formData.placementInstructions,
         accountDiscount: accountCreation ? ACCOUNT_DISCOUNT : 0,
-        paymentMethod: paymentMethod,
+        paymentMethod: methodToUse,
       });
 
       // Navigate to payment step
@@ -675,76 +676,31 @@ export default function BookingStep1() {
               <div id="payment-section" className="mb-8">
                 <h2 className="text-2xl font-bold text-[#142A52] mb-6">Payment Method</h2>
 
-                <div className="space-y-4 mb-6">
-                  <motion.button
-                    onClick={() => setPaymentMethod('google-pay')}
-                    className={`w-full p-4 border-2 rounded-lg cursor-pointer transition-all ${paymentMethod === 'google-pay'
-                      ? "border-black bg-black/10"
-                      : "border-[#142A52]/20 hover:border-black"
-                      }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M12.5 2.5c-1.5 0-3 .5-4.2 1.3L9.8 6c.8-.5 1.8-.8 2.7-.8 2.5 0 4.5 2 4.5 4.5 0 1.8-1 3.3-2.5 4.1l1.5 2.6c2.5-1.3 4.2-4 4.2-7 0-4-3.2-7.2-7.2-7.2z" />
-                        <path d="M12.5 7.5c-1.2 0-2.2.4-3 1.1L11.8 11c.4-.3.9-.5 1.7-.5 1.4 0 2.5 1.1 2.5 2.5 0 .9-.4 1.7-1 2.2l1.5 2.6c1.5-.9 2.5-2.5 2.5-4.3 0-2.8-2.2-5-5-5z" />
-                        <path d="M7.5 12.5c0 1.4.6 2.6 1.5 3.5l2.5-4.3c-.4-.4-.6-1-.6-1.7 0-1.4 1.1-2.5 2.5-2.5.7 0 1.3.2 1.8.6l2.5-4.3c-1.3-.8-2.8-1.3-4.3-1.3-3.5 0-6.5 2.8-6.5 6.5 0 2.2.9 4.1 2.4 5.5l-2.4 4.1c-2.1-1.8-3.4-4.5-3.4-7.5 0-5 4-9 9-9 2.5 0 4.8.9 6.5 2.5L15 7.5c-1-.6-2.2-.8-3.5-.8-2.8 0-5 2.2-5 5z" />
-                      </svg>
-                      <span className="font-bold text-[#142A52]">Pay with Google Pay</span>
-                    </div>
-                  </motion.button>
+                {/* Direct Payment Buttons */}
+                <div className="space-y-4 mb-8">
+                <div className="pr-2">
 
-                  <motion.button
-                    onClick={() => setPaymentMethod('credit-card')}
-                    className={`w-full p-4 border-2 rounded-lg cursor-pointer transition-all ${paymentMethod === 'credit-card'
-                      ? "border-[#C89B2B] bg-[#C89B2B]/10"
-                      : "border-[#142A52]/20 hover:border-[#C89B2B]"
-                      }`}
+                 <motion.button
+                    onClick={() => handleSubmit('apple-pay')}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="w-full p-3 bg-black text-white font-bold rounded  flex items-center justify-center gap-2 h-[42px] hover:bg-gray-900 transition-colors"
                   >
-                    <div className="flex items-center gap-3">
-                      <span className="text-2xl">💳</span>
-                      <span className="font-bold text-[#142A52]">Credit/Debit Card</span>
-                    </div>
-                  </motion.button>
-
-                <motion.button
-                  onClick={() => setPaymentMethod('apple-pay')}
-                  className={`w-full p-4 border-2 rounded-lg cursor-pointer transition-all ${paymentMethod === 'apple-pay'
-                    ? "border-black bg-black/10"
-                    : "border-[#142A52]/20 hover:border-black"
-                    }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <svg className="w-6 h-6" viewBox="0 0 384 512" fill="currentColor">
+                    <svg className="w-5 h-5" viewBox="0 0 384 512" fill="currentColor">
                       <path d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zm-56.6-164.2c27.3-32.4 24.8-61.9 24-72.5-24.1 1.4-52 16.4-67.9 34.9-17.5 19.8-27.8 44.3-25.6 71.9 26.1 2 49.9-11.4 69.5-34.3z"/>
                     </svg>
-                    <span className="font-bold text-[#142A52]">Pay with Apple Pay</span>
+                    Pay with Apple Pay
+                  </motion.button>
                   </div>
-                </motion.button>
-
-                <motion.button
-                  onClick={() => setPaymentMethod('paypal')}
-                  className={`w-full p-4 border-2 rounded-lg cursor-pointer transition-all ${paymentMethod === 'paypal'
-                    ? "border-[#003087] bg-[#003087]/10"
-                    : "border-[#142A52]/20 hover:border-[#003087]"
-                    }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <svg className="w-6 h-6" viewBox="0 0 384 512" fill="#003087">
-                       <path d="M111.4 295.9l-35.4 0c-5.8 0-10.5-4.7-10.5-10.5L34.1 48.5c0-5.8 4.7-10.5 10.5-10.5l147.8 0c48.1 0 78.4 23.3 78.4 62.4 0 43.1-33 73.1-78.4 73.1l-40.8 0c-5.8 0-10.5 4.7-10.5 10.5l-29.7 111.9zm13.1-131.6l32.1 0c26.2 0 43.3-13.8 43.3-36.9 0-21-14.8-31.9-43.3-31.9l-45.7 0c-2.4 0-4.5 1.7-4.9 4l-15.6 60.8c-.4 2.3 1.3 4.4 3.7 4.4z"/>
-                    </svg>
-                    <span className="font-bold text-[#142A52]">Pay with PayPal</span>
-                  </div>
-                </motion.button>
-                </div>
-
-                {paymentMethod === "google-pay" && (
                   <motion.div
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="mb-4"
+                    className="mb-2 w-full flex pb-1  [&>div]:w-full pr-2 [&_.google-pay-button-container]:w-full [&_button]:!w-full"
                   >
                     <GPayButton
                       amount={totalPrice}
+                      // @ts-ignore - Safely pass buttonSizeMode if GPayButton passes props down
+                      buttonSizeMode="fill"
                       onPaymentSuccess={(paymentData) => {
                         handleGooglePayPayment(paymentData);
                       }}
@@ -753,14 +709,34 @@ export default function BookingStep1() {
                       }}
                     />
                   </motion.div>
-                )}
 
-                {paymentMethod === "credit-card" && (
                   <motion.div
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="bg-[#142A52]/5 border-2 border-[#142A52]/20 rounded-lg p-6"
+                    className="mb-2"
                   >
+                    <PayPalButton
+                      amount={totalPrice}
+                      onSuccess={(details) => handlePayPalPayment(details)}
+                      onError={(error) => setError('PayPal error: ' + error.message)}
+                    />
+                  </motion.div>
+
+                 
+                </div>
+
+                <div className="relative flex items-center py-4 mb-6">
+                  <div className="flex-grow border-t border-[#142A52]/20"></div>
+                  <span className="flex-shrink-0 mx-4 text-[#142A52]/50 text-sm font-bold uppercase">Or pay with card</span>
+                  <div className="flex-grow border-t border-[#142A52]/20"></div>
+                </div>
+
+                {/* Credit Card Form */}
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-[#142A52]/5 border-2 border-[#142A52]/20 rounded-lg p-6 mb-6"
+                >
                     <div className="mb-4">
                       <label className="block text-[12px] font-bold text-[#142A52] mb-2">
                         Cardholder Name *
@@ -828,40 +804,14 @@ export default function BookingStep1() {
                     <div className="flex items-center gap-2 text-xs text-[#142A52]/60 mt-4">
                       <Lock size={14} /> Secure payment processing
                     </div>
-                  </motion.div>
-                )}
-
-              {paymentMethod === "apple-pay" && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="bg-black/5 border-2 border-black/20 rounded-lg p-6 mb-4 text-center"
-                >
-                  <p className="font-bold text-[#142A52]">You will complete your payment using Apple Pay.</p>
                 </motion.div>
-              )}
-
-              {paymentMethod === "paypal" && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="mb-4"
-                >
-                  <PayPalButton
-                    amount={totalPrice}
-                    onSuccess={(details) => handlePayPalPayment(details)}
-                    onError={(error) => setError('PayPal error: ' + error.message)}
-                  />
-                </motion.div>
-              )}
 
                 {error && <div className="text-red-500 mt-4 text-center font-bold">{error}</div>}
 
-              {(paymentMethod === "credit-card" || paymentMethod === "apple-pay") && (
                   <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    onClick={handleSubmit}
+                    onClick={() => handleSubmit('credit-card')}
                     disabled={loading}
                     className="w-full mt-6 px-8 py-4 bg-gradient-to-r from-[#142A52] to-[#C89B2B] hover:from-[#0f1f3a] hover:to-[#d4a835] text-white font-bold text-lg rounded-xl transition-all flex items-center justify-center gap-3 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
                   >
@@ -877,7 +827,6 @@ export default function BookingStep1() {
                       </>
                     )}
                   </motion.button>
-                )}
               </div>
               {/* Action Buttons */}
 
