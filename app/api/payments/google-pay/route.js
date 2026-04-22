@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
+import { processOrderAndSaveToDB } from '@/lib/services/orderService';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
   apiVersion: '2020-08-27',
@@ -7,7 +8,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
 
 export async function POST(request) {
   try {
-    const { paymentData, amount, currency } = await request.json();
+    const { paymentData, amount, currency, bookingData, contactInfo } = await request.json();
 
     console.log('Received Google Pay data:', JSON.stringify(paymentData, null, 2));
 
@@ -26,36 +27,48 @@ export async function POST(request) {
 
     console.log('Extracted token:', token ? 'present' : 'missing');
 
+    let paymentIntentId = `dev_gpay_${Date.now()}`;
+    let status = 'succeeded';
+
     // For development/example gateway, simulate success
     if (token === 'example' || !token || token.includes('example')) {
       console.log('Development mode: Simulating Google Pay payment success');
-      return NextResponse.json({
-        success: true,
-        paymentIntentId: `dev_gpay_${Date.now()}`,
-        status: 'succeeded',
+    } else {
+      // Create a payment intent with Stripe using the Google Pay token
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: Math.round(amount * 100), // Convert to cents
+        currency: currency.toLowerCase(),
+        payment_method_data: {
+          type: 'card',
+          card: {
+            token: token,
+          },
+        },
+        confirm: true,
+        automatic_payment_methods: {
+          enabled: false,
+        },
       });
+      paymentIntentId = paymentIntent.id;
+      status = paymentIntent.status;
     }
 
-    // Create a payment intent with Stripe using the Google Pay token
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: Math.round(amount * 100), // Convert to cents
-      currency: currency.toLowerCase(),
-      payment_method_data: {
-        type: 'card',
-        card: {
-          token: token,
-        },
-      },
-      confirm: true,
-      automatic_payment_methods: {
-        enabled: false,
-      },
-    });
+    if (status === 'succeeded' && bookingData && contactInfo) {
+      try {
+        await processOrderAndSaveToDB(bookingData, contactInfo, {
+          amount: amount,
+          method: 'google-pay',
+          paymentIntentId: paymentIntentId
+        });
+      } catch (dbError) {
+        console.error('Failed to save order to database:', dbError);
+      }
+    }
 
     return NextResponse.json({
       success: true,
-      paymentIntentId: paymentIntent.id,
-      status: paymentIntent.status,
+      paymentIntentId: paymentIntentId,
+      status: status,
     });
     
   } catch (error) {

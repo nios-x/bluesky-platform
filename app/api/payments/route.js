@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
+import { processOrderAndSaveToDB } from '@/lib/services/orderService';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
   apiVersion: '2020-08-27',
@@ -7,7 +8,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
 
 export async function POST(request) {
   try {
-    const { amount, currency, paymentMethod, cardData } = await request.json();
+    const { amount, currency, paymentMethod, cardData, bookingData, contactInfo } = await request.json();
 
     let paymentIntent;
 
@@ -47,6 +48,20 @@ export async function POST(request) {
       };
     } else {
       throw new Error('Unsupported payment method');
+    }
+
+    if (paymentIntent.status === 'succeeded' && bookingData && contactInfo) {
+      console.log(paymentIntent)
+      try {
+        await processOrderAndSaveToDB(bookingData, contactInfo, {
+          amount: amount,
+          method: paymentMethod,
+          paymentIntentId: paymentIntent.id
+        });
+      } catch (dbError) {
+        console.error('Failed to save order to database:', dbError);
+        // Note: You might want to refund the payment here in a production environment
+      }
     }
 
     return NextResponse.json({

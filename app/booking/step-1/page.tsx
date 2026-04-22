@@ -8,19 +8,22 @@ import { useBooking } from "@/contexts/booking-context";
 import { ACCOUNT_DISCOUNT } from "@/lib/constants/booking";
 import { ChevronLeft, CheckCircle2, Mail, Phone } from "lucide-react";
 import Image from "next/image";
-import { DUMPSTER_TYPES, DUMPSTER_SIZES, PRICING, HEAVY_MATERIALS, HEAVY_MATERIAL_SURCHARGE } from "@/lib/constants/booking";
-import { ChevronRight, AlertCircle, Zap, ArrowLeft } from "lucide-react";
+import { HEAVY_MATERIALS, HEAVY_MATERIAL_SURCHARGE } from "@/lib/constants/booking";
+import { ChevronRight, AlertCircle, Zap, ArrowLeft, Trash2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { Lock } from "lucide-react";
 import GPayButton from "@/components/payments/gpay";
 import ProductInfoSection from "@/components/whats-included";
 import PayPalButton from "./paypal";
 import ItemsAdder from "@/components/order/ItemsAdder";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { LOCATIONS } from "@/lib/constants/locations";
 
 export default function BookingStep1() {
   const router = useRouter();
-  const { bookings, updateBooking, addBooking } = useBooking();
-  const booking = bookings[0] || {};
+  const { bookings, updateBooking, addBooking, removeBooking } = useBooking();
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  const booking = bookings[selectedIndex] || {};
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
@@ -43,18 +46,101 @@ export default function BookingStep1() {
     ],
   };
   const [accountCreation, setAccountCreation] = useState(false);
-  const [selectedDumpsterType, setSelectedDumpsterType] = useState(booking.dumpsterType || DUMPSTER_TYPES.ROLL_OFF);
+  const [selectedDumpsterType, setSelectedDumpsterType] = useState(booking.dumpsterType || "47d87a5e-84c8-431e-b055-c996142352eb");
   const [selectedSize, setSelectedSize] = useState(booking.dumpsterSize || 20);
+  const [currentImageIdx, setCurrentImageIdx] = useState(0);
+  const [dbDumpsterTypes, setDbDumpsterTypes] = useState<any[]>([]);
 
-  const sizes = DUMPSTER_SIZES[selectedDumpsterType as keyof typeof DUMPSTER_SIZES];
-  const basePrice = PRICING[selectedDumpsterType as keyof typeof PRICING]?.[selectedSize as keyof typeof PRICING[string]] || 435;
+  useEffect(() => {
+    const fetchFromDB = async () => {
+      try {
+        const response = await fetch('/api/pricing/dumpsters');
+        const data = await response.json();
+        
+        const typesMap: Record<string, any> = {};
+        
+        data.dumpsters.forEach((d: any) => {
+          const typeId = d.dumpster_types?.id;
+          if (!typeId) return;
+          const sizeValMatch = d.dumpster_sizes?.label?.match(/^(\d+)/);
+          const sizeVal = sizeValMatch ? parseInt(sizeValMatch[1], 10) : 0;
+          if (sizeVal === 0) return;
+
+          
+          if (!typesMap[typeId]) {
+            typesMap[typeId] = {
+              id: typeId,
+              name: d.dumpster_types.name,
+              description: d.dumpster_types.description,
+              image: d.dumpster_types.name.includes("Rubber") ? "/images/rubber-wheel-dumpster.png" : d.dumpster_types.name.includes("Permanent") ? "/images/permanent-dumpster.png" : "/images/roll-off-dumpster.png",
+              sizes: []
+            };
+          }
+          
+          let price = 435;
+          if (d.dumpster_types.name.includes("Roll Off") || d.dumpster_types.name.includes("Roll-off")) {
+            if (sizeVal === 10) price = 435;
+            if (sizeVal === 20) price = 455;
+            if (sizeVal === 30) price = 475;
+            if (sizeVal === 40) price = 555;
+          } else if (d.dumpster_types.name.includes("Rubber")) {
+             if (sizeVal === 10) price = 445;
+             if (sizeVal === 20) price = 525;
+             if (sizeVal === 30) price = 655;
+          } else {
+             if (sizeVal === 2) price = 250;
+             if (sizeVal === 4) price = 350;
+             if (sizeVal === 6) price = 450;
+             if (sizeVal === 8) price = 550;
+          }
+
+          typesMap[typeId].sizes.push({
+            dumpster_id: d.id,
+            size_id: d.dumpster_sizes?.id,
+            value: sizeVal,
+            label: `${sizeVal} Yard`,
+            dimensions: d.dumpster_sizes ? `${d.dumpster_sizes.length_ft}' × ${d.dumpster_sizes.width_ft}' × ${d.dumpster_sizes.height_ft}'` : "",
+            price: price
+          });
+        });
+        
+        Object.values(typesMap).forEach((type: any) => {
+          type.sizes.sort((a: any, b: any) => a.value - b.value);
+        });
+
+        setDbDumpsterTypes(Object.values(typesMap));
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    fetchFromDB();
+  }, []);
+
+  const currentTypeObj = dbDumpsterTypes.find(t => t.id === selectedDumpsterType) || dbDumpsterTypes[0];
+  const sizes = currentTypeObj?.sizes || [];
+  const selectedSizeObj = sizes.find((s: any) => s.value === selectedSize) || sizes[0];
+  const basePrice = selectedSizeObj?.price || 435;
+
+  const locationInfo = LOCATIONS.find(loc => loc.zip === booking.zipCode);
 
   // Check if heavy material restrictions apply
   const isHeavyMaterial = booking.materialType && HEAVY_MATERIALS.includes(booking.materialType);
-  const isHeavyMaterialWithRubberWheel = isHeavyMaterial && selectedDumpsterType === DUMPSTER_TYPES.RUBBER_WHEEL;
+  const isHeavyMaterialWithRubberWheel = isHeavyMaterial && selectedDumpsterType === "b7f86e0a-0e2d-439c-95b3-434c6e97eefe";
+
+  const calculateSurcharges = () => {
+    let surcharge = 0;
+    if (isHeavyMaterial && selectedDumpsterType === "47d87a5e-84c8-431e-b055-c996142352eb") {
+      surcharge += HEAVY_MATERIAL_SURCHARGE;
+    }
+    return surcharge;
+  };
+
+  const surcharges = calculateSurcharges();
+  const currentItemPrice = basePrice + surcharges;
+  const cartTotal = currentItemPrice + bookings.slice(1).reduce((sum: any, b: any) => sum + (b.totalPrice || 0), 0);
 
   const calculateFinalPrice = () => {
-    let finalPrice = booking.totalPrice || 0;
+    let finalPrice = cartTotal;
 
     // Add rental period cost (7 days is base, 14 days might have different pricing)
     if (booking.rentalPeriod && booking.rentalPeriod > 14) {
@@ -71,6 +157,15 @@ export default function BookingStep1() {
   };
 
   const finalPrice = calculateFinalPrice();
+
+  const handleRemoveItem = () => {
+    if (bookings.length <= 1) {
+      setError("Cannot remove the last item in your order.");
+      return;
+    }
+    removeBooking(selectedIndex);
+    setSelectedIndex(0);
+  };
 
   const handleInputChange = (field: string, value: string | boolean) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -116,7 +211,7 @@ export default function BookingStep1() {
 
       // Navigate to payment step
       router.push("/booking/step-2");
-    } catch (err: any) {
+    } catch (err: any) {  
       setError(err.message || "An error occurred. Please try again.");
     } finally {
       setLoading(false);
@@ -132,42 +227,76 @@ export default function BookingStep1() {
     // Google Pay is now handled by the GPayButton component
   }, []);
 
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentImageIdx((prev) => (prev + 1) % 4);
+    }, 3000);
+    return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    if (booking.dumpsterType) setSelectedDumpsterType(booking.dumpsterType);
+    if (booking.dumpsterSize) setSelectedSize(booking.dumpsterSize);
+  }, [selectedIndex, booking.dumpsterType, booking.dumpsterSize]);
+
   // Heavy materials only allow 10 yd roll-off
-  const allowedSizes = isHeavyMaterial && selectedDumpsterType === DUMPSTER_TYPES.ROLL_OFF
-    ? sizes.filter((s) => s.size === 10)
+  const allowedSizes = isHeavyMaterial && selectedDumpsterType === "47d87a5e-84c8-431e-b055-c996142352eb"
+    ? sizes.filter((s) => s.value === 10)
     : sizes;
 
   const handleDumpsterTypeChange = (type: string) => {
     setSelectedDumpsterType(type);
 
     // If heavy material and rubber wheel selected, show warning
-    if (isHeavyMaterial && type === DUMPSTER_TYPES.RUBBER_WHEEL) {
+    if (isHeavyMaterial && type === "b7f86e0a-0e2d-439c-95b3-434c6e97eefe") {
       setError("⚠️ Rubber wheel dumpsters cannot be used for concrete, brick, dirt, or rock. Please select Roll-Off.");
       return;
     }
     setError("");
 
-    // Reset size to first available
-    if (allowedSizes.length > 0) {
-      setSelectedSize(allowedSizes[0].size);
+    const typeObj = dbDumpsterTypes.find(t => t.id === type) || dbDumpsterTypes[0];
+    const newAllowedSizes = isHeavyMaterial && type === "47d87a5e-84c8-431e-b055-c996142352eb"
+      ? typeObj?.sizes.filter((s: any) => s.value === 10)
+      : typeObj?.sizes;
+      
+    let newSize = selectedSize;
+    if (newAllowedSizes && newAllowedSizes.length > 0 && !newAllowedSizes.find((s:any) => s.value === selectedSize)) {
+      newSize = newAllowedSizes[0].value;
+      setSelectedSize(newSize);
     }
+    
+    const sizeObj = typeObj?.sizes.find((s: any) => s.value === newSize) || typeObj?.sizes[0];
+    const newPrice = sizeObj?.price || 435;
+    
+    let surcharge = 0;
+    if (isHeavyMaterial && type === "47d87a5e-84c8-431e-b055-c996142352eb") {
+      surcharge += HEAVY_MATERIAL_SURCHARGE;
+    }
+
+    updateBooking(selectedIndex, {
+      ...booking,
+      dumpsterType: type,
+      dumpsterSize: newSize,
+      basePrice: newPrice,
+      surcharges: surcharge,
+      totalPrice: newPrice + surcharge,
+    });
   };
 
   const handleSizeChange = (size: number) => {
     setSelectedSize(size);
     setError("");
-  };
 
-  const calculateSurcharges = () => {
-    let surcharge = 0;
-    if (isHeavyMaterial && selectedDumpsterType === DUMPSTER_TYPES.ROLL_OFF) {
-      surcharge += HEAVY_MATERIAL_SURCHARGE;
-    }
-    return surcharge;
+    const sizeObj = sizes.find((s: any) => s.value === size) || sizes[0];
+    const newPrice = sizeObj?.price || 435;
+    
+    updateBooking(selectedIndex, {
+      ...booking,
+      dumpsterSize: size,
+      basePrice: newPrice,
+      totalPrice: newPrice + surcharges,
+    });
   };
-
-  const surcharges = calculateSurcharges();
-  const totalPrice = basePrice + surcharges;
 
   const handleContinue = () => {
     if (isHeavyMaterialWithRubberWheel) {
@@ -181,7 +310,7 @@ export default function BookingStep1() {
       dumpsterSize: selectedSize,
       basePrice,
       surcharges,
-      totalPrice,
+      totalPrice: currentItemPrice,
     });
 
     // Scroll to payment section
@@ -274,9 +403,11 @@ export default function BookingStep1() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          amount: totalPrice,
+          amount: cartTotal,
           currency: 'USD',
           paymentData,
+          bookingData: booking,
+          contactInfo: formData,
         }),
       });
 
@@ -320,7 +451,8 @@ export default function BookingStep1() {
     }
   };
 
-  const handleSubmit2 = async () => {
+  const handleSubmit2 = async (methodOverride?: string) => {
+    const methodToUse = typeof methodOverride === 'string' ? methodOverride : paymentMethod;
 
     setLoading(true);
     setError("");
@@ -332,10 +464,12 @@ export default function BookingStep1() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          amount: totalPrice,
+          amount: cartTotal,
           currency: 'USD',
-          paymentMethod: paymentMethod,
-          cardData: paymentMethod === 'credit-card' ? cardData : undefined,
+          paymentMethod: methodToUse,
+          cardData: methodToUse === 'credit-card' ? cardData : undefined,
+          bookingData: booking,
+          contactInfo: formData,
         }),
       });
 
@@ -343,7 +477,7 @@ export default function BookingStep1() {
 
       if (data.success) {
         updateBooking(0, {
-          paymentMethod: paymentMethod,
+          paymentMethod: methodToUse,
           paymentIntentId: data.paymentIntentId,
           paymentStatus: 'completed',
         });
@@ -359,7 +493,31 @@ export default function BookingStep1() {
     }
   };
 
-  const selectedSizeObj = sizes.find(s => s.size === selectedSize);
+  const getDumpsterInfo = (type: string) => {
+    if (type === "8fb25f2b-d593-42b6-8066-a62f59e2ca12") {
+      return {
+        title: "Permanent Dumpsters",
+        description: "Long-term waste management solutions for businesses and multi-unit properties",
+        features: ["Commercial-grade durability", "Regular pickup schedules", "Lockable lids available"],
+        image: "/images/permanent-dumpster.png"
+      };
+    } else if (type === "b7f86e0a-0e2d-439c-95b3-434c6e97eefe") {
+      return {
+        title: "Rubber-wheeled Dumpsters",
+        description: "Ideal for residential driveways and areas where surface protection is essential",
+        features: ["Surface-friendly rubber wheels", "Driveway protection", "Easy placement"],
+        image: "/images/rubber-wheel-dumpster.png"
+      };
+    }
+    return {
+      title: "Roll-off Dumpsters",
+      description: "Perfect for large construction projects, home renovations, and commercial waste disposal",
+      image: "/images/roll-off-dumpster.png"
+    };
+  };
+
+  const dumpsterInfo = getDumpsterInfo(selectedDumpsterType);
+  const sliderImages = Array(4).fill(dumpsterInfo.image);
 
   return (
     <main className="bg-white min-h-screen flex flex-col">
@@ -369,19 +527,19 @@ export default function BookingStep1() {
         <div className="flex justify-center">
           <div className="w-[25%] px-12">
             <div className="sticky top-24 mt-5 bg-gradient-to-b from-[#142A52] to-[#142A52]/80 text-white rounded-lg p-4 shadow-lg">
-              <h3 className="text-xl font-bold  pb-2 border-b border-white/20">Order Summary</h3>
+              <h3 className="text-xl font-bold  pb-2 border-b border-white/20">Shipping Address</h3>
 
               <div className="space-y-2 mb-6 pt-2">
                 <div>
-                  <p className="text-white/70 text-[12px]">Dumpster Type</p>
-                  <p className="font-bold">{booking.dumpsterSize} yd {booking.dumpsterType}</p>
+                  <p className="text-white/70 text-[12px]">State</p>
+                  <p className="font-bold capitalize">{booking.state || locationInfo?.state?.toLowerCase() || "MI"}</p>
                 </div>
                 <div>
-                  <p className="text-white/70 text-[12px]">Rental Period</p>
-                  <p className="font-bold">{booking.rentalPeriod} days</p>
+                  <p className="text-white/70 text-[12px]">City</p>
+                  <p className="font-bold capitalize">{booking.city || locationInfo?.city?.toLowerCase() || "N/A"}</p>
                 </div>
                 <div>
-                  <p className="text-white/70 text-[12px]">Location</p>
+                  <p className="text-white/70 text-[12px]">Zip Code</p>
                   <p className="font-bold">{booking.zipCode}</p>
                 </div>
                 <div>
@@ -397,34 +555,7 @@ export default function BookingStep1() {
                 </div>
               </div>
 
-              <div className="border-t border-white/20 pt-2 space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-white/70">Base Price</span>
-                  <span>${booking.basePrice}</span>
-                </div>
-                {booking.surcharges > 0 && (
-                  <div className="flex justify-between text-yellow-300">
-                    <span>Surcharges</span>
-                    <span>${booking.surcharges}</span>
-                  </div>
-                )}
-                {booking.rentalPeriod && booking.rentalPeriod > 14 && (
-                  <div className="flex justify-between text-yellow-300">
-                    <span>Extra Days ({booking.rentalPeriod - 14})</span>
-                    <span>${(booking.rentalPeriod - 14) * 25}</span>
-                  </div>
-                )}
-                {accountCreation && (
-                  <div className="flex justify-between text-green-300">
-                    <span>Account Discount</span>
-                    <span>-${ACCOUNT_DISCOUNT}</span>
-                  </div>
-                )}
-                <div className="flex justify-between text-[#C89B2B] border-t border-white/20 pt-3 text-lg font-bold">
-                  <span>Total</span>
-                  <span>${finalPrice.toFixed(2)}</span>
-                </div>
-              </div>
+          
             </div></div>
           <div className="w-[40%] mx-auto">
             {/* Progress */}
@@ -435,73 +566,85 @@ export default function BookingStep1() {
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                   <div className="max-w-3xl">
                     <p className="text-[15px] uppercase tracking-[0.2em] text-[#C89B2B] mb-2">
-                      Permanent Dumpster Rental
+                      {dumpsterInfo.title}
                     </p>
                     <h1 className="text-[24px] font-bold text-[#142A52] mb-2">
-                        
+                      {dumpsterInfo.title}
                     </h1>
                     <p className="text-[14px] text-slate-600 leading-relaxed">
-                      Compact permanent front-load dumpster designed for regular pickup and reliable waste collection.
+                      {dumpsterInfo.description}
                     </p>
                   </div>
-
-                  <div className="flex flex-wrap gap-1 text-[10px] text-slate-700">
-                    <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-1">
-                      Front-load design
-                    </span>
-                    <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-1">
-                      Weekly pickup ready
-                    </span>
-                  </div>
+                
                 </div>
 
                 {/* Content */}
                 <div className="flex w-full relative ">
 
                   {/* Left Big Image */}
-                  <div className="rounded-l-sm relative outline outline-slate-200 bg-white w-[70%] p-6">
-                    <div className="relative w-full h-[250px]">
-                      <Image
-                        src="/images/roll-off-dumpster.png"
-                        alt="Dumpster"
-                        fill
-                        className="object-contain"
-                      />
+                  <div className="rounded-l-sm relative outline outline-slate-200 bg-white w-[75%] p-6 overflow-hidden">
+                    <div 
+                      className="relative w-full h-[220px] flex transition-transform duration-500 ease-in-out"
+                      style={{ transform: `translateX(-${currentImageIdx * 100}%)` }}
+                    >
+                      {sliderImages.map((src, idx) => (
+                        <div key={idx} className="relative w-full h-full flex-shrink-0">
+                          <Image
+                            src={src}
+                            alt={`${dumpsterInfo.title} View ${idx + 1}`}
+                            fill
+                            className="object-contain"
+                          />
+                        </div>
+                      ))}
                     </div>
-                    <div className="w-[95%] absolute bottom-3 right-3 text-right">
-                      <p className="text-[12px] text-[#142A52]/60">Dimensions</p>
-                      <p className="text-[13px] ">
+                    
+                    {/* Slider Dots */}
+                    <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-2 z-10">
+                      {sliderImages.map((_, idx) => (
+                        <button
+                          key={idx}
+                          onClick={() => setCurrentImageIdx(idx)}
+                          className={`w-2 h-2 rounded-full transition-colors ${idx === currentImageIdx ? 'bg-[#142A52]' : 'bg-gray-300'}`}
+                        />
+                      ))}
+                    </div>
+
+                    <div className="absolute bottom-4 right-4 bg-white/90 backdrop-blur-md px-3 py-2 rounded-lg  border border-[#142A52]/10 z-10 text-right">
+                      <p className="text-[10px] uppercase tracking-wider text-[#142A52]/60 font-bold mb-0.5">Dimensions</p>
+                      <p className="text-[13px] font-bold text-[#142A52]">
                         {selectedSizeObj?.dimensions || "—"}
                       </p>
                     </div>
                   </div>
 
                   {/* Right Side Images */}
-                  <div className="w-[30%] flex flex-col">
-                    <div className="absolute -top-5 text-[11px] translate-x-[70%]">
-                      Other sizes available
+                  <div className="w-[25%] flex flex-col relative">
+                    <div className="absolute -top-5 text-[11px] right-0 text-gray-500">
+                      Available Views
                     </div>
-                    {[selectedSizeObj, selectedSizeObj, selectedSizeObj].map((item, i) => (
+                    {sliderImages.slice(0, 4).map((src, i) => (
                       <div
                         key={i}
-                        className={`flex items-center justify-between outline outline-slate-200 bg-white flex-1 p-4 ${i === 0 ? "rounded-tr-sm" : i === 2 ? "rounded-br-sm" : ""
-                          }`}
+                        onClick={() => setCurrentImageIdx(i)}
+                        className={`flex items-center justify-between outline outline-slate-200 bg-white flex-1 p-3 cursor-pointer hover:bg-gray-50 transition-colors ${
+                          i === 0 ? "rounded-tr-sm" : i === 3 ? "rounded-br-sm" : ""
+                        } ${currentImageIdx === i ? "ring-2 ring-inset ring-[#C89B2B]" : ""}`}
                       >
                         {/* Image */}
-                        <div className="relative w-[60%] h-[70px]">
+                        <div className="relative w-[60%] h-[50px]">
                           <Image
-                            src="/images/roll-off-dumpster.png"
-                            alt="Dumpster"
+                            src={src}
+                            alt={`Dumpster View ${i + 1}`}
                             fill
                             className="object-contain"
                           />
                         </div>
 
-                        {/* Dimensions */}
                         <div className="w-[40%] text-right">
-                          <p className="text-[9px] text-[#142A52]/60">Dimensions</p>
-                          <p className="text-[10px] ">
-                            {item?.dimensions || "—"}
+                          <p className="text-[9px] text-[#142A52]/60">View</p>
+                          <p className="text-[10px] font-bold">
+                            0{i + 1}
                           </p>
                         </div>
                       </div>
@@ -512,6 +655,39 @@ export default function BookingStep1() {
                 </div>
               </div>
             </motion.div>
+
+            {/* Dimension and Capacity Selectors */}
+            <div className="flex flex-col md:flex-row gap-6 mb-8 mt-6">
+              <div className="w-full md:w-1/2">
+                <label className="block text-[12px] font-bold text-[#142A52] mb-2">Dumpster Dimension</label>
+                <Select value={selectedSize?.toString()} onValueChange={(val) => handleSizeChange(parseInt(val))}>
+                  <SelectTrigger className="w-full border-2 border-[#142A52]/30 rounded-lg focus:border-[#C89B2B] focus:outline-none h-[42px] bg-white">
+                    <SelectValue placeholder="Select Dimension" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {sizes.map((s: any) => (
+                      <SelectItem key={s.value} value={s.value.toString()}>{s.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="w-full md:w-1/2">
+                <label className="block text-[12px] font-bold text-[#142A52] mb-2">Dumpster Capacity</label>
+                <Select>
+                  <SelectTrigger className="w-full border-2 border-[#142A52]/30 rounded-lg focus:border-[#C89B2B] focus:outline-none h-[42px] bg-white">
+                    <SelectValue placeholder="Select Capacity" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1">1 Ton</SelectItem>
+                    <SelectItem value="2">2 Tons</SelectItem>
+                    <SelectItem value="3">3 Tons</SelectItem>
+                    <SelectItem value="4">4 Tons</SelectItem>
+                    <SelectItem value="5">5 Tons</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
             <ProductInfoSection product={product} />
             <div className=" mt-10 gap-8">
               {/* Main Form */}
@@ -612,7 +788,7 @@ export default function BookingStep1() {
             >
 
               {/* Heavy Material Warning */}
-              {isHeavyMaterial && selectedDumpsterType === DUMPSTER_TYPES.ROLL_OFF && (
+              {isHeavyMaterial && selectedDumpsterType === "47d87a5e-84c8-431e-b055-c996142352eb" && (
                 <motion.div
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -635,38 +811,19 @@ export default function BookingStep1() {
                 className="bg-gradient-to-br from-[#142A52] via-[#1a3a6f] to-[#0f1f3a] text-white rounded-2xl shadow-xl p-8 border border-[#C89B2B]/30"
               >
                 <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-2xl font-bold">Order Summary</h3>
+                  <h3 className="text-2xl font-bold">Shipping Address</h3>
                   <Zap className="w-6 h-6 text-[#C89B2B]" />
                 </div>
 
-                <div className="space-y-4 mb-6 pb-6 border-b border-white/20">
-                  <div className="flex justify-between items-center">
-                    <span className="text-white/80">{selectedSize} yd {selectedDumpsterType}</span>
-                    <span className="font-bold text-lg">${basePrice}</span>
-                  </div>
-                  {surcharges > 0 && (
-                    <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      className="flex justify-between items-center text-yellow-300 font-bold"
-                    >
-                      <span className="flex items-center gap-2">
-                        <Zap className="w-4 h-4" />
-                        Heavy Material Surcharge
-                      </span>
-                      <span>+${surcharges}</span>
-                    </motion.div>
-                  )}
-                </div>
-
+                
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.2 }}
                   className="flex justify-between items-center"
                 >
-                  <span className="text-xl font-bold">Total (Base Price)</span>
-                  <span className="text-3xl font-bold text-[#C89B2B]">${totalPrice}</span>
+                  <span className="text-xl pl-2 font-bold">Total (Base Price)</span>
+                  <span className="text-3xl font-bold text-[#C89B2B]">${cartTotal.toFixed(2)}</span>
                 </motion.div>
                 <p className="text-xs text-white/60 mt-4">
                   💡 Rental period and special requests may adjust final price
@@ -681,7 +838,7 @@ export default function BookingStep1() {
                 <div className="pr-2">
 
                  <motion.button
-                    onClick={() => handleSubmit('apple-pay')}
+                    onClick={() => handleSubmit2('apple-pay')}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     className="w-full p-3 bg-black text-white font-bold rounded  flex items-center justify-center gap-2 h-[42px] hover:bg-gray-900 transition-colors"
@@ -698,7 +855,7 @@ export default function BookingStep1() {
                     className="mb-2 w-full flex pb-1  [&>div]:w-full pr-2 [&_.google-pay-button-container]:w-full [&_button]:!w-full"
                   >
                     <GPayButton
-                      amount={totalPrice}
+                      amount={cartTotal}
                       // @ts-ignore - Safely pass buttonSizeMode if GPayButton passes props down
                       buttonSizeMode="fill"
                       onPaymentSuccess={(paymentData) => {
@@ -716,7 +873,7 @@ export default function BookingStep1() {
                     className="mb-2"
                   >
                     <PayPalButton
-                      amount={totalPrice}
+                      amount={cartTotal}
                       onSuccess={(details) => handlePayPalPayment(details)}
                       onError={(error) => setError('PayPal error: ' + error.message)}
                     />
@@ -811,7 +968,7 @@ export default function BookingStep1() {
                   <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    onClick={() => handleSubmit('credit-card')}
+                    onClick={() => handleSubmit2('credit-card')}
                     disabled={loading}
                     className="w-full mt-6 px-8 py-4 bg-gradient-to-r from-[#142A52] to-[#C89B2B] hover:from-[#0f1f3a] hover:to-[#d4a835] text-white font-bold text-lg rounded-xl transition-all flex items-center justify-center gap-3 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
                   >
@@ -833,18 +990,18 @@ export default function BookingStep1() {
             </motion.div>
 
           </div>
-          <div className="w-[35%] px-25">
+          <div className="w-[35%] px-10">
 
             <div className="scale-[0.9] mt-5 bg-gradient-to-b from-[#142A52] to-[#142A52]/80 text-white rounded-2xl p-2 ">
               <ItemsAdder
-                dumpsterTypes={[
-                  { id: "roll-off", name: "Roll-off" },
-                  { id: "rubber-wheel", name: "Rubber Wheel" },
-                  { id: "front-load", name: "Front Load" },
-                ]}
-                sizes={[10, 20, 30, 40]}
+                dumpsterTypes={dbDumpsterTypes.map(t => ({ id: t.id, name: t.name, sizes: t.sizes.map((s: any) => s.value) }))}
+                sizes={Array.from(new Set(dbDumpsterTypes.flatMap(t => t.sizes.map((s: any) => s.value))))}
+                selectedIndex={selectedIndex}
+                onSelect={(idx) => setSelectedIndex(idx)}
                 onAddMore={(newItem) => {
-                  const itemBasePrice = PRICING[newItem.type as keyof typeof PRICING]?.[newItem.size as keyof typeof PRICING[string]] || 435;
+                  const addedTypeObj = dbDumpsterTypes.find((t: any) => t.id === newItem.type) || dbDumpsterTypes[0];
+                  const addedSizeObj = addedTypeObj?.sizes.find((s: any) => s.value === newItem.size) || addedTypeObj?.sizes[0];
+                  const itemBasePrice = addedSizeObj?.price || 435;
                   let extraDaysCost = 0;
                   if (newItem.rentalPeriod > 14) {
                     extraDaysCost = (newItem.rentalPeriod - 14) * 25;

@@ -6,19 +6,24 @@ import { useBooking, BookingData } from "@/contexts/booking-context";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Trash2 } from "lucide-react";
 
 type Props = {
-  dumpsterTypes: { id: string; name: string }[];
-  sizes: number[];
+  dumpsterTypes: { id: string; name: string; sizes?: number[] }[];
+  sizes?: number[];
   onAddMore?: (data: { type: string; size: number; deliveryDate: string; removalDate: string; rentalPeriod: number }) => void;
+  selectedIndex?: number;
+  onSelect?: (index: number) => void;
 };
 
 export default function OrderDetailsCard({
   dumpsterTypes,
   sizes,
   onAddMore,
+  selectedIndex = 0,
+  onSelect,
 }: Props) {
-  const { bookings } = useBooking();
+  const { bookings, removeBooking } = useBooking();
   const [type, setType] = useState("");
   const [size, setSize] = useState<number | "">("");
   const [deliveryDate, setDeliveryDate] = useState("");
@@ -70,13 +75,39 @@ export default function OrderDetailsCard({
           {bookings && bookings.length > 0 ? (
             <div className="space-y-4">
               {bookings.map((b: BookingData, idx: number) => (
-                <div key={idx} className="flex justify-between items-center  border-[#142A52]/10 last:border-0 last:pb-0">
+                <div 
+                  key={idx} 
+                  onClick={() => onSelect && onSelect(idx)}
+                  className={`flex justify-between items-center p-2 rounded cursor-pointer transition-colors border-[#142A52]/10 last:border-0 last:pb-0 ${selectedIndex === idx ? 'bg-[#142A52]/10 border-l-4 border-l-[#C89B2B]' : 'hover:bg-gray-100'}`}
+                >
                   <div>
-                    <p className="font-bold text-[#142A52]">{b.dumpsterSize ? `${b.dumpsterSize} Yard ` : ''}{b.dumpsterType || 'Dumpster'}</p>
+                    <p className="font-bold text-[#142A52]">
+                      {b.dumpsterSize ? `${b.dumpsterSize} Yard ` : ''}
+                      {dumpsterTypes.find(t => t.id === b.dumpsterType)?.name || b.dumpsterType || 'Dumpster'}
+                    </p>
                     {b.rentalPeriod ? <p className="text-xs text-[#142A52]/70">{b.rentalPeriod} Days</p> : null}
                   </div>
-                  <div className="text-right">
-                    <p className="font-bold text-[#142A52]">${b.totalPrice ? b.totalPrice.toFixed(2) : "0.00"}</p>
+                  <div className="flex items-center gap-4">
+                    <div className="text-right">
+                      <p className="font-bold text-[#142A52]">${b.totalPrice ? b.totalPrice.toFixed(2) : "0.00"}</p>
+                    </div>
+                    {bookings.length > 1 && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeBooking(idx);
+                          if (selectedIndex === idx && onSelect) {
+                            onSelect(0);
+                          } else if (selectedIndex > idx && onSelect) {
+                            onSelect(selectedIndex - 1);
+                          }
+                        }}
+                        className="flex items-center gap-1 text-red-500 hover:text-red-700 transition-colors p-1 rounded hover:bg-red-50"
+                        title="Remove Item"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    )}
                   </div>
                 </div>
               ))}
@@ -97,7 +128,7 @@ export default function OrderDetailsCard({
         <label className="block text-sm font-bold text-[#142A52] mb-2">
           Type of Dumpster
         </label>
-        <Select value={type} onValueChange={setType}>
+        <Select value={type} onValueChange={(t) => { setType(t); setSize(""); }}>
           <SelectTrigger className="w-full border-2 border-[#142A52]/30 rounded-lg h-[52px] focus:border-[#C89B2B] focus:ring-[#C89B2B]/20 text-black">
             <SelectValue placeholder="Select type" />
           </SelectTrigger>
@@ -116,12 +147,12 @@ export default function OrderDetailsCard({
         <label className="block text-sm font-bold text-[#142A52] mb-2">
           Size of Dumpster
         </label>
-        <Select value={size?.toString() || ""} onValueChange={(val) => setSize(Number(val))}>
-          <SelectTrigger className="w-full border-2 border-[#142A52]/30 rounded-lg h-[52px] focus:border-[#C89B2B] focus:ring-[#C89B2B]/20 text-black">
-            <SelectValue placeholder="Select size" />
+        <Select value={size?.toString() || ""} onValueChange={(val) => setSize(Number(val))} disabled={!type}>
+          <SelectTrigger className="w-full border-2 border-[#142A52]/30 rounded-lg h-[52px] focus:border-[#C89B2B] focus:ring-[#C89B2B]/20 text-black disabled:opacity-50">
+            <SelectValue placeholder={type ? "Select size" : "Select type first"} />
           </SelectTrigger>
           <SelectContent>
-            {sizes.map((s) => (
+            {(dumpsterTypes.find(t => t.id === type)?.sizes || sizes || []).map((s) => (
               <SelectItem key={s} value={s.toString()}>
                 {s} Yard
               </SelectItem>

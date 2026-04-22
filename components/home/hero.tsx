@@ -8,46 +8,76 @@ import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useBooking } from "@/contexts/booking-context";
 import { PROJECT_TYPES, MATERIAL_TYPES } from "@/lib/constants/booking";
+import { LOCATIONS } from "@/lib/constants/locations";
 
-const dumpsterTypes = [
-  {
-    id: "roll-off",
-    name: "Roll-off Dumpsters",
-    description: "Perfect for large construction projects, home renovations",
-    image: "/images/roll-off-dumpster.png",
-    sizes: [
-      { value: 10, label: "10 Yard", price: 435 },
-      { value: 20, label: "20 Yard", price: 455 },
-      { value: 30, label: "30 Yard", price: 475 },
-      { value: 40, label: "40 Yard", price: 555 }
-    ]
-  },
-  {
-    id: "rubber-wheel",
-    name: "Rubber-wheeled Dumpsters",
-    description: "Ideal for residential driveways and surface protection",
-    image: "/images/rubber-wheel-dumpster.png",
-    sizes: [
-      { value: 10, label: "10 Yard", price: 445 },
-      { value: 20, label: "20 Yard", price: 525 },
-      { value: 30, label: "30 Yard", price: 655 }
-    ]
-  },
-  {
-    id: "front-load",
-    name: "Front Load Dumpsters",
-    description: "Commercial-grade for businesses and multi-unit properties",
-    image: "/images/permanent-dumpster.png",
-    sizes: [
-      { value: 2, label: "2 Yard", price: 250 },
-      { value: 4, label: "4 Yard", price: 350 },
-      { value: 6, label: "6 Yard", price: 450 },
-      { value: 8, label: "8 Yard", price: 550 }
-    ]
-  }
-];
 
 export function Hero() {
+  const [dbDumpsterTypes, setDbDumpsterTypes] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchFromDB = async () => {
+      try {
+        const response = await fetch('/api/pricing/dumpsters');
+        const data = await response.json();
+        
+        const typesMap: Record<string, any> = {};
+        
+        data.dumpsters.forEach((d: any) => {
+          const typeId = d.dumpster_types?.id;
+          if (!typeId) return;
+          
+          if (!typesMap[typeId]) {
+            typesMap[typeId] = {
+              id: typeId,
+              name: d.dumpster_types.name,
+              description: d.dumpster_types.description,
+              image: d.dumpster_types.name.includes("Rubber") ? "/images/rubber-wheel-dumpster.png" : d.dumpster_types.name.includes("Permanent") ? "/images/permanent-dumpster.png" : "/images/roll-off-dumpster.png",
+              sizes: []
+            };
+          }
+          
+          const sizeValMatch = d.dumpster_sizes?.label?.match(/^(\d+)/);
+          const sizeVal = sizeValMatch ? parseInt(sizeValMatch[1], 10) : 0;
+          if (sizeVal === 0) return;
+          
+          let price = 435;
+          if (d.dumpster_types.name.includes("Roll Off") || d.dumpster_types.name.includes("Roll-off")) {
+            if (sizeVal === 10) price = 435;
+            if (sizeVal === 20) price = 455;
+            if (sizeVal === 30) price = 475;
+            if (sizeVal === 40) price = 555;
+          } else if (d.dumpster_types.name.includes("Rubber")) {
+             if (sizeVal === 10) price = 445;
+             if (sizeVal === 20) price = 525;
+             if (sizeVal === 30) price = 655;
+          } else {
+             if (sizeVal === 2) price = 250;
+             if (sizeVal === 4) price = 350;
+             if (sizeVal === 6) price = 450;
+             if (sizeVal === 8) price = 550;
+          }
+
+          typesMap[typeId].sizes.push({
+            dumpster_id: d.id,
+            size_id: d.dumpster_sizes?.id,
+            value: sizeVal,
+            label: `${sizeVal} Yard`,
+            dimensions: d.dumpster_sizes ? `${d.dumpster_sizes.length_ft}' × ${d.dumpster_sizes.width_ft}' × ${d.dumpster_sizes.height_ft}'` : "",
+            price: price
+          });
+        });
+        
+        Object.values(typesMap).forEach((type: any) => {
+          type.sizes.sort((a: any, b: any) => a.value - b.value);
+        });
+
+        setDbDumpsterTypes(Object.values(typesMap));
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    fetchFromDB();
+  }, []);
   const [zipCode, setZipCode] = useState("");
   const [dumpsterType, setDumpsterType] = useState("");
   const [dumpsterSize, setDumpsterSize] = useState<number | null>(null);
@@ -62,8 +92,48 @@ export function Hero() {
   const [removalDateObj, setRemovalDateObj] = useState<Date | undefined>(undefined);
   const [projectType, setProjectType] = useState("");
 
+  const [locationQuery, setLocationQuery] = useState("");
+  const [filteredLocations, setFilteredLocations] = useState<any[]>([]);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+  const getMichiganZipCodesByCity = (query: string) => {
+    if (!query) return [];
+    return LOCATIONS.filter((loc: any) =>
+      (loc.city && loc.city.toLowerCase().includes(query.toLowerCase())) ||
+      (loc.zip && loc.zip.toLowerCase().includes(query.toLowerCase())) ||
+      (loc.state && loc.state.toLowerCase().includes(query.toLowerCase()))
+    ).slice(0, 10);
+  };
+
+  const handleLocationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const query = e.target.value;
+    setLocationQuery(query);
+    setZipCode(""); // Reset actual zip code until a valid location is explicitly selected
+    if (query.trim().length > 0) {
+      setFilteredLocations(getMichiganZipCodesByCity(query));
+      setIsDropdownOpen(true);
+    } else {
+      setFilteredLocations([]);
+      setIsDropdownOpen(false);
+    }
+  };
+
+  const handleLocationSelect = (loc: any) => {
+    const displayValue = `${loc.zip}, ${loc.city}, ${loc.state || 'MI'}`;
+    setLocationQuery(displayValue);
+    setZipCode(loc.zip);
+    setIsDropdownOpen(false);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" && isDropdownOpen && filteredLocations.length > 0) {
+      e.preventDefault();
+      handleLocationSelect(filteredLocations[0]);
+    }
+  };
+
   // Find selected dumpster type and size
-  const selectedDumpsterType = dumpsterTypes.find(type => type.id === dumpsterType);
+  const selectedDumpsterType = dbDumpsterTypes.find(type => type.id === dumpsterType);
   const selectedSize = selectedDumpsterType?.sizes.find(size => size.value === dumpsterSize);
 
   // Price calculations
@@ -186,23 +256,43 @@ export function Hero() {
             <h2 className="text-2xl font-bold text-[#142A52] mb-6">Book a Dumpster in 60 Seconds</h2>
 
             {/* Zip Code */}
-            <div className="mb-6">
-              <label className="block text-sm font-bold text-[#142A52] mb-2">1. ZIP Code or Address</label>
+            <div className="mb-6 relative">
+              <label className="block text-sm font-bold text-[#142A52] mb-2">1. Select Location</label>
               <input
-                type="number"
-                value={zipCode}
-                onChange={(e) => setZipCode(e.target.value)}
-                placeholder="e.g., 48001 or full address"
-                style={{ "scrollbarColor": "transparent" }}
-                className="w-full px-4 py-3 border-2 border-[#142A52]/30 rounded-lg focus:border-[#C89B2B] focus:ring-2 focus:ring-[#C89B2B]/20 outline-none transition"
+                type="text"
+                value={locationQuery}
+                onChange={handleLocationChange}
+                onKeyDown={handleKeyDown}
+                onFocus={() => {
+                  if (locationQuery.length > 0) setIsDropdownOpen(true);
+                }}
+                onBlur={() => setTimeout(() => setIsDropdownOpen(false), 200)}
+                placeholder="Type city or zip code"
+                className="w-full px-4 py-3 border-2 border-[#142A52]/30 rounded-lg focus:border-[#C89B2B] focus:ring-2 focus:ring-[#C89B2B]/20 outline-none transition h-auto text-base"
               />
+              {isDropdownOpen && filteredLocations.length > 0 && (
+                <ul className="absolute z-50 w-full mt-1 bg-white border-2 border-[#142A52]/10 rounded-lg shadow-xl max-h-60 overflow-y-auto">
+                  {filteredLocations.map((loc: any, index: number) => (
+                    <li
+                      key={index}
+                      onMouseDown={(e) => {
+                        e.preventDefault(); // Prevent input from losing focus
+                        handleLocationSelect(loc);
+                      }}
+                      className="px-4 py-3 hover:bg-[#C89B2B]/10 cursor-pointer text-sm text-[#142A52] border-b border-gray-100 last:border-0 transition-colors"
+                    >
+                      <span className="font-bold">{loc.zip}</span>, {loc.city}, {loc.state || 'MI'}
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
 
             {/* Dumpster Type Selection */}
             <div className="mb-6">
               <label className="block text-sm font-bold text-[#142A52] mb-3">2. Type of Dumpster</label>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {dumpsterTypes.map((type) => (
+                {dbDumpsterTypes.map((type) => (
                   <button
                     key={type.id}
                     onClick={() => {
@@ -411,5 +501,3 @@ export function Hero() {
     </section>
   );
 }
-
-

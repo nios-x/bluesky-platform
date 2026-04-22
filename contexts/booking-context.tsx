@@ -7,7 +7,9 @@ export interface BookingData {
   zipCode: string;
   deliveryDate: string;
   rentalPeriod: number;
-
+  state?: string;
+  city?: string;
+  
   projectType: string;
   materialType: string;
 
