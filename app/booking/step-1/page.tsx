@@ -385,17 +385,7 @@ export default function BookingStep1() {
     setError("");
 
     try {
-      // If the component simulated a success response in development mode,
-      // it will already include a paymentIntentId and status.
-      if (paymentData?.status === 'succeeded' && paymentData?.paymentIntentId) {
-        updateBooking(0, {
-          paymentMethod: 'google-pay',
-          paymentIntentId: paymentData.paymentIntentId,
-          paymentStatus: 'completed',
-        });
-        router.push('/booking/confirmation');
-        return;
-      }
+      // We now strictly rely on the backend API to handle development simulation and order saving.
 
       const response = await fetch('/api/payments/google-pay', {
         method: 'POST',
@@ -406,7 +396,7 @@ export default function BookingStep1() {
           amount: cartTotal,
           currency: 'USD',
           paymentData,
-          bookingData: booking,
+          bookingsData: bookings,
           contactInfo: formData,
         }),
       });
@@ -468,7 +458,7 @@ export default function BookingStep1() {
           currency: 'USD',
           paymentMethod: methodToUse,
           cardData: methodToUse === 'credit-card' ? cardData : undefined,
-          bookingData: booking,
+          bookingsData: bookings,
           contactInfo: formData,
         }),
       });

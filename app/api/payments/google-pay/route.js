@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { processOrderAndSaveToDB } from '@/lib/services/orderService';
+import { supabaseAdmin } from '@/lib/supabase/admin';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
   apiVersion: '2020-08-27',
@@ -8,7 +9,21 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
 
 export async function POST(request) {
   try {
-    const { paymentData, amount, currency, bookingData, contactInfo } = await request.json();
+    const body = await request.json();
+    const { paymentData, amount, currency, bookingsData, contactInfo } = body;
+
+    let webhookId = null;
+    // Save the raw form data in the database
+    try {
+      const { data, error } = await supabaseAdmin.from('payment_webhooks').insert({
+        gateway: 'google-pay',
+        payload: body,
+        processed: false
+      }).select().single();
+      if (data && !error) webhookId = data.id;
+    } catch (e) {
+      console.error('Failed to save form data to payment_webhooks:', e);
+    }
 
     console.log('Received Google Pay data:', JSON.stringify(paymentData, null, 2));
 
@@ -53,13 +68,21 @@ export async function POST(request) {
       status = paymentIntent.status;
     }
 
-    if (status === 'succeeded' && bookingData && contactInfo) {
+    if (status === 'succeeded' && bookingsData && contactInfo) {
       try {
-        await processOrderAndSaveToDB(bookingData, contactInfo, {
+        const order = await processOrderAndSaveToDB(bookingsData, contactInfo, {
           amount: amount,
           method: 'google-pay',
           paymentIntentId: paymentIntentId
         });
+
+        // Update the webhook with the order_id and set processed to true
+        if (webhookId && order && order.id) {
+          await supabaseAdmin.from('payment_webhooks').update({
+            order_id: order.id,
+            processed: true
+          }).eq('id', webhookId);
+        }
       } catch (dbError) {
         console.error('Failed to save order to database:', dbError);
       }

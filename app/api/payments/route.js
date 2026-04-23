@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { processOrderAndSaveToDB } from '@/lib/services/orderService';
+import { supabaseAdmin } from '@/lib/supabase/admin';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
   apiVersion: '2020-08-27',
@@ -8,7 +9,21 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
 
 export async function POST(request) {
   try {
-    const { amount, currency, paymentMethod, cardData, bookingData, contactInfo } = await request.json();
+    const body = await request.json();
+    const { amount, currency, paymentMethod, cardData, bookingsData, contactInfo } = body;
+
+    let webhookId = null;
+    // Save the raw form data in the database
+    try {
+      const { data, error } = await supabaseAdmin.from('payment_webhooks').insert({
+        gateway: paymentMethod || 'unknown',
+        payload: body,
+        processed: false
+      }).select().single();
+      if (data && !error) webhookId = data.id;
+    } catch (e) {
+      console.error('Failed to save form data to payment_webhooks:', e);
+    }
 
     let paymentIntent;
 
@@ -50,14 +65,22 @@ export async function POST(request) {
       throw new Error('Unsupported payment method');
     }
 
-    if (paymentIntent.status === 'succeeded' && bookingData && contactInfo) {
+    if (paymentIntent.status === 'succeeded' && bookingsData && contactInfo) {
       console.log(paymentIntent)
       try {
-        await processOrderAndSaveToDB(bookingData, contactInfo, {
+        const order = await processOrderAndSaveToDB(bookingsData, contactInfo, {
           amount: amount,
           method: paymentMethod,
           paymentIntentId: paymentIntent.id
         });
+
+        // Update the webhook with the order_id and set processed to true
+        if (webhookId && order && order.id) {
+          await supabaseAdmin.from('payment_webhooks').update({
+            order_id: order.id,
+            processed: true
+          }).eq('id', webhookId);
+        }
       } catch (dbError) {
         console.error('Failed to save order to database:', dbError);
         // Note: You might want to refund the payment here in a production environment
