@@ -1,16 +1,20 @@
 import { NextResponse } from 'next/server';
-import Stripe from 'stripe';
+import { stripe } from '@/lib/stripe';
 import { processOrderAndSaveToDB } from '@/lib/services/orderService';
 import { supabaseAdmin } from '@/lib/supabase/admin';
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2020-08-27',
-});
+import { calculateServerSideTotal } from '@/lib/services/pricingService';
 
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { amount, currency, paymentMethod, cardData, bookingsData, contactInfo } = body;
+    const { currency, paymentMethod, bookingsData, contactInfo } = body;
+
+    // RULE: Server-Side Amount Validation
+    const serverAmount = await calculateServerSideTotal(bookingsData, contactInfo);
+    
+    if (!serverAmount || serverAmount <= 0) {
+      throw new Error('Invalid or empty order amount calculated on server');
+    }
 
     let webhookId = null;
     // Save the raw form data in the database
@@ -27,36 +31,17 @@ export async function POST(request) {
 
     let paymentIntent;
 
-    if (paymentMethod === 'credit-card') {
-      // Create a payment method with card details
-      const paymentMethodObj = await stripe.paymentMethods.create({
-        type: 'card',
-        card: {
-          number: cardData.cardNumber.replace(/\s/g, ''),
-          exp_month: parseInt(cardData.expiry.split('/')[0]),
-          exp_year: parseInt('20' + cardData.expiry.split('/')[1]),
-          cvc: cardData.cvc,
-        },
-      });
+    // RULE: Never Handle Raw Card Data
+    // Removed `credit-card` block entirely. Use Stripe Checkout or Elements instead.
 
-      // Create payment intent
-      paymentIntent = await stripe.paymentIntents.create({
-        amount: Math.round(amount * 100), // Convert to cents
-        currency: currency.toLowerCase(),
-        payment_method: paymentMethodObj.id,
-        confirm: true,
-        automatic_payment_methods: {
-          enabled: false,
-        },
-      });
-    } else if (paymentMethod === 'paypal') {
-      // For demo, simulate PayPal
+    if (paymentMethod === 'paypal') {
+      // For demo, simulate PayPal success. Real implementation would redirect to PayPal SDK.
       paymentIntent = {
         id: 'pi_paypal_' + Date.now(),
         status: 'succeeded',
       };
     } else if (paymentMethod === 'apple-pay') {
-      // For demo, simulate Apple Pay
+      // For demo, simulate Apple Pay. Real implementation would use Stripe Payment Request Button / Elements.
       paymentIntent = {
         id: 'pi_applepay_' + Date.now(),
         status: 'succeeded',
@@ -65,11 +50,15 @@ export async function POST(request) {
       throw new Error('Unsupported payment method');
     }
 
+    // Ideally, for real payment gateways, you would handle this via Webhooks (Rule: Idempotency & Webhooks)
+    // Because this is currently simulating Paypal/Apple Pay on the backend without webhooks, we process it here.
     if (paymentIntent.status === 'succeeded' && bookingsData && contactInfo) {
       console.log(paymentIntent)
       try {
+        // RULE: Idempotency keys should be used if we were calling Stripe APIs here.
+        // We simulate order processing.
         const order = await processOrderAndSaveToDB(bookingsData, contactInfo, {
-          amount: amount,
+          amount: serverAmount,
           method: paymentMethod,
           paymentIntentId: paymentIntent.id
         });
@@ -83,7 +72,6 @@ export async function POST(request) {
         }
       } catch (dbError) {
         console.error('Failed to save order to database:', dbError);
-        // Note: You might want to refund the payment here in a production environment
       }
     }
 

@@ -17,7 +17,7 @@ export default function PayPalButton({ amount, onSuccess, onError }: PayPalButto
     let isCancelled = false;
 
     loadScript({
-      "client-id": process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || "test",
+      clientId: process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || "test",
       currency: "USD",
       intent: "capture",
       components: "buttons",
@@ -28,7 +28,7 @@ export default function PayPalButton({ amount, onSuccess, onError }: PayPalButto
         if (paypal && paypal.Buttons && containerRef.current) {
           containerRef.current.innerHTML = ""; // Clear existing buttons if re-rendering
           
-          paypal.Buttons({
+          const buttons = paypal.Buttons({
             createOrder: (data, actions) => {
               return actions.order.create({
                 intent: "CAPTURE",
@@ -52,10 +52,23 @@ export default function PayPalButton({ amount, onSuccess, onError }: PayPalButto
                 }
               }
             },
-            onError: (err) => {
+            onError: (err: any) => {
+              // Ignore standard unmount errors from the SDK
+              if (err && err.message && typeof err.message === 'string' && err.message.includes('Detected container element removed from DOM')) {
+                return;
+              }
               onError(err);
             },
-          }).render(containerRef.current);
+          });
+          
+          if (containerRef.current) {
+            buttons.render(containerRef.current).catch((err: any) => {
+               if (err && err.message && typeof err.message === 'string' && err.message.includes('Detected container element removed from DOM')) {
+                  return;
+               }
+               console.error("PayPal render error:", err);
+            });
+          }
           
           setIsLoaded(true);
         }
@@ -73,9 +86,11 @@ export default function PayPalButton({ amount, onSuccess, onError }: PayPalButto
   }, [amount, onSuccess, onError]);
 
   return (
-    <div className="w-full">
-      {!isLoaded && <div className="text-center py-4 font-bold text-[#142A52]">Loading PayPal...</div>}
-      <div ref={containerRef} className="w-full min-h-[150px] z-0 relative"></div>
+    <div className="w-full relative">
+      {!isLoaded && <div className="text-center py-4 font-bold text-[#142A52] absolute inset-0 z-10 bg-white/80 flex items-center justify-center">Loading PayPal...</div>}
+      <div className="w-full min-h-[150px] z-0 relative">
+        <div ref={containerRef}></div>
+      </div>
     </div>
   );
 }

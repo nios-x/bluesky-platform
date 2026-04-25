@@ -137,26 +137,53 @@ export default function BookingStep1() {
 
   const surcharges = calculateSurcharges();
   const currentItemPrice = basePrice + surcharges;
-  const cartTotal = currentItemPrice + bookings.slice(1).reduce((sum: any, b: any) => sum + (b.totalPrice || 0), 0);
 
-  const calculateFinalPrice = () => {
-    let finalPrice = cartTotal;
+  const calculateItemPrices = () => {
+    if (!bookings || bookings.length === 0) return [];
 
-    // Add rental period cost (7 days is base, 14 days might have different pricing)
-    if (booking.rentalPeriod && booking.rentalPeriod > 14) {
-      const extraDays = booking.rentalPeriod - 14;
-      finalPrice += extraDays * 25; // $25 per extra day
-    }
+    return bookings.map((b: any, index: number) => {
+      let bBasePrice = 435;
+      const bDumpsterType = index === selectedIndex ? selectedDumpsterType : b.dumpsterType;
+      const bSize = parseInt((index === selectedIndex ? selectedSize : b.dumpsterSize) || 20);
+      const bMaterialType = b.materialType;
+      const bRentalPeriod = b.rentalPeriod;
 
-    // Apply account discount if creating account
-    if (accountCreation) {
-      finalPrice -= ACCOUNT_DISCOUNT;
-    }
+      if (dbDumpsterTypes.length > 0) {
+        const typeObj = dbDumpsterTypes.find((t: any) => t.id === bDumpsterType) || dbDumpsterTypes[0];
+        if (typeObj && typeObj.sizes) {
+          const sizeObj = typeObj.sizes.find((s: any) => s.value === bSize) || typeObj.sizes[0];
+          if (sizeObj) bBasePrice = sizeObj.price;
+        }
+      }
 
-    return Math.max(finalPrice, 0);
+      let bSurcharges = 0;
+      const isHeavy = bMaterialType && HEAVY_MATERIALS.includes(bMaterialType);
+      if (isHeavy && bDumpsterType === "47d87a5e-84c8-431e-b055-c996142352eb") {
+        bSurcharges += HEAVY_MATERIAL_SURCHARGE;
+      }
+
+      let bExtraDays = 0;
+      if (bRentalPeriod && bRentalPeriod > 14) {
+        bExtraDays = (bRentalPeriod - 14) * 25;
+      }
+
+      return bBasePrice + bSurcharges + bExtraDays;
+    });
   };
 
-  const finalPrice = calculateFinalPrice();
+  const itemPrices = calculateItemPrices();
+
+  const calculateCartTotal = () => {
+    let total = itemPrices.reduce((sum, p) => sum + p, 0);
+
+    if (accountCreation) {
+      total -= ACCOUNT_DISCOUNT;
+    }
+
+    return Math.max(total, 0);
+  };
+
+  const cartTotal = calculateCartTotal();
 
   const handleRemoveItem = () => {
     if (bookings.length <= 1) {
@@ -279,7 +306,7 @@ export default function BookingStep1() {
       dumpsterSize: newSize,
       basePrice: newPrice,
       surcharges: surcharge,
-      totalPrice: newPrice + surcharge,
+      totalPrice: newPrice + surcharge + (booking.rentalPeriod && booking.rentalPeriod > 14 ? (booking.rentalPeriod - 14) * 25 : 0),
     });
   };
 
@@ -305,12 +332,12 @@ export default function BookingStep1() {
     }
 
     // Update booking with selection and scroll to payment
-    updateBooking(0, {
+    updateBooking(selectedIndex, {
       dumpsterType: selectedDumpsterType,
       dumpsterSize: selectedSize,
       basePrice,
       surcharges,
-      totalPrice: currentItemPrice,
+      totalPrice: currentItemPrice + (booking.rentalPeriod && booking.rentalPeriod > 14 ? (booking.rentalPeriod - 14) * 25 : 0),
     });
 
     // Scroll to payment section
@@ -441,7 +468,50 @@ export default function BookingStep1() {
     }
   };
 
+  const handleStripePayment = async () => {
+    if (!formData.fullName || !formData.email || !formData.phone) {
+      setError("Please fill out your contact details (Full Name, Email, and Phone) before proceeding.");
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+
+    try {
+      const response = await fetch('/api/checkout_sessions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          amount: cartTotal,
+          bookingsData: bookings,
+          contactInfo: formData,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        setError(data.error || 'Payment failed');
+      }
+    } catch (err: any) {
+      setError('Payment processing failed: ' + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSubmit2 = async (methodOverride?: string) => {
+    if (!formData.fullName || !formData.email || !formData.phone) {
+      setError("Please fill out your contact details (Full Name, Email, and Phone) before proceeding.");
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+
     const methodToUse = typeof methodOverride === 'string' ? methodOverride : paymentMethod;
 
     setLoading(true);
@@ -684,8 +754,19 @@ export default function BookingStep1() {
 
               <div className="">
                 {/* Contact Information */}
-                <div className="mb-8 p-3">
+                <div id="billing-section" className="mb-8 p-3">
                   <h2 className="text-2xl font-bold text-[#142A52] mb-6"> Billing Information</h2>
+
+                  {error && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 rounded-r-lg flex items-start gap-3"
+                    >
+                      <AlertCircle className="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" />
+                      <p className="text-red-700 text-sm font-medium">{error}</p>
+                    </motion.div>
+                  )}
 
                   <div className="mb-6">
                     <label className="block text-[12px] font-bold text-[#142A52] mb-2">
@@ -825,7 +906,20 @@ export default function BookingStep1() {
 
                 {/* Direct Payment Buttons */}
                 <div className="space-y-4 mb-8">
-                <div className="pr-2">
+                <div className="">
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mb-2"
+                  >
+                    <button
+                      type="button"
+                      onClick={handleStripePayment}
+                      className="w-full p-3 bg-[#635BFF] text-white font-bold rounded flex items-center justify-center gap-2 h-[42px] hover:bg-[#4B45FF] transition-colors"
+                    >
+                      Pay with Stripe
+                    </button>
+                  </motion.div>
 
                  <motion.button
                     onClick={() => handleSubmit2('apple-pay')}
@@ -840,8 +934,6 @@ export default function BookingStep1() {
                   </motion.button>
                   </div>
                   <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
                     className="mb-2 w-full flex pb-1  [&>div]:w-full pr-2 [&_.google-pay-button-container]:w-full [&_button]:!w-full"
                   >
                     <GPayButton
@@ -869,111 +961,10 @@ export default function BookingStep1() {
                     />
                   </motion.div>
 
+
                  
                 </div>
 
-                <div className="relative flex items-center py-4 mb-6">
-                  <div className="flex-grow border-t border-[#142A52]/20"></div>
-                  <span className="flex-shrink-0 mx-4 text-[#142A52]/50 text-sm font-bold uppercase">Or pay with card</span>
-                  <div className="flex-grow border-t border-[#142A52]/20"></div>
-                </div>
-
-                {/* Credit Card Form */}
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="bg-[#142A52]/5 border-2 border-[#142A52]/20 rounded-lg p-6 mb-6"
-                >
-                    <div className="mb-4">
-                      <label className="block text-[12px] font-bold text-[#142A52] mb-2">
-                        Cardholder Name *
-                      </label>
-                      <input
-                        type="text"
-                        value={cardData.cardName}
-                        onChange={(e) => handleCardInputChange("cardName", e.target.value)}
-                        className="w-full px-4 py-3 border-2 border-[#142A52]/30 rounded-lg focus:border-[#C89B2B] focus:outline-none"
-                        placeholder="John Doe"
-                      />
-                    </div>
-
-                    <div className="mb-4">
-                      <label className="block text-[12px] font-bold text-[#142A52] mb-2">
-                        Card Number *
-                      </label>
-                      <input
-                        type="text"
-                        value={cardData.cardNumber}
-                        onChange={(e) =>
-                          handleCardInputChange(
-                            "cardNumber",
-                            e.target.value.replace(/\D/g, "").slice(0, 16)
-                          )
-                        }
-                        className="w-full px-4 py-3 border-2 border-[#142A52]/30 rounded-lg focus:border-[#C89B2B] focus:outline-none"
-                        placeholder="1234 5678 9012 3456"
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-[12px] font-bold text-[#142A52] mb-2">
-                          Expiry Date *
-                        </label>
-                        <input
-                          type="text"
-                          placeholder="MM/YY"
-                          value={cardData.expiry}
-                          onChange={(e) => {
-                            let val = e.target.value.replace(/\D/g, "");
-                            if (val.length >= 2) val = val.slice(0, 2) + "/" + val.slice(2, 4);
-                            handleCardInputChange("expiry", val);
-                          }}
-                          className="w-full px-4 py-3 border-2 border-[#142A52]/30 rounded-lg focus:border-[#C89B2B] focus:outline-none"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-[12px] font-bold text-[#142A52] mb-2">
-                          CVC *
-                        </label>
-                        <input
-                          type="text"
-                          placeholder="123"
-                          value={cardData.cvc}
-                          onChange={(e) =>
-                            handleCardInputChange("cvc", e.target.value.replace(/\D/g, "").slice(0, 4))
-                          }
-                          className="w-full px-4 py-3 border-2 border-[#142A52]/30 rounded-lg focus:border-[#C89B2B] focus:outline-none"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2 text-xs text-[#142A52]/60 mt-4">
-                      <Lock size={14} /> Secure payment processing
-                    </div>
-                </motion.div>
-
-                {error && <div className="text-red-500 mt-4 text-center font-bold">{error}</div>}
-
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => handleSubmit2('credit-card')}
-                    disabled={loading}
-                    className="w-full mt-6 px-8 py-4 bg-gradient-to-r from-[#142A52] to-[#C89B2B] hover:from-[#0f1f3a] hover:to-[#d4a835] text-white font-bold text-lg rounded-xl transition-all flex items-center justify-center gap-3 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {loading ? (
-                      <>
-                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                        Processing...
-                      </>
-                    ) : (
-                      <>
-                        Complete Booking
-                        <ChevronRight className="w-5 h-5" />
-                      </>
-                    )}
-                  </motion.button>
               </div>
               {/* Action Buttons */}
 
@@ -988,6 +979,8 @@ export default function BookingStep1() {
                 sizes={Array.from(new Set(dbDumpsterTypes.flatMap(t => t.sizes.map((s: any) => s.value))))}
                 selectedIndex={selectedIndex}
                 onSelect={(idx) => setSelectedIndex(idx)}
+                cartTotal={cartTotal}
+                itemPrices={itemPrices}
                 onAddMore={(newItem) => {
                   const addedTypeObj = dbDumpsterTypes.find((t: any) => t.id === newItem.type) || dbDumpsterTypes[0];
                   const addedSizeObj = addedTypeObj?.sizes.find((s: any) => s.value === newItem.size) || addedTypeObj?.sizes[0];
