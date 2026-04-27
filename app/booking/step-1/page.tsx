@@ -733,7 +733,7 @@ export default function BookingStep1() {
               </div>
               <div className="w-full md:w-1/2">
                 <label className="block text-[12px] font-bold text-[#142A52] mb-2">Dumpster Capacity</label>
-                <Select>
+                <Select value={booking.dumpsterCapacity?.toString() || ""} onValueChange={(val) => updateBooking(selectedIndex, { ...booking, dumpsterCapacity: parseInt(val) })}>
                   <SelectTrigger className="w-full border-2 border-[#142A52]/30 rounded-lg focus:border-[#C89B2B] focus:outline-none h-[42px] bg-white">
                     <SelectValue placeholder="Select Capacity" />
                   </SelectTrigger>

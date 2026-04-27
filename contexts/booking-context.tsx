@@ -15,6 +15,7 @@ export interface BookingData {
 
   dumpsterType: string;
   dumpsterSize: number;
+  dumpsterCapacity?: number; // Weight capacity in tons
 
   fullName: string;
   email: string;

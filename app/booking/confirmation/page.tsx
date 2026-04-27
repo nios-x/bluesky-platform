@@ -177,7 +177,7 @@ function BookingConfirmationContent() {
                   <div key={idx} className="bg-[#142A52]/5 p-4 rounded-lg flex flex-col sm:flex-row justify-between gap-4">
                     <div>
                       <p className="font-bold text-[#142A52] text-lg">
-                        {b.dumpsterSize || b.size} Yard {getDumpsterName(b.dumpsterType || b.dumpster_type_id)}
+                        {b.dumpsterSize || b.size} Yard {(b.dumpsterType || b.dumpster_type_id || 'Dumpster').replace(/_/g, ' ')}
                       </p>
                       <p className="text-sm text-[#142A52]/70 mt-1 flex items-center gap-2">
                         <Calendar size={14} /> 
@@ -187,6 +187,12 @@ function BookingConfirmationContent() {
                         <p className="text-sm text-[#142A52]/70 mt-1 flex items-center gap-2">
                           <Package size={14} /> 
                           Rental Period: {b.rentalPeriod} Days
+                        </p>
+                      )}
+                      {b.dumpsterCapacity && (
+                        <p className="text-sm text-[#142A52]/70 mt-1 flex items-center gap-2">
+                          <Package size={14} /> 
+                          Weight Capacity: {b.dumpsterCapacity} Ton{b.dumpsterCapacity > 1 ? 's' : ''}
                         </p>
                       )}
                     </div>

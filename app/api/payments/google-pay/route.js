@@ -31,16 +31,26 @@ export async function POST(request) {
     let token;
     if (paymentData.paymentMethodData && paymentData.paymentMethodData.tokenizationData) {
       token = paymentData.paymentMethodData.tokenizationData.token;
+    } else if (paymentData.paymentMethod && paymentData.paymentMethod.tokenizationData) {
+      token = paymentData.paymentMethod.tokenizationData.token;
     } else {
       console.error('Unexpected payment data structure. Available keys:', Object.keys(paymentData));
-      if (paymentData.tokenizationData) {
-        token = paymentData.tokenizationData.token;
-      } else {
-        throw new Error('Unable to extract payment token from Google Pay data');
+      throw new Error('Unable to extract payment token from Google Pay data');
+    }
+
+    // Parse token if it's a string (it might be JSON)
+    if (typeof token === 'string') {
+      try {
+        const parsed = JSON.parse(token);
+        if (parsed.id) {
+          token = parsed.id;
+        }
+      } catch (e) {
+        // Token is already a string ID, not JSON
       }
     }
 
-    console.log('Extracted token:', token ? 'present' : 'missing');
+    console.log('Extracted token:', token ? token.substring(0, 20) + '...' : 'missing');
 
     let paymentIntentId = `dev_gpay_${Date.now()}`;
     let status = 'succeeded';
@@ -49,23 +59,22 @@ export async function POST(request) {
     if (token === 'example' || !token || token.includes('example')) {
       console.log('Development mode: Simulating Google Pay payment success');
     } else {
-      // Create a payment intent with Stripe using the Google Pay token
-      const paymentIntent = await stripe.paymentIntents.create({
-        amount: Math.round(amount * 100), // Convert to cents
-        currency: currency.toLowerCase(),
-        payment_method_data: {
-          type: 'card',
-          card: {
-            token: token,
-          },
-        },
-        confirm: true,
-        automatic_payment_methods: {
-          enabled: false,
-        },
-      });
-      paymentIntentId = paymentIntent.id;
-      status = paymentIntent.status;
+      try {
+        // When using a Stripe token (tok_*), we need to create a payment intent differently
+        // Option 1: Use the Charges API (legacy but simpler for tokens)
+        const charge = await stripe.charges.create({
+          amount: Math.round(amount * 100), // Convert to cents
+          currency: currency.toLowerCase(),
+          source: token,
+          description: `Google Pay payment for order`,
+        });
+        
+        paymentIntentId = charge.id;
+        status = charge.status === 'succeeded' ? 'succeeded' : 'failed';
+      } catch (stripeError) {
+        console.error('Stripe charge error:', stripeError.message);
+        throw new Error(`Stripe payment failed: ${stripeError.message}`);
+      }
     }
 
     if (status === 'succeeded' && bookingsData && contactInfo) {
