@@ -36,6 +36,9 @@ export async function POST(req: Request) {
 
     // Create Checkout Sessions from body params using price_data for dynamic pricing
     const session = await stripe.checkout.sessions.create({
+      payment_method_types: ['card'],
+      customer_email: contactInfo?.email,
+      billing_address_collection: 'required',
       line_items: [
         {
           price_data: {
@@ -53,6 +56,7 @@ export async function POST(req: Request) {
       cancel_url: `${origin}/booking/step-1`, // Redirect back to booking step 1 if canceled
       client_reference_id: webhookId ? webhookId.toString() : undefined, // Map webhook payload
       payment_intent_data: {
+        description: 'Dumpster Rental Booking - Services',
         metadata: {
           webhookId: webhookId ? webhookId.toString() : '',
         }

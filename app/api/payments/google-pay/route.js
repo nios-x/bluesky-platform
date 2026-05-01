@@ -60,13 +60,37 @@ export async function POST(request) {
       console.log('Development mode: Simulating Google Pay payment success');
     } else {
       try {
+        const customerName = contactInfo?.fullName || 'Guest Customer';
+        const customerAddress = {
+          line1: bookingsData?.[0]?.address || contactInfo?.address || '123 Main St',
+          city: bookingsData?.[0]?.city || contactInfo?.city || 'Detroit',
+          state: bookingsData?.[0]?.state || contactInfo?.state || 'MI',
+          postal_code: bookingsData?.[0]?.zipCode || contactInfo?.zipCode || '48201',
+          country: 'US',
+        };
+
+        const customer = await stripe.customers.create({
+          name: customerName,
+          email: contactInfo?.email,
+          address: customerAddress,
+          source: token,
+          shipping: {
+            name: customerName,
+            address: customerAddress
+          }
+        });
+
         // When using a Stripe token (tok_*), we need to create a payment intent differently
         // Option 1: Use the Charges API (legacy but simpler for tokens)
         const charge = await stripe.charges.create({
           amount: Math.round(amount * 100), // Convert to cents
           currency: currency.toLowerCase(),
-          source: token,
-          description: `Google Pay payment for order`,
+          customer: customer.id,
+          description: `Google Pay payment for Dumpster Rental Services`,
+          shipping: {
+            name: customerName,
+            address: customerAddress
+          }
         });
         
         paymentIntentId = charge.id;

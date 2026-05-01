@@ -437,7 +437,7 @@ export default function BookingStep1() {
           paymentStatus: 'completed',
         });
 
-        router.push('/booking/confirmation');
+        router.push(`/booking/confirmation?session_id=${data.paymentIntentId}`);
       } else {
         setError(data.error || 'Payment failed');
       }
@@ -460,7 +460,7 @@ export default function BookingStep1() {
       });
 
       // Since PayPal handled the transaction directly, skip intermediate steps
-      router.push('/booking/confirmation');
+      router.push(`/booking/confirmation?session_id=${details.id}`);
     } catch (err: any) {
       setError('Payment processing failed: ' + err.message);
     } finally {
@@ -542,7 +542,7 @@ export default function BookingStep1() {
           paymentStatus: 'completed',
         });
 
-        router.push('/booking/confirmation');
+        router.push(`/booking/confirmation?session_id=${data.paymentIntentId}`);
       } else {
         setError(data.error || 'Payment failed');
       }
@@ -653,6 +653,7 @@ export default function BookingStep1() {
                             src={src}
                             alt={`${dumpsterInfo.title} View ${idx + 1}`}
                             fill
+                            sizes="(max-width: 768px) 100vw, 50vw"
                             className="object-contain"
                           />
                         </div>
@@ -697,6 +698,7 @@ export default function BookingStep1() {
                             src={src}
                             alt={`Dumpster View ${i + 1}`}
                             fill
+                            sizes="(max-width: 768px) 100vw, 50vw"
                             className="object-contain"
                           />
                         </div>
