@@ -5,6 +5,7 @@ import { getOrderByIdController } from "@/controllers/order";
 export async function GET(req, { params }) {
   try {
     const supabase = createSupabaseServerClient();
+    const { id } = await params;
     const {
       data: { user },
       error,
@@ -13,7 +14,7 @@ export async function GET(req, { params }) {
     if (error || !user)
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const order = await getOrderByIdController(supabase, user, params.id);
+    const order = await getOrderByIdController(supabase, user, id);
 
     return NextResponse.json(order);
   } catch (err) {

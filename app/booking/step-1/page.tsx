@@ -408,6 +408,12 @@ export default function BookingStep1() {
   };
 
   const handleGooglePayPayment = async (paymentData: any) => {
+    if (!formData.fullName || !formData.email || !formData.phone) {
+      setError("Please fill out your contact details (Full Name, Email, and Phone) before proceeding.");
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+
     setLoading(true);
     setError("");
 
@@ -937,11 +943,27 @@ export default function BookingStep1() {
                   </div>
                   <motion.div
                     className="mb-2 w-full flex pb-1  [&>div]:w-full pr-2 [&_.google-pay-button-container]:w-full [&_button]:!w-full"
+                    onClickCapture={(e) => {
+                      if (!formData.fullName || !formData.email || !formData.phone) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setError("Please fill out your contact details (Full Name, Email, and Phone) before proceeding.");
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      }
+                    }}
                   >
                     <GPayButton
                       amount={cartTotal}
                       // @ts-ignore - Safely pass buttonSizeMode if GPayButton passes props down
                       buttonSizeMode="fill"
+                      onClick={(e: any) => {
+                        if (!formData.fullName || !formData.email || !formData.phone) {
+                          if (e && e.preventDefault) e.preventDefault();
+                          setError("Please fill out your contact details (Full Name, Email, and Phone) before proceeding.");
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                          throw new Error("Form incomplete");
+                        }
+                      }}
                       onPaymentSuccess={(paymentData) => {
                         handleGooglePayPayment(paymentData);
                       }}
@@ -955,6 +977,14 @@ export default function BookingStep1() {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     className="mb-2"
+                    onClickCapture={(e) => {
+                      if (!formData.fullName || !formData.email || !formData.phone) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setError("Please fill out your contact details (Full Name, Email, and Phone) before proceeding.");
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      }
+                    }}
                   >
                     <PayPalButton
                       amount={cartTotal}

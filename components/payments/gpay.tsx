@@ -7,6 +7,7 @@ interface GPayButtonProps {
   countryCode?: string;
   onPaymentSuccess?: (paymentData: any) => void;
   onPaymentError?: (error: any) => void;
+  onClick?: (event: any) => void;
 }
 
 export default function GPayButton({
@@ -14,7 +15,8 @@ export default function GPayButton({
   currency = 'USD',
   countryCode = 'US',
   onPaymentSuccess,
-  onPaymentError
+  onPaymentError,
+  onClick
 }: GPayButtonProps) {
   const handleLoadPaymentData = (paymentRequest: any) => {
     console.log('Google Pay payment data authorized:', paymentRequest);
@@ -37,6 +39,7 @@ export default function GPayButton({
           onPaymentError(error);
         }
       }}
+      onClick={onClick}
       buttonColor="default"
       buttonType="pay"
       buttonSizeMode="fill"

@@ -139,8 +139,20 @@ export default function AdminOrdersPage() {
               ))
             ) : sortedOrders.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="h-32 text-center text-muted-foreground">
-                  {searchQuery ? "No orders match your search." : "No orders found."}
+                <TableCell colSpan={7} className="h-[400px] text-center">
+                  <div className="flex flex-col items-center justify-center space-y-3 h-full">
+                    <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-2">
+                      <Search className="h-8 w-8 text-muted-foreground opacity-50" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+                      {searchQuery ? "No orders match your search" : "No orders yet"}
+                    </h3>
+                    <p className="text-sm text-muted-foreground max-w-sm mx-auto">
+                      {searchQuery 
+                        ? "Try adjusting your search term to find what you're looking for." 
+                        : "When customers book dumpsters, their orders will appear here for you to manage."}
+                    </p>
+                  </div>
                 </TableCell>
               </TableRow>
             ) : (

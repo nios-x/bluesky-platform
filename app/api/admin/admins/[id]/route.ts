@@ -3,8 +3,9 @@ import { updateAdminRecord } from "@/lib/models/admin_users";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { getAdmin } from "@/lib/admin/get-admin";
 
-export async function PUT(req: Request, { params }: { params: { id: string } }) {
+export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params;
     const { admin } = await getAdmin();
     if (!admin) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -26,7 +27,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
       return NextResponse.json({ error: "No valid fields to update" }, { status: 400 });
     }
 
-    const data = await updateAdminRecord(supabaseAdmin, params.id, allowedPayload);
+    const data = await updateAdminRecord(supabaseAdmin, id, allowedPayload);
     return NextResponse.json({ success: true, admin: data });
   } catch (error: any) {
     console.error("Update admin error:", error);
