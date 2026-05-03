@@ -167,7 +167,7 @@ export function HeroNew() {
       {/* Background */}
       <div className="absolute inset-0 w-full h-full">
         <img
-          src="/images/Home_page_main.png"
+          src="/Dumpster/hero.png"
           alt="Blue Sky Disposal"
           className="w-full h-full object-cover object-[center_75%]"
           loading="eager"

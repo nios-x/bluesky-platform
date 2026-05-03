@@ -173,6 +173,28 @@ export function Hero() {
     return dates;
   };
 
+  // ===== PROGRESSIVE REVEAL COMPLETION STATES =====
+  const isStep1Done = !!zipCode;
+  const isStep2Done = !!dumpsterType;
+  const isStep3Done = !!dumpsterSize;
+  const isStep4Done = !!projectType;
+  const isStep5Done = !!deliveryDate;
+  const isStep6Done = !!removalDate;
+
+  // Determine what steps should be visible
+  const showStep2 = isStep1Done;
+  const showStep34 = isStep2Done;
+  const showStep56 = isStep3Done && isStep4Done;
+
+  // Dynamic button text based on completion
+  const getButtonText = () => {
+    if (!isStep1Done) return "Enter Location →";
+    if (!isStep2Done) return "Select Dumpster Type →";
+    if (!isStep3Done || !isStep4Done) return "Continue →";
+    if (!isStep5Done || !isStep6Done) return "Pick Dates →";
+    return "📅 Book Now →";
+  };
+
   const handleStartBooking = () => {
     setSearchError("");
 
@@ -228,15 +250,15 @@ export function Hero() {
   };
 
   return (
-    <section className="relative min-h-[700px] lg:min-h-[900px] flex items-center overflow-hidden">
+    <section className="relative min-h-[700px] lg:min-h-[900px] flex items-start overflow-hidden">
       {/* Background Image */}
-      <div className="absolute inset-0 w-full h-full">
+      <div className="absolute justify-center inset-0 w-full h-full">
         <img
-          src="/images/Home_page_main.png"
+          src="/Dumpster/hero.png"
           alt="Blue Sky Disposal Services"
-          className="w-full h-full object-cover brightness-75"
+          className="w-full h-full object-cover brightness-90 contrast-110"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-[#142A52]/80 via-[#142A52]/50 to-[#C89B2B]/10" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#142A52]/70 via-[#142A52]/40 to-transparent" />
       </div>
 
       {/* Content */}
@@ -253,7 +275,7 @@ export function Hero() {
         {/* Booking Box */}
         <div className="max-w-4xl scale-[0.95] mx-auto">
           <div className="bg-white rounded-2xl shadow-2xl p-6 sm:p-10 text-left border-4 border-[#C89B2B]">
-            <h2 className="text-2xl font-bold text-[#142A52] mb-6">Book a Dumpster in 60 Seconds</h2>
+            
 
             {/* Zip Code */}
             <div className="mb-6 relative">
@@ -288,165 +310,217 @@ export function Hero() {
               )}
             </div>
 
-            {/* Dumpster Type Selection */}
-            <div className="mb-6">
-              <label className="block text-sm font-bold text-[#142A52] mb-3">2. Type of Dumpster</label>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {dbDumpsterTypes.map((type) => (
-                  <button
-                    key={type.id}
-                    onClick={() => {
-                      setDumpsterType(type.id);
-                      setDumpsterSize(null); // Reset size when type changes
-                    }}
-                    className={`p-4 rounded-lg border-2 transition-all text-left ${dumpsterType === type.id
-                        ? "border-[#C89B2B] bg-[#C89B2B]/10"
-                        : "border-[#142A52]/30 hover:border-[#C89B2B]/50"
+            {/* Dumpster Type Selection - Shows only after location is set */}
+            <div
+              className={`transition-all duration-500 ease-in-out overflow-hidden ${
+                showStep2
+                  ? "max-h-[500px] opacity-100 mb-6"
+                  : "max-h-0 opacity-0"
+              }`}
+            >
+              <div className="mb-6">
+                <label className="block text-sm font-bold text-[#142A52] mb-3">2. Type of Dumpster</label>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {dbDumpsterTypes.map((type) => (
+                    <button
+                      key={type.id}
+                      onClick={() => {
+                        setDumpsterType(type.id);
+                        setDumpsterSize(null); // Reset size when type changes
+                      }}
+                      className={`p-4 rounded-lg border-2 transition-all text-left ${
+                        dumpsterType === type.id
+                          ? "border-[#C89B2B] bg-[#C89B2B]/10"
+                          : "border-[#142A52]/30 hover:border-[#C89B2B]/50"
                       }`}
+                    >
+                      <img
+                        src={type.image}
+                        alt={type.name}
+                        className="w-full h-20 object-cover rounded mb-2"
+                      />
+                      <h3 className="font-bold text-[#142A52] text-sm">{type.name}</h3>
+                      <p className="text-xs text-[#142A52]/70">{type.description}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+              </div>
+            {/* Step 3 & 4: Size & Project Type - Shows only after dumpster type is selected */}
+            <div
+              className={`transition-all duration-500 ease-in-out overflow-hidden ${
+                showStep34
+                  ? "max-h-[300px] opacity-100 mb-6"
+                  : "max-h-0 opacity-0"
+              }`}
+            >
+              <div className="flex justify-between flex-wrap gap-6">
+                {/* Dumpster Size Selection */}
+                <div className="mb-6 w-full md:w-[48%]">
+                  <label className="block text-sm font-bold text-[#142A52] mb-2">
+                    3. Size of Dumpster
+                  </label>
+                  <Select
+                    value={dumpsterSize?.toString()}
+                    onValueChange={(value) => setDumpsterSize(parseInt(value))}
                   >
-                    <img
-                      src={type.image}
-                      alt={type.name}
-                      className="w-full h-20 object-cover rounded mb-2"
-                    />
-                    <h3 className="font-bold text-[#142A52] text-sm">{type.name}</h3>
-                    <p className="text-xs text-[#142A52]/70">{type.description}</p>
-                  </button>
-                ))}
+                    <SelectTrigger className="w-full border-2 border-[#142A52]/30 focus:border-[#C89B2B]">
+                      <SelectValue placeholder="Select dumpster size" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {selectedDumpsterType?.sizes.map((size) => (
+                        <SelectItem key={size.value} value={size.value.toString()}>
+                          {size.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Project Type Selection */}
+                <div className="mb-6 w-full md:w-[48%]">
+                  <label className="block text-sm font-bold text-[#142A52] mb-2">
+                    4. Project Type
+                  </label>
+                  <Select value={projectType} onValueChange={setProjectType}>
+                    <SelectTrigger className="w-full border-2 border-[#142A52]/30 focus:border-[#C89B2B]">
+                      <SelectValue placeholder="Select project type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {PROJECT_TYPES.map((type) => (
+                        <SelectItem key={type} value={type}>
+                          {type}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </div>
-            <div className="flex justify-between flex-wrap gap-6">
-              {/* Dumpster Size Selection */}
+            {/* Step 5 & 6: Delivery & Removal Dates - Shows only after size and project type are selected */}
+            <div
+              className={`transition-all duration-500 ease-in-out overflow-hidden ${
+                showStep56
+                  ? "max-h-[600px] opacity-100 mb-6"
+                  : "max-h-0 opacity-0"
+              }`}
+            >
+              <div className="flex justify-between flex-wrap gap-6">
+                {/* Delivery Date */}
+                <div className="mb-6 w-full md:w-[48%]">
+                  <label className="block text-sm font-bold text-[#142A52] mb-2">
+                    5. Delivery Date
+                  </label>
+                  <Popover
+                    open={showDeliveryCalendar}
+                    onOpenChange={setShowDeliveryCalendar}
+                  >
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className="w-full justify-start text-left font-normal border-2 border-[#142A52]/30 hover:border-[#C89B2B] h-10"
+                      >
+                        {deliveryDate
+                          ? new Date(deliveryDate).toLocaleDateString("en-US", {
+                              weekday: "short",
+                              month: "short",
+                              day: "numeric",
+                            })
+                          : "Select delivery date"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={deliveryDateObj}
+                        onSelect={(selectedDate) => {
+                          if (selectedDate) {
+                            setDeliveryDateObj(selectedDate);
+                            setDeliveryDate(
+                              selectedDate.toISOString().split("T")[0]
+                            );
+                            setShowDeliveryCalendar(false);
+                            // Reset removal date when delivery date changes
+                            setRemovalDateObj(undefined);
+                            setRemovalDate("");
+                          }
+                        }}
+                        className="rounded-lg border"
+                        disabled={(date) => {
+                          // Disable dates before today
+                          const today = new Date();
+                          today.setHours(0, 0, 0, 0);
+                          if (date < today) return true;
 
-              <div className="mb-6 w-[48%]">
-                <label className="block text-sm font-bold text-[#142A52] mb-2">3. Size of Dumpster</label>
-                <Select value={dumpsterSize?.toString()} onValueChange={(value) => setDumpsterSize(parseInt(value))}>
-                  <SelectTrigger className="w-full border-2 border-[#142A52]/30 focus:border-[#C89B2B]">
-                    <SelectValue placeholder="Select dumpster size" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {selectedDumpsterType?.sizes.map((size) => (
-                      <SelectItem key={size.value} value={size.value.toString()}>
-                        {size.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                          const dayOfWeek = date.getDay();
+                          return dayOfWeek === 0 || dayOfWeek === 6; // Disable weekends
+                        }}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+
+                {/* Removal Date */}
+                <div className="mb-6 w-full md:w-[48%]">
+                  <label className="block text-sm font-bold text-[#142A52] mb-2">
+                    6. Removal Date (7 days free, $25/day after)
+                  </label>
+                  <Popover
+                    open={showRemovalCalendar}
+                    onOpenChange={setShowRemovalCalendar}
+                  >
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className="w-full justify-start text-left font-normal border-2 border-[#142A52]/30 hover:border-[#C89B2B] h-10"
+                      >
+                        {removalDate
+                          ? new Date(removalDate).toLocaleDateString("en-US", {
+                              weekday: "short",
+                              month: "short",
+                              day: "numeric",
+                            })
+                          : "Select removal date"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={removalDateObj}
+                        onSelect={(selectedDate) => {
+                          if (selectedDate) {
+                            setRemovalDateObj(selectedDate);
+                            setRemovalDate(
+                              selectedDate.toISOString().split("T")[0]
+                            );
+                            setShowRemovalCalendar(false);
+                          }
+                        }}
+                        className="rounded-lg border"
+                        disabled={(date) => {
+                          const dayOfWeek = date.getDay();
+                          // Disable weekends
+                          if (dayOfWeek === 0 || dayOfWeek === 6) return true;
+                          // Disable dates before delivery date
+                          if (deliveryDate && date < new Date(deliveryDate))
+                            return true;
+                          // Disable dates more than 30 days from delivery
+                          if (deliveryDate) {
+                            const deliveryDateObj = new Date(deliveryDate);
+                            const maxDate = new Date(deliveryDateObj);
+                            maxDate.setDate(maxDate.getDate() + 30);
+                            if (date > maxDate) return true;
+                          }
+                          return false;
+                        }}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  <p className="text-xs text-[#142A52]/60 mt-1">
+                    7 days free rental included. Additional days: $25 per day.
+                  </p>
+                </div>
               </div>
-
-              <div className="mb-6 w-[48%]">
-                <label className="block text-sm font-bold text-[#142A52] mb-2">4. Project Type</label>
-                <Select value={projectType} onValueChange={setProjectType}>
-                  <SelectTrigger className="w-full border-2 border-[#142A52]/30 focus:border-[#C89B2B]">
-                    <SelectValue placeholder="Select project type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {PROJECT_TYPES.map((type) => (
-                      <SelectItem key={type} value={type}>
-                        {type}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-            </div>
-            <div className="flex justify-between flex-wrap gap-6">
-              {/* Delivery Date */}
-              <div className="mb-6 w-[48%]">
-
-                <label className="block text-sm font-bold text-[#142A52] mb-2">4. Delivery Date</label>
-                <Popover open={showDeliveryCalendar} onOpenChange={setShowDeliveryCalendar}>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className="w-full justify-start text-left font-normal border-2 border-[#142A52]/30 hover:border-[#C89B2B] h-10"
-                    >
-                      {deliveryDate ? new Date(deliveryDate).toLocaleDateString("en-US", {
-                        weekday: "short",
-                        month: "short",
-                        day: "numeric",
-                      }) : "Select delivery date"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={deliveryDateObj}
-                      onSelect={(selectedDate) => {
-                        if (selectedDate) {
-                          setDeliveryDateObj(selectedDate);
-                          setDeliveryDate(selectedDate.toISOString().split("T")[0]);
-                          setShowDeliveryCalendar(false);
-                          // Reset removal date when delivery date changes
-                          setRemovalDateObj(undefined);
-                          setRemovalDate("");
-                        }
-                      }}
-                      className="rounded-lg border"
-                      disabled={(date) => {
-                        // Disable dates before today
-                        const today = new Date();
-                        today.setHours(0, 0, 0, 0);
-                        if (date < today) return true;
-
-                        const dayOfWeek = date.getDay();
-                        return dayOfWeek === 0 || dayOfWeek === 6; // Disable weekends
-                      }}
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
-              <div className="mb-6 w-[48%]">
-                <label className="block text-sm font-bold text-[#142A52] mb-2">5. Removal Date (7 days free, $25/day after)</label>
-                <Popover open={showRemovalCalendar} onOpenChange={setShowRemovalCalendar}>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className="w-full justify-start text-left font-normal border-2 border-[#142A52]/30 hover:border-[#C89B2B] h-10"
-                    >
-                      {removalDate ? new Date(removalDate).toLocaleDateString("en-US", {
-                        weekday: "short",
-                        month: "short",
-                        day: "numeric",
-                      }) : "Select removal date"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={removalDateObj}
-                      onSelect={(selectedDate) => {
-                        if (selectedDate) {
-                          setRemovalDateObj(selectedDate);
-                          setRemovalDate(selectedDate.toISOString().split("T")[0]);
-                          setShowRemovalCalendar(false);
-                        }
-                      }}
-                      className="rounded-lg border"
-                      disabled={(date) => {
-                        const dayOfWeek = date.getDay();
-                        // Disable weekends
-                        if (dayOfWeek === 0 || dayOfWeek === 6) return true;
-                        // Disable dates before delivery date
-                        if (deliveryDate && date < new Date(deliveryDate)) return true;
-                        // Disable dates more than 30 days from delivery
-                        if (deliveryDate) {
-                          const deliveryDateObj = new Date(deliveryDate);
-                          const maxDate = new Date(deliveryDateObj);
-                          maxDate.setDate(maxDate.getDate() + 30);
-                          if (date > maxDate) return true;
-                        }
-                        return false;
-                      }}
-                    />
-                  </PopoverContent>
-                </Popover>
-                <p className="text-xs text-[#142A52]/60 mt-1">
-                  7 days free rental included. Additional days: $25 per day.
-                </p>
-              </div>
-
             </div>
 
             {/* Price Breakdown */}
@@ -476,7 +550,7 @@ export function Hero() {
               </div>
             )}
 
-            {/* Action Buttons */}
+            {/* Action Buttons - Always visible, with dynamic text */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <button
                 onClick={handleHelpMeChoose}
@@ -486,9 +560,14 @@ export function Hero() {
               </button>
               <button
                 onClick={handleStartBooking}
-                className="w-full bg-gradient-to-r from-[#142A52] to-[#C89B2B] hover:from-[#1a3a6e] hover:to-[#d4a835] text-white font-bold py-4 rounded-lg transition-all shadow-lg text-lg flex items-center justify-center gap-2"
+                disabled={!isStep1Done || !isStep2Done || !isStep3Done || !isStep4Done || !isStep5Done || !isStep6Done}
+                className={`w-full font-bold py-4 rounded-lg transition-all shadow-lg text-lg flex items-center justify-center gap-2 ${
+                  isStep1Done && isStep2Done && isStep3Done && isStep4Done && isStep5Done && isStep6Done
+                    ? "bg-gradient-to-r from-[#142A52] to-[#C89B2B] hover:from-[#1a3a6e] hover:to-[#d4a835] text-white"
+                    : "bg-gradient-to-r from-[#142A52]/60 to-[#C89B2B]/60 text-white/80 cursor-not-allowed"
+                }`}
               >
-                📅 Book Now →
+                {getButtonText()}
               </button>
             </div>
 
