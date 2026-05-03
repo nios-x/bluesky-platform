@@ -1,13 +1,113 @@
 "use client";
 
+import { useEffect, useState, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
-import { useBooking } from "@/contexts/booking-context";
 import { CheckCircle2, Mail, Phone, MapPin, Calendar, Package } from "lucide-react";
 import Link from "next/link";
 
-export default function BookingConfirmation() {
-  const { bookings } = useBooking();
+function BookingConfirmationContent() {
+  const searchParams = useSearchParams();
+  const sessionId = searchParams.get('session_id');
+  const [orderData, setOrderData] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [dbDumpsterTypes, setDbDumpsterTypes] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchDumpsters = async () => {
+      try {
+        const response = await fetch('/api/pricing/dumpsters');
+        const data = await response.json();
+        
+        const typesMap: Record<string, any> = {};
+        
+        data.dumpsters.forEach((d: any) => {
+          const typeId = d.dumpster_types?.id;
+          if (!typeId) return;
+          if (!typesMap[typeId]) {
+            typesMap[typeId] = {
+              id: typeId,
+              name: d.dumpster_types.name,
+            };
+          }
+        });
+
+        setDbDumpsterTypes(Object.values(typesMap));
+      } catch (err) {
+        console.error("Failed to fetch dumpsters", err);
+      }
+    };
+    fetchDumpsters();
+  }, []);
+
+  useEffect(() => {
+    const fetchOrder = async () => {
+      if (!sessionId) {
+        setIsLoading(false);
+        return;
+      }
+      
+      try {
+        let retries = 3;
+        let data;
+        
+        // Sometimes webhooks/DB inserts take a few seconds to propagate, so we'll poll briefly
+        while (retries > 0) {
+          const response = await fetch(`/api/orders/my?session_id=${sessionId}`);
+          data = await response.json();
+          
+          if (data.success && data.order) {
+            break;
+          }
+          
+          // Wait 1.5 seconds before retrying
+          await new Promise(resolve => setTimeout(resolve, 1500));
+          retries--;
+        }
+        
+        if (data && data.success && data.order) {
+          setOrderData(data.order);
+        } else {
+          setError(data?.error || "Failed to load order details. Your order may still be processing.");
+        }
+      } catch (err: any) {
+        console.error("Error fetching order:", err);
+        setError("Error loading your confirmation details.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchOrder();
+  }, [sessionId]);
+
+  const getDumpsterName = (id: string) => {
+    const found = dbDumpsterTypes.find(t => t.id === id);
+    return found ? found.name : "Dumpster";
+  };
+
+  if (isLoading) {
+    return (
+      <main className="bg-gradient-to-b from-green-50 to-white min-h-screen flex flex-col">
+        <Header />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#142A52] mx-auto mb-4"></div>
+            <p className="text-[#142A52] font-bold">Loading your order details...</p>
+          </div>
+        </div>
+        <Footer />
+      </main>
+    );
+  }
+
+  // Fallback to display even if API fetch fails, using whatever we can
+  const bookings = orderData?.items || [];
+  const contactInfo = orderData?.customer || {};
+  const finalTotal = orderData?.total_amount || 0;
+  const paymentMethod = orderData?.payment_method || "Stripe";
 
   return (
     <main className="bg-gradient-to-b from-green-50 to-white min-h-screen flex flex-col">
@@ -32,102 +132,90 @@ export default function BookingConfirmation() {
             Your dumpster is booked. A confirmation email has been sent to your inbox.
           </p>
 
+          {error && (
+            <div className="mb-8 p-4 bg-yellow-50 text-yellow-800 border-2 border-yellow-200 rounded-lg">
+              <p className="font-bold">⚠️ Warning: {error}</p>
+              <p className="text-sm mt-1">Your payment was successful, but we couldn't load the live receipt. Please check your email for the confirmation details.</p>
+            </div>
+          )}
+
           {/* Booking Details */}
-          <div className="bg-white border-2 border-[#C89B2B] rounded-lg p-8 mb-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {/* Left Column */}
-              <div className="text-left">
-                <h2 className="text-xl font-bold text-[#142A52] mb-6">Booking Details</h2>
-
-                <div className="space-y-4">
-                  <div className="flex items-start gap-3">
-                    <Package className="text-[#C89B2B] mt-1" size={20} />
-                    <div>
-                      <p className="text-sm text-[#142A52]/70">Dumpster</p>
-                      <p className="font-bold text-[#142A52]">
-                        {bookings[0]?.dumpsterSize} yd {bookings[0]?.dumpsterType}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-3">
-                    <Calendar className="text-[#C89B2B] mt-1" size={20} />
-                    <div>
-                      <p className="text-sm text-[#142A52]/70">Delivery Date</p>
-                      <p className="font-bold text-[#142A52]">
-                        {bookings[0]?.deliveryDate &&
-                          new Date(bookings[0].deliveryDate).toLocaleDateString("en-US", {
-                            weekday: "long",
-                            month: "long",
-                            day: "numeric",
-                            year: "numeric",
-                          })}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-3">
-                    <MapPin className="text-[#C89B2B] mt-1" size={20} />
-                    <div>
-                      <p className="text-sm text-[#142A52]/70">Location</p>
-                      <p className="font-bold text-[#142A52]">{bookings[0]?.zipCode}</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-3">
-                    <Package className="text-[#C89B2B] mt-1" size={20} />
-                    <div>
-                      <p className="text-sm text-[#142A52]/70">Project Type</p>
-                      <p className="font-bold text-[#142A52]">{bookings[0]?.projectType}</p>
-                    </div>
+          {!error && (
+            <div className="bg-white border-2 border-[#C89B2B] rounded-lg p-8 mb-8 text-left">
+              <h2 className="text-xl font-bold text-[#142A52] mb-6 border-b pb-4 border-[#142A52]/10">Order Summary</h2>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-6">
+                {/* Left Column - Contact Info */}
+                <div>
+                  <h3 className="font-bold text-[#142A52] mb-4">Contact Information</h3>
+                  <div className="space-y-3">
+                    <p className="text-sm text-[#142A52]"><span className="font-bold">Name:</span> {contactInfo.full_name}</p>
+                    <p className="text-sm text-[#142A52]"><span className="font-bold">Email:</span> {contactInfo.email}</p>
+                    <p className="text-sm text-[#142A52]"><span className="font-bold">Phone:</span> {contactInfo.phone}</p>
+                    {contactInfo.company && (
+                      <p className="text-sm text-[#142A52]"><span className="font-bold">Company:</span> {contactInfo.company}</p>
+                    )}
+                    {/* The first item usually carries the master zipCode in the DB schema for now */}
+                    <p className="text-sm text-[#142A52]"><span className="font-bold">Location Zip:</span> {bookings[0]?.zipCode || contactInfo.zipCode || 'N/A'}</p>
                   </div>
                 </div>
-              </div>
 
-              {/* Right Column - Contact & Payment */}
-              <div className="text-left">
-                <h2 className="text-xl font-bold text-[#142A52] mb-6">Contact Information</h2>
-
-                <div className="space-y-4">
-                  <div className="flex items-start gap-3">
-                    <Mail className="text-[#C89B2B] mt-1" size={20} />
-                    <div>
-                      <p className="text-sm text-[#142A52]/70">Email</p>
-                      <p className="font-bold text-[#142A52]">{bookings[0]?.email}</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-3">
-                    <Phone className="text-[#C89B2B] mt-1" size={20} />
-                    <div>
-                      <p className="text-sm text-[#142A52]/70">Phone</p>
-                      <p className="font-bold text-[#142A52]">{bookings[0]?.phone}</p>
-                    </div>
-                  </div>
-
-                  {bookings[0]?.company && (
-                    <div>
-                      <p className="text-sm text-[#142A52]/70">Company</p>
-                      <p className="font-bold text-[#142A52]">{bookings[0]?.company}</p>
-                    </div>
+                {/* Right Column - Instructions */}
+                <div>
+                  <h3 className="font-bold text-[#142A52] mb-4">Delivery Notes</h3>
+                  {contactInfo.placement_instructions ? (
+                    <p className="text-sm text-[#142A52] italic">"{contactInfo.placement_instructions}"</p>
+                  ) : (
+                    <p className="text-sm text-[#142A52]/50 italic">No special instructions provided.</p>
                   )}
                 </div>
               </div>
-            </div>
 
-            {/* Total Price */}
-            <div className="mt-8 pt-8 border-t-2 border-[#C89B2B]/30">
-              <div className="flex justify-between items-center">
-                <span className="text-lg font-bold text-[#142A52]">Total Amount</span>
-                <span className="text-3xl font-bold text-[#C89B2B]">
-                  ${bookings[0]?.totalPrice ? bookings[0].totalPrice.toFixed(2) : "0.00"}
-                </span>
+              <h3 className="font-bold text-[#142A52] mb-4 border-t pt-6 border-[#142A52]/10">Items Booked</h3>
+              <div className="space-y-4 mb-8">
+                {bookings.map((b: any, idx: number) => (
+                  <div key={idx} className="bg-[#142A52]/5 p-4 rounded-lg flex flex-col sm:flex-row justify-between gap-4">
+                    <div>
+                      <p className="font-bold text-[#142A52] text-lg">
+                        {b.dumpsterSize || b.size} Yard {(b.dumpsterType || b.dumpster_type_id || 'Dumpster').replace(/_/g, ' ')}
+                      </p>
+                      <p className="text-sm text-[#142A52]/70 mt-1 flex items-center gap-2">
+                        <Calendar size={14} /> 
+                        Delivery: {b.deliveryDate ? new Date(b.deliveryDate).toLocaleDateString() : 'TBD'}
+                      </p>
+                      {b.rentalPeriod && (
+                        <p className="text-sm text-[#142A52]/70 mt-1 flex items-center gap-2">
+                          <Package size={14} /> 
+                          Rental Period: {b.rentalPeriod} Days
+                        </p>
+                      )}
+                      {b.dumpsterCapacity && (
+                        <p className="text-sm text-[#142A52]/70 mt-1 flex items-center gap-2">
+                          <Package size={14} /> 
+                          Weight Capacity: {b.dumpsterCapacity} Ton{b.dumpsterCapacity > 1 ? 's' : ''}
+                        </p>
+                      )}
+                    </div>
+                    <div className="text-left sm:text-right">
+                      {/* Backend items often store price as a separate field or it's implicitly part of total */}
+                      <p className="font-bold text-[#C89B2B] text-xl">${b.totalPrice ? b.totalPrice.toFixed(2) : (b.price ? b.price.toFixed(2) : "0.00")}</p>
+                    </div>
+                  </div>
+                ))}
               </div>
-              <p className="text-sm text-[#142A52]/60 mt-2">
-                ✅ Payment successful - Confirmation sent to your email
-              </p>
+
+              {/* Total Price */}
+              <div className="pt-6 border-t-2 border-[#C89B2B]/30 flex flex-col items-end">
+                <div className="flex justify-between items-center w-full max-w-xs">
+                  <span className="text-xl font-bold text-[#142A52]">Total Paid</span>
+                  <span className="text-3xl font-bold text-[#C89B2B]">${finalTotal.toFixed(2)}</span>
+                </div>
+                <p className="text-sm text-[#142A52]/60 mt-2 text-right">
+                  ✅ Payment successful via {paymentMethod === "stripe_checkout" ? "Stripe" : paymentMethod}
+                </p>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* What Happens Next */}
           <div className="bg-blue-50 border-2 border-[#142A52]/20 rounded-lg p-8 mb-8">
@@ -213,5 +301,24 @@ export default function BookingConfirmation() {
 
       <Footer />
     </main>
+  );
+}
+
+export default function BookingConfirmation() {
+  return (
+    <Suspense fallback={
+      <main className="bg-gradient-to-b from-green-50 to-white min-h-screen flex flex-col">
+        <Header />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#142A52] mx-auto mb-4"></div>
+            <p className="text-[#142A52] font-bold">Loading your order details...</p>
+          </div>
+        </div>
+        <Footer />
+      </main>
+    }>
+      <BookingConfirmationContent />
+    </Suspense>
   );
 }

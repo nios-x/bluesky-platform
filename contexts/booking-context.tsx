@@ -15,6 +15,7 @@ export interface BookingData {
 
   dumpsterType: string;
   dumpsterSize: number;
+  dumpsterCapacity?: number; // Weight capacity in tons
 
   fullName: string;
   email: string;
@@ -27,7 +28,7 @@ export interface BookingData {
   accountDiscount: number;
   totalPrice: number;
 
-  paymentMethod?: "google-pay" | "credit-card";
+  paymentMethod?: "google-pay" | "credit-card" | "paypal" | "stripe" | string;
   paymentIntentId?: string;
   paymentStatus?: "completed" | "pending" | "failed";
 
@@ -48,8 +49,10 @@ interface BookingContextType {
 
 const BookingContext = createContext<any>(undefined);
 
+const defaultBooking: BookingData = { address: "", zipCode: "", deliveryDate: "", rentalPeriod: 0, projectType: "", materialType: "", dumpsterType: "", dumpsterSize: 0, fullName: "", email: "", phone: "", basePrice: 0, surcharges: 0, accountDiscount: 0, totalPrice: 0 };
+
 export function BookingProvider({ children }: { children: React.ReactNode }) {
-  const [bookings, setBookings] = useState<BookingData[]>([{ address: "", zipCode: "", deliveryDate: "", rentalPeriod: 0, projectType: "", materialType: "", dumpsterType: "", dumpsterSize: 0, fullName: "", email: "", phone: "", basePrice: 0, surcharges: 0, accountDiscount: 0, totalPrice: 0 }]);
+  const [bookings, setBookings] = useState<BookingData[]>([defaultBooking]);
 
   // Add new booking
   const addBooking = (data: BookingData) => {
@@ -72,7 +75,7 @@ export function BookingProvider({ children }: { children: React.ReactNode }) {
 
   // Reset
   const resetBookings = () => {
-    setBookings([]);
+    setBookings([defaultBooking]);
   };
 
   // Get one booking

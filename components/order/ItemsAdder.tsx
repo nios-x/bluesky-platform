@@ -14,6 +14,8 @@ type Props = {
   onAddMore?: (data: { type: string; size: number; deliveryDate: string; removalDate: string; rentalPeriod: number }) => void;
   selectedIndex?: number;
   onSelect?: (index: number) => void;
+  cartTotal?: number;
+  itemPrices?: number[];
 };
 
 export default function OrderDetailsCard({
@@ -22,6 +24,8 @@ export default function OrderDetailsCard({
   onAddMore,
   selectedIndex = 0,
   onSelect,
+  cartTotal,
+  itemPrices,
 }: Props) {
   const { bookings, removeBooking } = useBooking();
   const [type, setType] = useState("");
@@ -89,7 +93,7 @@ export default function OrderDetailsCard({
                   </div>
                   <div className="flex items-center gap-4">
                     <div className="text-right">
-                      <p className="font-bold text-[#142A52]">${b.totalPrice ? b.totalPrice.toFixed(2) : "0.00"}</p>
+                      <p className="font-bold text-[#142A52]">${itemPrices && itemPrices[idx] !== undefined ? itemPrices[idx].toFixed(2) : (b.totalPrice ? b.totalPrice.toFixed(2) : "0.00")}</p>
                     </div>
                     {bookings.length > 1 && (
                       <button
@@ -114,7 +118,7 @@ export default function OrderDetailsCard({
               <div className="flex justify-between items-center pt-2 border-t border-[#142A52]/30 mt-2">
                 <span className="font-bold text-[#142A52]">Total</span>
                 <span className="font-bold text-[#C89B2B]">
-                  ${bookings.reduce((sum: number, b: BookingData) => sum + (b.totalPrice || 0), 0).toFixed(2)}
+                  ${(cartTotal ?? bookings.reduce((sum: number, b: BookingData) => sum + (b.totalPrice || 0), 0)).toFixed(2)}
                 </span>
               </div>
             </div>

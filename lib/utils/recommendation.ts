@@ -14,7 +14,7 @@ export async function fileToBase64(file) {
     reader.onload = () => {
       const result = reader.result;
       // Extract base64 part without "data:image/jpeg;base64," prefix
-      const base64 = result.split(',')[1];
+      const base64 = (result as string).split(',')[1];
       resolve(base64);
     };
     reader.onerror = reject;

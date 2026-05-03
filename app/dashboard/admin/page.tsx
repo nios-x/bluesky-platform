@@ -92,13 +92,12 @@ export default function AdminDashboard() {
                   <td className="px-6 py-4 text-emerald-600 dark:text-emerald-400 font-semibold">{order.amount}</td>
                   <td className="px-6 py-4">
                     <span
-                      className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                        order.status === "Completed"
+                      className={`px-3 py-1 rounded-full text-xs font-semibold ${order.status === "Completed"
                           ? "bg-emerald-500/20 text-emerald-700 dark:text-emerald-400"
                           : order.status === "In Progress"
-                          ? "bg-cyan-500/20 text-cyan-700 dark:text-cyan-400"
-                          : "bg-amber-500/20 text-amber-700 dark:text-amber-400"
-                      }`}
+                            ? "bg-cyan-500/20 text-cyan-700 dark:text-cyan-400"
+                            : "bg-amber-500/20 text-amber-700 dark:text-amber-400"
+                        }`}
                     >
                       {order.status}
                     </span>
