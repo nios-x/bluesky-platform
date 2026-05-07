@@ -9,6 +9,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { useBooking } from "@/contexts/booking-context";
 import { PROJECT_TYPES, MATERIAL_TYPES } from "@/lib/constants/booking";
 import { LOCATIONS } from "@/lib/constants/locations";
+import { SmartRecommendationModal } from "@/components/ai/SmartRecommendationModal";
+import { useSmartRecommendationModal } from "@/hooks/use-smart-recommendation-modal";
 
 
 export function Hero() {
@@ -88,6 +90,7 @@ export function Hero() {
   const [showRemovalCalendar, setShowRemovalCalendar] = useState(false);
   const router = useRouter();
   const { updateBooking } = useBooking();
+  const { isOpen, openModal, closeModal } = useSmartRecommendationModal();
   const [deliveryDateObj, setDeliveryDateObj] = useState<Date | undefined>(new Date());
   const [removalDateObj, setRemovalDateObj] = useState<Date | undefined>(undefined);
   const [projectType, setProjectType] = useState("");
@@ -236,17 +239,9 @@ export function Hero() {
 
   const handleHelpMeChoose = () => {
     setSearchError("");
-
-    if (!zipCode.trim()) {
-      setSearchError("Please enter a zip code");
-      return;
-    }
-
-    // Navigate to calculator section
-    const calculatorElement = document.getElementById('smart-assessment');
-    if (calculatorElement) {
-      calculatorElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
+    // Open AI recommendation modal without requiring ZIP code
+    // User can enter ZIP code inside the modal if needed
+    openModal();
   };
 
   return (
@@ -556,7 +551,7 @@ export function Hero() {
                 onClick={handleHelpMeChoose}
                 className="w-full bg-white border-2 border-[#142A52] text-[#142A52] font-bold py-4 rounded-lg transition-all shadow-md hover:bg-[#142A52]/5 text-lg flex items-center justify-center gap-2"
               >
-                💡 Help Me Choose
+                ✨ Meet Your AI Dumpster Expert
               </button>
               <button
                 onClick={handleStartBooking}
@@ -577,6 +572,9 @@ export function Hero() {
           </div>
         </div>
       </div>
+
+      {/* AI Recommendation Modal */}
+      <SmartRecommendationModal isOpen={isOpen} onClose={closeModal} initialZipCode={zipCode} />
     </section>
   );
 }

@@ -5,6 +5,8 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { AlertCircle, CheckCircle2 } from "lucide-react";
+import { SmartRecommendationModal } from "@/components/ai/SmartRecommendationModal";
+import { useSmartRecommendationModal } from "@/hooks/use-smart-recommendation-modal";
 
 interface SizeRecommendation {
   size: number;
@@ -20,6 +22,7 @@ export function SmartAssessment() {
   const [materialType, setMaterialType] = useState("");
   const [dimensions, setDimensions] = useState({ length: "", width: "", height: "" });
   const [recommendation, setRecommendation] = useState<SizeRecommendation | null>(null);
+  const { isOpen, openModal, closeModal } = useSmartRecommendationModal();
 
   const projectTypes = [
     "Home Cleanout",
@@ -135,7 +138,7 @@ export function SmartAssessment() {
       <div className="max-w-3xl mx-auto">
         <div className="mb-12 text-center">
           <h2 className="text-3xl md:text-4xl font-bold text-[#142A52] mb-4">
-            🧠 Smart Dumpster Assessment
+            Smart Dumpster Assessment
           </h2>
           <p className="text-lg text-[#142A52]/70">
             Not sure which size you need? Answer a few questions and we'll recommend the perfect dumpster.
@@ -163,6 +166,23 @@ export function SmartAssessment() {
                 </button>
               ))}
             </div>
+
+            {/* AI Recommendation Alternative */}
+            <div className="relative my-6">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t-2 border-gray-300"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-3 bg-white text-gray-500 font-bold">OR</span>
+              </div>
+            </div>
+
+            <Button
+              onClick={openModal}
+              className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold py-3 rounded-lg flex items-center justify-center gap-2"
+            >
+              🤖 Get AI Recommendation (with chat & image upload)
+            </Button>
           </Card>
         )}
 
@@ -281,6 +301,9 @@ export function SmartAssessment() {
           </Card>
         )}
       </div>
+
+      {/* AI Recommendation Modal */}
+      <SmartRecommendationModal isOpen={isOpen} onClose={closeModal} />
     </section>
   );
 }
