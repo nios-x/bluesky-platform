@@ -1,4 +1,4 @@
-const getPaymentDataRequest = (price: string, currency: string, countryCode: string) => {
+const getPaymentDataRequest = (price: string, currency: string, countryCode: string): any => {
   const stripePublishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || "pk_test_replace_with_real_key";
 
   // For development/testing, use a basic configuration
@@ -23,6 +23,7 @@ const getPaymentDataRequest = (price: string, currency: string, countryCode: str
         },
       ],
       merchantInfo: {
+        merchantId: 'BCR2DN4TCGQD5EPW',
         merchantName: 'BlueSky Dumpster Rentals',
       },
       transactionInfo: {
@@ -57,6 +58,7 @@ const getPaymentDataRequest = (price: string, currency: string, countryCode: str
       },
     ],
     merchantInfo: {
+      merchantId: 'BCR2DN4TCGQD5EPW',
       merchantName: 'BlueSky Dumpster Rentals',
     },
     transactionInfo: {

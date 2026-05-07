@@ -246,7 +246,7 @@ export function AIChatbotRefactored() {
                   onChange={e => setZipCode(e.target.value)}
                   placeholder="e.g., 48038"
                   className="flex-1 px-3 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  maxLength="5"
+                  maxLength={5}
                 />
                 <Button
                   onClick={() => handleSendMessage()}

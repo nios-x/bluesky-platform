@@ -6,6 +6,8 @@ import { supabaseAdmin } from '@/lib/supabase/admin'
 import { calculateServerSideTotal } from '@/lib/services/pricingService'
 import { processOrderAndSaveToDB } from '@/lib/services/orderService'
 
+export const dynamic = 'force-dynamic'
+
 export async function POST(req: Request) {
   try {
     const headersList = await headers()
