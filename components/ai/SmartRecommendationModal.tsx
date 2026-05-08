@@ -262,7 +262,7 @@ export function SmartRecommendationModal({
                 AI
               </div>
               <div>
-                <h2 className="text-sm font-semibold text-gray-900">
+                <h2 className="text-sm font-semibold text-gray-800">
                   Dumpster Assistant
                 </h2>
                 <p className="text-xs text-gray-500">
