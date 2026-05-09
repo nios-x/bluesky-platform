@@ -19,6 +19,7 @@ import { TerminalSquareIcon, FileTextIcon, DollarSignIcon, BarChartIcon, UsersIc
 const rawNavItems = [
   { name: "Overview", href: "/admin", icon: TerminalSquareIcon, roles: ["SUPER", "OPS", "SUPPORT"] },
   { name: "Orders", href: "/admin/orders", icon: FileTextIcon, roles: ["SUPER", "OPS", "SUPPORT"] },
+  { name: "Customers", href: "/admin/customers", icon: UsersIcon, roles: ["SUPER", "OPS", "SUPPORT"] },
   { name: "Pricing", href: "/admin/pricing", icon: DollarSignIcon, roles: ["SUPER", "OPS"] },
   { name: "Invoices", href: "/admin/invoices", icon: FileTextIcon, roles: ["SUPER", "OPS"] },
   { name: "Analytics", href: "/admin/analytics", icon: BarChartIcon, roles: ["SUPER"] },

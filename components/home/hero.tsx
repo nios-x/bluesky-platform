@@ -11,7 +11,20 @@ import { PROJECT_TYPES, MATERIAL_TYPES } from "@/lib/constants/booking";
 import { LOCATIONS } from "@/lib/constants/locations";
 import { SmartRecommendationModal } from "@/components/ai/SmartRecommendationModal";
 import { useSmartRecommendationModal } from "@/hooks/use-smart-recommendation-modal";
+import { Zap } from "lucide-react";
 
+const formatLocalDate = (date: Date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const parseLocalDate = (dateStr: string) => {
+  if (!dateStr) return new Date();
+  const [year, month, day] = dateStr.split('-').map(Number);
+  return new Date(year, month - 1, day);
+};
 
 export function Hero() {
   const [dbDumpsterTypes, setDbDumpsterTypes] = useState<any[]>([]);
@@ -21,27 +34,27 @@ export function Hero() {
       try {
         const response = await fetch('/api/pricing/dumpsters');
         const data = await response.json();
-        
+
         const typesMap: Record<string, any> = {};
-        
+
         data.dumpsters.forEach((d: any) => {
           const typeId = d.dumpster_types?.id;
           if (!typeId) return;
-          
+
           if (!typesMap[typeId]) {
             typesMap[typeId] = {
               id: typeId,
               name: d.dumpster_types.name,
               description: d.dumpster_types.description,
-              image: d.dumpster_types.name.includes("Rubber") ? "/images/rubber-wheel-dumpster.png" : d.dumpster_types.name.includes("Permanent") ? "/images/permanent-dumpster.png" : "/images/roll-off-dumpster.png",
+              image: d.dumpster_types.name.includes("Rubber") ? "/Dumpster/Rubber-wheeled Dumpsters/20 Yard Rubber tire trailor (4)@1.5x.jpg" : d.dumpster_types.name.includes("Permanent") ? "/Dumpster/Permanent Dumpsters/2 yard front load dumpster (3)@1.5x.jpg" : "/Dumpster/Roll-off Dumpsters/10 yard roll off 1@1.5x.jpg",
               sizes: []
             };
           }
-          
+
           const sizeValMatch = d.dumpster_sizes?.label?.match(/^(\d+)/);
           const sizeVal = sizeValMatch ? parseInt(sizeValMatch[1], 10) : 0;
           if (sizeVal === 0) return;
-          
+
           let price = 435;
           if (d.dumpster_types.name.includes("Roll Off") || d.dumpster_types.name.includes("Roll-off")) {
             if (sizeVal === 10) price = 435;
@@ -49,14 +62,14 @@ export function Hero() {
             if (sizeVal === 30) price = 475;
             if (sizeVal === 40) price = 555;
           } else if (d.dumpster_types.name.includes("Rubber")) {
-             if (sizeVal === 10) price = 445;
-             if (sizeVal === 20) price = 525;
-             if (sizeVal === 30) price = 655;
+            if (sizeVal === 10) price = 445;
+            if (sizeVal === 20) price = 525;
+            if (sizeVal === 30) price = 655;
           } else {
-             if (sizeVal === 2) price = 250;
-             if (sizeVal === 4) price = 350;
-             if (sizeVal === 6) price = 450;
-             if (sizeVal === 8) price = 550;
+            if (sizeVal === 2) price = 250;
+            if (sizeVal === 4) price = 350;
+            if (sizeVal === 6) price = 450;
+            if (sizeVal === 8) price = 550;
           }
 
           typesMap[typeId].sizes.push({
@@ -68,7 +81,7 @@ export function Hero() {
             price: price
           });
         });
-        
+
         Object.values(typesMap).forEach((type: any) => {
           type.sizes.sort((a: any, b: any) => a.value - b.value);
         });
@@ -91,7 +104,7 @@ export function Hero() {
   const router = useRouter();
   const { updateBooking } = useBooking();
   const { isOpen, openModal, closeModal } = useSmartRecommendationModal();
-  const [deliveryDateObj, setDeliveryDateObj] = useState<Date | undefined>(new Date());
+  const [deliveryDateObj, setDeliveryDateObj] = useState<Date | undefined>(undefined);
   const [removalDateObj, setRemovalDateObj] = useState<Date | undefined>(undefined);
   const [projectType, setProjectType] = useState("");
 
@@ -138,18 +151,29 @@ export function Hero() {
   // Find selected dumpster type and size
   const selectedDumpsterType = dbDumpsterTypes.find(type => type.id === dumpsterType);
   const selectedSize = selectedDumpsterType?.sizes.find(size => size.value === dumpsterSize);
+  const isRubber = selectedDumpsterType?.name?.includes("Rubber") || false;
+  const freeDays = isRubber ? 14 : 7;
 
   // Price calculations
   const SHIPPING_PRICE = 200;
   const basePrice = selectedSize?.price || 0;
-  const totalPrice = basePrice + SHIPPING_PRICE;
+
+  let totalDays = 0;
+  if (deliveryDate && removalDate) {
+    const timeDiff = parseLocalDate(removalDate).getTime() - parseLocalDate(deliveryDate).getTime();
+    totalDays = Math.max(1, Math.ceil(timeDiff / (1000 * 3600 * 24)));
+  }
+
+  const extraDays = Math.max(0, totalDays - freeDays);
+  const extraRentalCharges = extraDays * 25;
+  const totalPrice = basePrice + SHIPPING_PRICE + extraRentalCharges;
 
   // Set default removal date when delivery date changes
   useEffect(() => {
     if (deliveryDate && !removalDateObj) {
-      const delivery = new Date(deliveryDate);
+      const delivery = parseLocalDate(deliveryDate);
       const defaultRemoval = new Date(delivery);
-      defaultRemoval.setDate(defaultRemoval.getDate() + 7);
+      defaultRemoval.setDate(defaultRemoval.getDate() + freeDays);
 
       // Skip weekends for removal date
       if (defaultRemoval.getDay() === 0) { // Sunday
@@ -159,9 +183,9 @@ export function Hero() {
       }
 
       setRemovalDateObj(defaultRemoval);
-      setRemovalDate(defaultRemoval.toISOString().split("T")[0]);
+      setRemovalDate(formatLocalDate(defaultRemoval));
     }
-  }, [deliveryDate, removalDateObj]);
+  }, [deliveryDate, removalDateObj, freeDays]);
 
   const getAvailableDates = () => {
     const dates = [];
@@ -227,12 +251,13 @@ export function Hero() {
       dumpsterType,
       dumpsterSize: dumpsterSize!,
       deliveryDate,
-      rentalPeriod: 7,
+      rentalPeriod: totalDays,
       projectType,
       basePrice: selectedSize?.price || 0,
+      surcharges: extraRentalCharges,
       totalPrice: totalPrice,
     });
-    
+
     // Navigate to booking page
     router.push("/booking/step-1");
   };
@@ -270,7 +295,7 @@ export function Hero() {
         {/* Booking Box */}
         <div className="max-w-4xl scale-[0.95] mx-auto">
           <div className="bg-white rounded-2xl shadow-2xl p-6 sm:p-10 text-left border-4 border-[#C89B2B]">
-            
+
 
             {/* Zip Code */}
             <div className="mb-6 relative">
@@ -307,11 +332,10 @@ export function Hero() {
 
             {/* Dumpster Type Selection - Shows only after location is set */}
             <div
-              className={`transition-all duration-500 ease-in-out overflow-hidden ${
-                showStep2
-                  ? "max-h-[500px] opacity-100 mb-6"
-                  : "max-h-0 opacity-0"
-              }`}
+              className={`transition-all duration-500 ease-in-out overflow-hidden ${showStep2
+                ? "max-h-[500px] opacity-100 mb-6"
+                : "max-h-0 opacity-0"
+                }`}
             >
               <div className="mb-6">
                 <label className="block text-sm font-bold text-[#142A52] mb-3">2. Type of Dumpster</label>
@@ -323,31 +347,31 @@ export function Hero() {
                         setDumpsterType(type.id);
                         setDumpsterSize(null); // Reset size when type changes
                       }}
-                      className={`p-4 rounded-lg border-2 transition-all text-left ${
-                        dumpsterType === type.id
-                          ? "border-[#C89B2B] bg-[#C89B2B]/10"
-                          : "border-[#142A52]/30 hover:border-[#C89B2B]/50"
-                      }`}
+                      className={`p-4 rounded-lg border-2 transition-all text-left ${dumpsterType === type.id
+                        ? "border-[#C89B2B] bg-[#C89B2B]/10"
+                        : "border-[#142A52]/30 hover:border-[#C89B2B]/50"
+                        }`}
                     >
-                      <img
-                        src={type.image}
-                        alt={type.name}
-                        className="w-full h-20 object-cover rounded mb-2"
-                      />
+                      <div className="flex justify-center items-center w-full h-20 overflow-hidden rounded-xl mb-2">
+                        <img
+                          src={type.image}
+                          alt={type.name}
+                          className="w-full h-full object-contain"
+                        />
+                      </div>
                       <h3 className="font-bold text-[#142A52] text-sm">{type.name}</h3>
-                      <p className="text-xs text-[#142A52]/70">{type.description}</p>
+                      <p className="text-xs text-[#142A52]/70">{type.description || type.name}</p>
                     </button>
                   ))}
                 </div>
               </div>
-              </div>
+            </div>
             {/* Step 3 & 4: Size & Project Type - Shows only after dumpster type is selected */}
             <div
-              className={`transition-all duration-500 ease-in-out overflow-hidden ${
-                showStep34
-                  ? "max-h-[300px] opacity-100 mb-6"
-                  : "max-h-0 opacity-0"
-              }`}
+              className={`transition-all duration-500 ease-in-out overflow-hidden ${showStep34
+                ? "max-h-[300px] opacity-100 mb-6"
+                : "max-h-0 opacity-0"
+                }`}
             >
               <div className="flex justify-between flex-wrap gap-6">
                 {/* Dumpster Size Selection */}
@@ -394,11 +418,10 @@ export function Hero() {
             </div>
             {/* Step 5 & 6: Delivery & Removal Dates - Shows only after size and project type are selected */}
             <div
-              className={`transition-all duration-500 ease-in-out overflow-hidden ${
-                showStep56
-                  ? "max-h-[600px] opacity-100 mb-6"
-                  : "max-h-0 opacity-0"
-              }`}
+              className={`transition-all duration-500 ease-in-out overflow-hidden ${showStep56
+                ? "max-h-[600px] opacity-100 mb-6"
+                : "max-h-0 opacity-0"
+                }`}
             >
               <div className="flex justify-between flex-wrap gap-6">
                 {/* Delivery Date */}
@@ -416,11 +439,11 @@ export function Hero() {
                         className="w-full justify-start text-left font-normal border-2 border-[#142A52]/30 hover:border-[#C89B2B] h-10"
                       >
                         {deliveryDate
-                          ? new Date(deliveryDate).toLocaleDateString("en-US", {
-                              weekday: "short",
-                              month: "short",
-                              day: "numeric",
-                            })
+                          ? parseLocalDate(deliveryDate).toLocaleDateString("en-US", {
+                            weekday: "short",
+                            month: "short",
+                            day: "numeric",
+                          })
                           : "Select delivery date"}
                       </Button>
                     </PopoverTrigger>
@@ -431,9 +454,7 @@ export function Hero() {
                         onSelect={(selectedDate) => {
                           if (selectedDate) {
                             setDeliveryDateObj(selectedDate);
-                            setDeliveryDate(
-                              selectedDate.toISOString().split("T")[0]
-                            );
+                            setDeliveryDate(formatLocalDate(selectedDate));
                             setShowDeliveryCalendar(false);
                             // Reset removal date when delivery date changes
                             setRemovalDateObj(undefined);
@@ -458,7 +479,7 @@ export function Hero() {
                 {/* Removal Date */}
                 <div className="mb-6 w-full md:w-[48%]">
                   <label className="block text-sm font-bold text-[#142A52] mb-2">
-                    6. Removal Date (7 days free, $25/day after)
+                    6. Removal Date ({freeDays} days free, $25/day after)
                   </label>
                   <Popover
                     open={showRemovalCalendar}
@@ -470,11 +491,11 @@ export function Hero() {
                         className="w-full justify-start text-left font-normal border-2 border-[#142A52]/30 hover:border-[#C89B2B] h-10"
                       >
                         {removalDate
-                          ? new Date(removalDate).toLocaleDateString("en-US", {
-                              weekday: "short",
-                              month: "short",
-                              day: "numeric",
-                            })
+                          ? parseLocalDate(removalDate).toLocaleDateString("en-US", {
+                            weekday: "short",
+                            month: "short",
+                            day: "numeric",
+                          })
                           : "Select removal date"}
                       </Button>
                     </PopoverTrigger>
@@ -485,9 +506,7 @@ export function Hero() {
                         onSelect={(selectedDate) => {
                           if (selectedDate) {
                             setRemovalDateObj(selectedDate);
-                            setRemovalDate(
-                              selectedDate.toISOString().split("T")[0]
-                            );
+                            setRemovalDate(formatLocalDate(selectedDate));
                             setShowRemovalCalendar(false);
                           }
                         }}
@@ -497,11 +516,11 @@ export function Hero() {
                           // Disable weekends
                           if (dayOfWeek === 0 || dayOfWeek === 6) return true;
                           // Disable dates before delivery date
-                          if (deliveryDate && date < new Date(deliveryDate))
+                          if (deliveryDate && date < parseLocalDate(deliveryDate))
                             return true;
                           // Disable dates more than 30 days from delivery
                           if (deliveryDate) {
-                            const deliveryDateObj = new Date(deliveryDate);
+                            const deliveryDateObj = parseLocalDate(deliveryDate);
                             const maxDate = new Date(deliveryDateObj);
                             maxDate.setDate(maxDate.getDate() + 30);
                             if (date > maxDate) return true;
@@ -512,30 +531,44 @@ export function Hero() {
                     </PopoverContent>
                   </Popover>
                   <p className="text-xs text-[#142A52]/60 mt-1">
-                    7 days free rental included. Additional days: $25 per day.
+                    {freeDays} days free rental included. Additional days: $25 per day.
                   </p>
                 </div>
               </div>
             </div>
 
-            {/* Price Breakdown */}
-            {selectedSize && (
-              <div className="mb-6 p-5 bg-[#fdfbf4] border border-[#142A52]/20 rounded-lg">
-                <h5 className="mb-4 font-bold text-lg text-[#142A52]">Total Price Breakdown</h5>
-                <div className="space-y-2 mb-4">
-                  <div className="flex justify-between items-center">
-                    <span className="text-[#142A52]">Base Price</span>
-                    <span className="font-bold text-[#142A52]">${basePrice.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-[#142A52]">Shipping</span>
-                    <span className="font-bold text-[#142A52]">${SHIPPING_PRICE.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between items-center border-t border-[#ccc] pt-3 mt-3">
-                    <span className="font-bold text-lg text-[#142A52]">Total Payable Amount</span>
-                    <span className="font-bold text-lg text-[#cc7e00]">${totalPrice.toFixed(2)}</span>
-                  </div>
+            {/* Pricing Summary Card */}
+            {selectedSize && removalDate && (
+              <div className="mb-8 bg-gradient-to-br from-[#142A52] via-[#1a3a6f] to-[#0f1f3a] text-white rounded-2xl shadow-xl p-6 border border-[#C89B2B]/30">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-xl font-bold">Order Summary</h3>
+                  <Zap className="w-5 h-5 text-[#C89B2B]" />
                 </div>
+
+                <div className="space-y-2 mb-4">
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-white/80">Base Price</span>
+                    <span className="font-bold text-white">${basePrice.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-white/80">Shipping & Delivery</span>
+                    <span className="font-bold text-white">${SHIPPING_PRICE.toFixed(2)}</span>
+                  </div>
+                  {extraDays > 0 && (
+                    <div className="flex justify-between items-center text-sm text-[#C89B2B]">
+                      <span>Extra Rental Charges ({extraDays} days)</span>
+                      <span className="font-bold">${extraRentalCharges.toFixed(2)}</span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex justify-between items-center pt-3 border-t border-white/20">
+                  <span className="text-lg font-bold">Total Amount</span>
+                  <span className="text-2xl font-bold text-[#C89B2B]">${totalPrice.toFixed(2)}</span>
+                </div>
+                <p className="text-xs text-white/60 mt-3">
+                  💡 Includes dumpster base price, shipping, and extra rental periods.
+                </p>
               </div>
             )}
 
@@ -556,11 +589,10 @@ export function Hero() {
               <button
                 onClick={handleStartBooking}
                 disabled={!isStep1Done || !isStep2Done || !isStep3Done || !isStep4Done || !isStep5Done || !isStep6Done}
-                className={`w-full font-bold py-4 rounded-lg transition-all shadow-lg text-lg flex items-center justify-center gap-2 ${
-                  isStep1Done && isStep2Done && isStep3Done && isStep4Done && isStep5Done && isStep6Done
-                    ? "bg-gradient-to-r from-[#142A52] to-[#C89B2B] hover:from-[#1a3a6e] hover:to-[#d4a835] text-white"
-                    : "bg-gradient-to-r from-[#142A52]/60 to-[#C89B2B]/60 text-white/80 cursor-not-allowed"
-                }`}
+                className={`w-full font-bold py-4 rounded-lg transition-all shadow-lg text-lg flex items-center justify-center gap-2 ${isStep1Done && isStep2Done && isStep3Done && isStep4Done && isStep5Done && isStep6Done
+                  ? "bg-gradient-to-r from-[#142A52] to-[#C89B2B] hover:from-[#1a3a6e] hover:to-[#d4a835] text-white"
+                  : "bg-gradient-to-r from-[#142A52]/60 to-[#C89B2B]/60 text-white/80 cursor-not-allowed"
+                  }`}
               >
                 {getButtonText()}
               </button>

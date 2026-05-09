@@ -41,6 +41,7 @@ export const RENTAL_PERIODS = [
 ];
 
 export const EXTRA_DAYS_SURCHARGE = 25; // $25 per day for > 14 days
+export const SHIPPING_PRICE = 200;
 
 export const DUMPSTER_TYPES = {
   ROLL_OFF: "roll-off",

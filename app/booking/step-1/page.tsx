@@ -8,7 +8,7 @@ import { useBooking } from "@/contexts/booking-context";
 import { ACCOUNT_DISCOUNT } from "@/lib/constants/booking";
 import { ChevronLeft, CheckCircle2, Mail, Phone } from "lucide-react";
 import Image from "next/image";
-import { HEAVY_MATERIALS, HEAVY_MATERIAL_SURCHARGE } from "@/lib/constants/booking";
+import { HEAVY_MATERIALS, HEAVY_MATERIAL_SURCHARGE, SHIPPING_PRICE } from "@/lib/constants/booking";
 import { ChevronRight, AlertCircle, Zap, ArrowLeft, Trash2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { Lock } from "lucide-react";
@@ -25,26 +25,33 @@ export default function BookingStep1() {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const booking = bookings[selectedIndex] || {};
   const [formData, setFormData] = useState({
+    // Name
+    firstName: "",
+    lastName: "",
     fullName: "",
     email: "",
     phone: "",
     company: "",
+    // Shipping address
+    shippingStreet: "",
+    shippingApartment: "",
+    shippingCity: "",
+    shippingState: "",
+    shippingZip: "",
+    shippingCountry: "US",
+    // Billing address
+    billingSameAsShipping: true,
+    billingStreet: "",
+    billingApartment: "",
+    billingCity: "",
+    billingState: "",
+    billingZip: "",
+    billingCountry: "US",
+    // Other
     placementInstructions: "",
-    agreeToTerms: false,
+    subscribeNewsletter: false,
   });
-  const product = {
-    idealFor: [
-      "Home renovation",
-      "Construction sites",
-      "Office cleanouts",
-    ],
-    capacity: "5 Tons",
-    included: [
-      "Delivery",
-      "Pickup",
-      "7-day rental",
-    ],
-  };
+
   const [accountCreation, setAccountCreation] = useState(false);
   const [selectedDumpsterType, setSelectedDumpsterType] = useState(booking.dumpsterType || "47d87a5e-84c8-431e-b055-c996142352eb");
   const [selectedSize, setSelectedSize] = useState(booking.dumpsterSize || 20);
@@ -52,13 +59,20 @@ export default function BookingStep1() {
   const [dbDumpsterTypes, setDbDumpsterTypes] = useState<any[]>([]);
 
   useEffect(() => {
+    // Pre-fill Zip from context
+    if (booking.zipCode && !formData.shippingZip) {
+      setFormData(prev => ({ ...prev, shippingZip: booking.zipCode }));
+    }
+  }, [booking.zipCode]);
+
+  useEffect(() => {
     const fetchFromDB = async () => {
       try {
         const response = await fetch('/api/pricing/dumpsters');
         const data = await response.json();
-        
+
         const typesMap: Record<string, any> = {};
-        
+
         data.dumpsters.forEach((d: any) => {
           const typeId = d.dumpster_types?.id;
           if (!typeId) return;
@@ -66,7 +80,7 @@ export default function BookingStep1() {
           const sizeVal = sizeValMatch ? parseInt(sizeValMatch[1], 10) : 0;
           if (sizeVal === 0) return;
 
-          
+
           if (!typesMap[typeId]) {
             typesMap[typeId] = {
               id: typeId,
@@ -76,7 +90,7 @@ export default function BookingStep1() {
               sizes: []
             };
           }
-          
+
           let price = 435;
           if (d.dumpster_types.name.includes("Roll Off") || d.dumpster_types.name.includes("Roll-off")) {
             if (sizeVal === 10) price = 435;
@@ -84,14 +98,14 @@ export default function BookingStep1() {
             if (sizeVal === 30) price = 475;
             if (sizeVal === 40) price = 555;
           } else if (d.dumpster_types.name.includes("Rubber")) {
-             if (sizeVal === 10) price = 445;
-             if (sizeVal === 20) price = 525;
-             if (sizeVal === 30) price = 655;
+            if (sizeVal === 10) price = 445;
+            if (sizeVal === 20) price = 525;
+            if (sizeVal === 30) price = 655;
           } else {
-             if (sizeVal === 2) price = 250;
-             if (sizeVal === 4) price = 350;
-             if (sizeVal === 6) price = 450;
-             if (sizeVal === 8) price = 550;
+            if (sizeVal === 2) price = 250;
+            if (sizeVal === 4) price = 350;
+            if (sizeVal === 6) price = 450;
+            if (sizeVal === 8) price = 550;
           }
 
           typesMap[typeId].sizes.push({
@@ -103,7 +117,7 @@ export default function BookingStep1() {
             price: price
           });
         });
-        
+
         Object.values(typesMap).forEach((type: any) => {
           type.sizes.sort((a: any, b: any) => a.value - b.value);
         });
@@ -117,9 +131,25 @@ export default function BookingStep1() {
   }, []);
 
   const currentTypeObj = dbDumpsterTypes.find(t => t.id === selectedDumpsterType) || dbDumpsterTypes[0];
+  const isRubber = currentTypeObj?.name?.includes("Rubber") || false;
+  const currentFreeDays = isRubber ? 14 : 7;
   const sizes = currentTypeObj?.sizes || [];
   const selectedSizeObj = sizes.find((s: any) => s.value === selectedSize) || sizes[0];
   const basePrice = selectedSizeObj?.price || 435;
+
+  const product = {
+    idealFor: [
+      "Home renovation",
+      "Construction sites",
+      "Office cleanouts",
+    ],
+    capacity: "5 Tons",
+    included: [
+      "Delivery",
+      "Pickup",
+      `${currentFreeDays}-day rental`,
+    ],
+  };
 
   const locationInfo = LOCATIONS.find(loc => loc.zip === booking.zipCode);
 
@@ -162,16 +192,67 @@ export default function BookingStep1() {
         bSurcharges += HEAVY_MATERIAL_SURCHARGE;
       }
 
+      const isBRubber = dbDumpsterTypes.find((t: any) => t.id === bDumpsterType)?.name?.includes("Rubber") || false;
+      const bFreeDays = isBRubber ? 14 : 7;
       let bExtraDays = 0;
-      if (bRentalPeriod && bRentalPeriod > 14) {
-        bExtraDays = (bRentalPeriod - 14) * 25;
+      if (bRentalPeriod && bRentalPeriod > bFreeDays) {
+        bExtraDays = (bRentalPeriod - bFreeDays) * 25;
       }
 
-      return bBasePrice + bSurcharges + bExtraDays;
+      return bBasePrice + bSurcharges + bExtraDays + SHIPPING_PRICE;
     });
   };
 
   const itemPrices = calculateItemPrices();
+
+  const calculateCartBreakdown = () => {
+    let breakdown = {
+      basePrice: 0,
+      surcharges: 0,
+      extraDays: 0,
+      shipping: 0
+    };
+
+    if (!bookings || bookings.length === 0) return breakdown;
+
+    bookings.forEach((b: any, index: number) => {
+      let bBasePrice = 435;
+      const bDumpsterType = index === selectedIndex ? selectedDumpsterType : b.dumpsterType;
+      const bSize = parseInt((index === selectedIndex ? selectedSize : b.dumpsterSize) || 20);
+      const bMaterialType = b.materialType;
+      const bRentalPeriod = b.rentalPeriod;
+
+      if (dbDumpsterTypes.length > 0) {
+        const typeObj = dbDumpsterTypes.find((t: any) => t.id === bDumpsterType) || dbDumpsterTypes[0];
+        if (typeObj && typeObj.sizes) {
+          const sizeObj = typeObj.sizes.find((s: any) => s.value === bSize) || typeObj.sizes[0];
+          if (sizeObj) bBasePrice = sizeObj.price;
+        }
+      }
+
+      let bSurcharges = 0;
+      const isHeavy = bMaterialType && HEAVY_MATERIALS.includes(bMaterialType);
+      if (isHeavy && bDumpsterType === "47d87a5e-84c8-431e-b055-c996142352eb") {
+        bSurcharges += HEAVY_MATERIAL_SURCHARGE;
+      }
+
+      const isBRubber = dbDumpsterTypes.find((t: any) => t.id === bDumpsterType)?.name?.includes("Rubber") || false;
+      const bFreeDays = isBRubber ? 14 : 7;
+      let bExtraDays = 0;
+      if (bRentalPeriod && bRentalPeriod > bFreeDays) {
+        bExtraDays = (bRentalPeriod - bFreeDays) * 25;
+      }
+
+      breakdown.basePrice += bBasePrice;
+      breakdown.surcharges += bSurcharges;
+      breakdown.extraDays += bExtraDays;
+      breakdown.shipping += SHIPPING_PRICE;
+    });
+
+    return breakdown;
+  };
+
+  const cartBreakdown = calculateCartBreakdown();
 
   const calculateCartTotal = () => {
     let total = itemPrices.reduce((sum, p) => sum + p, 0);
@@ -195,13 +276,20 @@ export default function BookingStep1() {
   };
 
   const handleInputChange = (field: string, value: string | boolean) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
+    setFormData((prev) => {
+      const updated = { ...prev, [field]: value };
+      // Auto-sync fullName from first + last
+      if (field === 'firstName' || field === 'lastName') {
+        updated.fullName = `${field === 'firstName' ? value : prev.firstName} ${field === 'lastName' ? value : prev.lastName}`.trim();
+      }
+      return updated;
+    });
     setError("");
   };
 
   const validateForm = () => {
-    if (!formData.fullName.trim()) {
-      setError("Full name is required");
+    if (!formData.firstName.trim() || !formData.lastName.trim()) {
+      setError("First and Last name are required");
       return false;
     }
     if (!formData.email.includes("@")) {
@@ -212,10 +300,32 @@ export default function BookingStep1() {
       setError("Valid 10-digit phone number is required");
       return false;
     }
-    if (!formData.agreeToTerms) {
-      setError("You must agree to Terms & Conditions");
+    // Shipping Address
+    if (!formData.shippingStreet.trim()) {
+      setError("Shipping street address is required");
       return false;
     }
+    if (!formData.shippingCity.trim()) {
+      setError("Shipping city is required");
+      return false;
+    }
+    if (!formData.shippingState.trim()) {
+      setError("Shipping state is required");
+      return false;
+    }
+    if (!formData.shippingZip.trim()) {
+      setError("Shipping ZIP code is required");
+      return false;
+    }
+
+    // Billing Address (if different)
+    if (!formData.billingSameAsShipping) {
+      if (!formData.billingStreet.trim() || !formData.billingCity.trim() || !formData.billingState.trim() || !formData.billingZip.trim()) {
+        setError("Please complete all billing address fields or check 'Same as shipping'");
+        return false;
+      }
+    }
+
     return true;
   };
 
@@ -225,20 +335,46 @@ export default function BookingStep1() {
 
     setLoading(true);
     try {
-      // Update booking with contact info
+      // Update booking with contact and address info
       updateBooking(0, {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
         fullName: formData.fullName,
         email: formData.email,
         phone: formData.phone,
         company: formData.company,
+        shippingAddress: {
+          street: formData.shippingStreet,
+          apartment: formData.shippingApartment,
+          city: formData.shippingCity,
+          state: formData.shippingState,
+          zip: formData.shippingZip,
+          country: formData.shippingCountry,
+        },
+        billingAddress: formData.billingSameAsShipping ? {
+          street: formData.shippingStreet,
+          apartment: formData.shippingApartment,
+          city: formData.shippingCity,
+          state: formData.shippingState,
+          zip: formData.shippingZip,
+          country: formData.shippingCountry,
+        } : {
+          street: formData.billingStreet,
+          apartment: formData.billingApartment,
+          city: formData.billingCity,
+          state: formData.billingState,
+          zip: formData.billingZip,
+          country: formData.billingCountry,
+        },
         placementInstructions: formData.placementInstructions,
         accountDiscount: accountCreation ? ACCOUNT_DISCOUNT : 0,
         paymentMethod: methodToUse,
+        subscribeNewsletter: formData.subscribeNewsletter,
       });
 
       // Navigate to payment step
       router.push("/booking/step-2");
-    } catch (err: any) {  
+    } catch (err: any) {
       setError(err.message || "An error occurred. Please try again.");
     } finally {
       setLoading(false);
@@ -264,6 +400,7 @@ export default function BookingStep1() {
   useEffect(() => {
     if (booking.dumpsterType) setSelectedDumpsterType(booking.dumpsterType);
     if (booking.dumpsterSize) setSelectedSize(booking.dumpsterSize);
+    setCurrentImageIdx(0);
   }, [selectedIndex, booking.dumpsterType, booking.dumpsterSize]);
 
   // Heavy materials only allow 10 yd roll-off
@@ -285,20 +422,23 @@ export default function BookingStep1() {
     const newAllowedSizes = isHeavyMaterial && type === "47d87a5e-84c8-431e-b055-c996142352eb"
       ? typeObj?.sizes.filter((s: any) => s.value === 10)
       : typeObj?.sizes;
-      
+
     let newSize = selectedSize;
-    if (newAllowedSizes && newAllowedSizes.length > 0 && !newAllowedSizes.find((s:any) => s.value === selectedSize)) {
+    if (newAllowedSizes && newAllowedSizes.length > 0 && !newAllowedSizes.find((s: any) => s.value === selectedSize)) {
       newSize = newAllowedSizes[0].value;
       setSelectedSize(newSize);
     }
-    
+
     const sizeObj = typeObj?.sizes.find((s: any) => s.value === newSize) || typeObj?.sizes[0];
     const newPrice = sizeObj?.price || 435;
-    
+
     let surcharge = 0;
     if (isHeavyMaterial && type === "47d87a5e-84c8-431e-b055-c996142352eb") {
       surcharge += HEAVY_MATERIAL_SURCHARGE;
     }
+
+    const isTypeRubber = typeObj?.name?.includes("Rubber") || false;
+    const typeFreeDays = isTypeRubber ? 14 : 7;
 
     updateBooking(selectedIndex, {
       ...booking,
@@ -306,7 +446,7 @@ export default function BookingStep1() {
       dumpsterSize: newSize,
       basePrice: newPrice,
       surcharges: surcharge,
-      totalPrice: newPrice + surcharge + (booking.rentalPeriod && booking.rentalPeriod > 14 ? (booking.rentalPeriod - 14) * 25 : 0),
+      totalPrice: newPrice + surcharge + (booking.rentalPeriod && booking.rentalPeriod > typeFreeDays ? (booking.rentalPeriod - typeFreeDays) * 25 : 0),
     });
   };
 
@@ -316,12 +456,14 @@ export default function BookingStep1() {
 
     const sizeObj = sizes.find((s: any) => s.value === size) || sizes[0];
     const newPrice = sizeObj?.price || 435;
-    
+
+    const sizeExtraCharge = (booking.rentalPeriod && booking.rentalPeriod > currentFreeDays) ? (booking.rentalPeriod - currentFreeDays) * 25 : 0;
+
     updateBooking(selectedIndex, {
       ...booking,
       dumpsterSize: size,
       basePrice: newPrice,
-      totalPrice: newPrice + surcharges,
+      totalPrice: newPrice + surcharges + sizeExtraCharge,
     });
   };
 
@@ -337,7 +479,7 @@ export default function BookingStep1() {
       dumpsterSize: selectedSize,
       basePrice,
       surcharges,
-      totalPrice: currentItemPrice + (booking.rentalPeriod && booking.rentalPeriod > 14 ? (booking.rentalPeriod - 14) * 25 : 0),
+      totalPrice: currentItemPrice + (booking.rentalPeriod && booking.rentalPeriod > currentFreeDays ? (booking.rentalPeriod - currentFreeDays) * 25 : 0),
     });
 
     // Scroll to payment section
@@ -383,9 +525,8 @@ export default function BookingStep1() {
     }
   };
 
-  const shippingFee = 125;
   const discountAmount = couponApplied ? 20 : 0;
-  const totalPayable = basePrice + shippingFee - discountAmount;
+  const totalPayable = calculateCartTotal() - discountAmount;
   const nextMonthAmount = 136;
 
   const validatePayment = () => {
@@ -408,17 +549,47 @@ export default function BookingStep1() {
   };
 
   const handleGooglePayPayment = async (paymentData: any) => {
-    if (!formData.fullName || !formData.email || !formData.phone) {
-      setError("Please fill out your contact details (Full Name, Email, and Phone) before proceeding.");
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      return;
-    }
+    if (!validateForm()) return;
 
     setLoading(true);
     setError("");
 
     try {
-      // We now strictly rely on the backend API to handle development simulation and order saving.
+      // Sync address to context first
+      const contactData = {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        fullName: formData.fullName,
+        email: formData.email,
+        phone: formData.phone,
+        company: formData.company,
+        shippingAddress: {
+          street: formData.shippingStreet,
+          apartment: formData.shippingApartment,
+          city: formData.shippingCity,
+          state: formData.shippingState,
+          zip: formData.shippingZip,
+          country: formData.shippingCountry,
+        },
+        billingAddress: formData.billingSameAsShipping ? {
+          street: formData.shippingStreet,
+          apartment: formData.shippingApartment,
+          city: formData.shippingCity,
+          state: formData.shippingState,
+          zip: formData.shippingZip,
+          country: formData.shippingCountry,
+        } : {
+          street: formData.billingStreet,
+          apartment: formData.billingApartment,
+          city: formData.billingCity,
+          state: formData.billingState,
+          zip: formData.billingZip,
+          country: formData.billingCountry,
+        },
+        placementInstructions: formData.placementInstructions,
+      };
+
+      updateBooking(0, contactData);
 
       const response = await fetch('/api/payments/google-pay', {
         method: 'POST',
@@ -455,17 +626,48 @@ export default function BookingStep1() {
   };
 
   const handlePayPalPayment = async (details: any) => {
+    if (!validateForm()) return;
     setLoading(true);
     setError("");
 
     try {
+      // Sync address to context
       updateBooking(0, {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        fullName: formData.fullName,
+        email: formData.email,
+        phone: formData.phone,
+        company: formData.company,
+        shippingAddress: {
+          street: formData.shippingStreet,
+          apartment: formData.shippingApartment,
+          city: formData.shippingCity,
+          state: formData.shippingState,
+          zip: formData.shippingZip,
+          country: formData.shippingCountry,
+        },
+        billingAddress: formData.billingSameAsShipping ? {
+          street: formData.shippingStreet,
+          apartment: formData.shippingApartment,
+          city: formData.shippingCity,
+          state: formData.shippingState,
+          zip: formData.shippingZip,
+          country: formData.shippingCountry,
+        } : {
+          street: formData.billingStreet,
+          apartment: formData.billingApartment,
+          city: formData.billingCity,
+          state: formData.billingState,
+          zip: formData.billingZip,
+          country: formData.billingCountry,
+        },
+        placementInstructions: formData.placementInstructions,
         paymentMethod: 'paypal',
         paymentIntentId: details.id,
         paymentStatus: 'completed',
       });
 
-      // Since PayPal handled the transaction directly, skip intermediate steps
       router.push(`/booking/confirmation?session_id=${details.id}`);
     } catch (err: any) {
       setError('Payment processing failed: ' + err.message);
@@ -475,16 +677,46 @@ export default function BookingStep1() {
   };
 
   const handleStripePayment = async () => {
-    if (!formData.fullName || !formData.email || !formData.phone) {
-      setError("Please fill out your contact details (Full Name, Email, and Phone) before proceeding.");
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      return;
-    }
+    if (!validateForm()) return;
 
     setLoading(true);
     setError("");
 
     try {
+      // Sync address to context
+      updateBooking(0, {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        fullName: formData.fullName,
+        email: formData.email,
+        phone: formData.phone,
+        company: formData.company,
+        shippingAddress: {
+          street: formData.shippingStreet,
+          apartment: formData.shippingApartment,
+          city: formData.shippingCity,
+          state: formData.shippingState,
+          zip: formData.shippingZip,
+          country: formData.shippingCountry,
+        },
+        billingAddress: formData.billingSameAsShipping ? {
+          street: formData.shippingStreet,
+          apartment: formData.shippingApartment,
+          city: formData.shippingCity,
+          state: formData.shippingState,
+          zip: formData.shippingZip,
+          country: formData.shippingCountry,
+        } : {
+          street: formData.billingStreet,
+          apartment: formData.billingApartment,
+          city: formData.billingCity,
+          state: formData.billingState,
+          zip: formData.billingZip,
+          country: formData.billingCountry,
+        },
+        placementInstructions: formData.placementInstructions,
+      });
+
       const response = await fetch('/api/checkout_sessions', {
         method: 'POST',
         headers: {
@@ -501,54 +733,6 @@ export default function BookingStep1() {
 
       if (data.url) {
         window.location.href = data.url;
-      } else {
-        setError(data.error || 'Payment failed');
-      }
-    } catch (err: any) {
-      setError('Payment processing failed: ' + err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleSubmit2 = async (methodOverride?: string) => {
-    if (!formData.fullName || !formData.email || !formData.phone) {
-      setError("Please fill out your contact details (Full Name, Email, and Phone) before proceeding.");
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      return;
-    }
-
-    const methodToUse = typeof methodOverride === 'string' ? methodOverride : paymentMethod;
-
-    setLoading(true);
-    setError("");
-
-    try {
-      const response = await fetch('/api/payments', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          amount: cartTotal,
-          currency: 'USD',
-          paymentMethod: methodToUse,
-          cardData: methodToUse === 'credit-card' ? cardData : undefined,
-          bookingsData: bookings,
-          contactInfo: formData,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (data.success) {
-        updateBooking(0, {
-          paymentMethod: methodToUse,
-          paymentIntentId: data.paymentIntentId,
-          paymentStatus: 'completed',
-        });
-
-        router.push(`/booking/confirmation?session_id=${data.paymentIntentId}`);
       } else {
         setError(data.error || 'Payment failed');
       }
@@ -582,48 +766,128 @@ export default function BookingStep1() {
     };
   };
 
+  const getDumpsterSliderImages = (type: string, size: number): string[] => {
+    // Permanent Dumpsters (Front Load) — sizes: 2, 4, 6, 8
+    if (type === "8fb25f2b-d593-42b6-8066-a62f59e2ca12") {
+      const base = "/Dumpster/Permanent Dumpsters";
+      if (size === 2) return [
+        `${base}/2 yard front load dumpster (1)@1.5x.jpg`,
+        `${base}/2 yard front load dumpster (2)_@1.5x.jpg`,
+        `${base}/2 yard front load dumpster (3)@1.5x.jpg`,
+        `${base}/2 yard front load dumpster (4)@1.5x.jpg`,
+      ];
+      if (size === 4) return [
+        `${base}/4 yard front load 1@1.5x.jpg`,
+        `${base}/4 yard front load 2@1.5x.jpg`,
+        `${base}/4 yard front load 3@1.5x.jpg`,
+        `${base}/4 yard front load 4@1.5x.jpg`,
+      ];
+      if (size === 6) return [
+        `${base}/6 yard front load 1@1.5x.jpg`,
+        `${base}/6 yard front load 2@1.5x.jpg`,
+        `${base}/6 yard front load 3@1.5x.jpg`,
+        `${base}/6 yard front load 4@1.5x.jpg`,
+        `${base}/6 yard front load 5@1.5x.jpg`,
+      ];
+      if (size === 8) return [
+        `${base}/8 yard front load 1@1.5x.jpg`,
+        `${base}/8 yard front load 2@1.5x.jpg`,
+        `${base}/8 yard front load 3@1.5x.jpg`,
+        `${base}/8 yard front load 4@1.5x.jpg`,
+      ];
+      // fallback: all permanent images
+      return [
+        `${base}/2 yard front load dumpster (1)@1.5x.jpg`,
+        `${base}/4 yard front load 1@1.5x.jpg`,
+        `${base}/6 yard front load 1@1.5x.jpg`,
+        `${base}/8 yard front load 1@1.5x.jpg`,
+      ];
+    }
+
+    // Rubber-wheeled Dumpsters — sizes: 10, 20, 30
+    if (type === "b7f86e0a-0e2d-439c-95b3-434c6e97eefe") {
+      const base = "/Dumpster/Rubber-wheeled Dumpsters";
+      if (size === 10) return [
+        `${base}/10 Yard Rubber tire trailor (1)@1.5x.jpg`,
+        `${base}/10 Yard Rubber tire trailor (2)@1.5x.jpg`,
+        `${base}/10 Yard Rubber tire trailor (3)@1.5x.jpg`,
+        `${base}/10 Yard Rubber tire trailor (4)@1.5x.jpg`,
+        `${base}/10 Yard Rubber tire trailor (1)(1)@1.5x.jpg`,
+        `${base}/10 Yard Rubber tire trailor (2)(1)@1.5x.jpg`,
+        `${base}/10 Yard Rubber tire trailor (3)(1)@1.5x.jpg`,
+        `${base}/10 Yard Rubber tire trailor (4)(1)@1.5x.jpg`,
+      ];
+      if (size === 20) return [
+        `${base}/20 Yard Rubber tire trailor (1)@1.5x.jpg`,
+        `${base}/20 Yard Rubber tire trailor (2)@1.5x.jpg`,
+        `${base}/20 Yard Rubber tire trailor (3)@1.5x.jpg`,
+        `${base}/20 Yard Rubber tire trailor (4)@1.5x.jpg`,
+        `${base}/20 Yard Rubber tire trailor (1)(1)@1.5x.jpg`,
+        `${base}/20 Yard Rubber tire trailor (2)(1)@1.5x.jpg`,
+        `${base}/20 Yard Rubber tire trailor (3)(1)@1.5x.jpg`,
+        `${base}/20 Yard Rubber tire trailor (4)(1)@1.5x.jpg`,
+      ];
+      if (size === 30) return [
+        `${base}/30 Yard Rubber tire trailor (1)@1.5x.jpg`,
+        `${base}/30 Yard Rubber tire trailor (2)@1.5x.jpg`,
+        `${base}/30 Yard Rubber tire trailor (3)@1.5x.jpg`,
+        `${base}/30 Yard Rubber tire trailor (4)@1.5x.jpg`,
+        `${base}/30 Yard Rubber tire trailor (1)(1)@1.5x.jpg`,
+        `${base}/30 Yard Rubber tire trailor (2)(1)@1.5x.jpg`,
+        `${base}/30 Yard Rubber tire trailor (3)(1)@1.5x.jpg`,
+        `${base}/30 Yard Rubber Wheeled - 4@1.5x.jpg`,
+      ];
+      // fallback
+      return [
+        `${base}/10 Yard Rubber tire trailor (1)@1.5x.jpg`,
+        `${base}/20 Yard Rubber tire trailor (1)@1.5x.jpg`,
+        `${base}/30 Yard Rubber tire trailor (1)@1.5x.jpg`,
+      ];
+    }
+
+    // Roll-off Dumpsters (default) — sizes: 10, 20, 30, 40
+    const base = "/Dumpster/Roll-off Dumpsters";
+    if (size === 10) return [
+      `${base}/10 yard roll off 1@1.5x.jpg`,
+      `${base}/10 yard roll off 2@1.5x.jpg`,
+      `${base}/10 yard roll off 3@1.5x.jpg`,
+      `${base}/10 yard roll off 4@1.5x.jpg`,
+    ];
+    if (size === 20) return [
+      `${base}/20 yard roll off 2@1.5x.jpg`,
+      `${base}/20 yard roll off 3@1.5x.jpg`,
+      `${base}/20 yard roll off 4@1.5x.jpg`,
+    ];
+    if (size === 30) return [
+      `${base}/30 yard roll off 1@1.5x.jpg`,
+      `${base}/30 yard roll off 2@1.5x.jpg`,
+      `${base}/30 yard roll off 3@1.5x.jpg`,
+      `${base}/30 yard roll off 4@1.5x.jpg`,
+    ];
+    if (size === 40) return [
+      `${base}/40 yard roll off1@1.5x.jpg`,
+      `${base}/40 yard roll off3@1.5x.jpg`,
+    ];
+    // fallback: one image per size
+    return [
+      `${base}/10 yard roll off 1@1.5x.jpg`,
+      `${base}/20 yard roll off 2@1.5x.jpg`,
+      `${base}/30 yard roll off 1@1.5x.jpg`,
+      `${base}/40 yard roll off1@1.5x.jpg`,
+    ];
+  };
+
   const dumpsterInfo = getDumpsterInfo(selectedDumpsterType);
-  const sliderImages = Array(4).fill(dumpsterInfo.image);
+  const sliderImages = getDumpsterSliderImages(selectedDumpsterType, selectedSize);
 
   return (
     <main className="bg-white min-h-screen flex flex-col">
       <Header />
 
-      <div className="py-8 mt-6 ">
-        <div className="flex justify-center">
-          <div className="w-[25%] px-12">
-            <div className="sticky top-24 mt-5 bg-gradient-to-b from-[#142A52] to-[#142A52]/80 text-white rounded-lg p-4 shadow-lg">
-              <h3 className="text-xl font-bold  pb-2 border-b border-white/20">Shipping Address</h3>
+      <div className="py-4 md:py-8 mt-4 md:mt-6">
+        <div className="flex flex-col lg:flex-row justify-center gap-8 px-4 md:px-8 max-w-7xl mx-auto">
 
-              <div className="space-y-2 mb-6 pt-2">
-                <div>
-                  <p className="text-white/70 text-[12px]">State</p>
-                  <p className="font-bold capitalize">{booking.state || locationInfo?.state?.toLowerCase() || "MI"}</p>
-                </div>
-                <div>
-                  <p className="text-white/70 text-[12px]">City</p>
-                  <p className="font-bold capitalize">{booking.city || locationInfo?.city?.toLowerCase() || "N/A"}</p>
-                </div>
-                <div>
-                  <p className="text-white/70 text-[12px]">Zip Code</p>
-                  <p className="font-bold">{booking.zipCode}</p>
-                </div>
-                <div>
-                  <p className="text-white/70 text-[12px]">Delivery</p>
-                  <p className="font-bold">
-                    {booking.deliveryDate &&
-                      new Date(booking.deliveryDate).toLocaleDateString("en-US", {
-                        month: "short",
-                        day: "numeric",
-                        year: "numeric",
-                      })}
-                  </p>
-                </div>
-              </div>
-
-          
-            </div></div>
-          <div className="w-[40%] mx-auto">
+          <div className="w-full lg:w-[65%]">
             {/* Progress */}
 
             <motion.div className="bg-white  border-slate-200 rounded-sm  mb-12">
@@ -641,15 +905,15 @@ export default function BookingStep1() {
                       {dumpsterInfo.description}
                     </p>
                   </div>
-                
+
                 </div>
 
                 {/* Content */}
-                <div className="flex w-full relative ">
+                <div className="flex flex-col md:flex-row w-full relative gap-2 md:gap-0">
 
                   {/* Left Big Image */}
-                  <div className="rounded-l-sm relative outline outline-slate-200 bg-white w-[75%] p-6 overflow-hidden">
-                    <div 
+                  <div className="rounded-l-sm md:rounded-l-sm relative outline outline-slate-200 bg-white w-full md:w-[75%] p-4 md:p-6 overflow-hidden">
+                    <div
                       className="relative w-full h-[220px] flex transition-transform duration-500 ease-in-out"
                       style={{ transform: `translateX(-${currentImageIdx * 100}%)` }}
                     >
@@ -665,7 +929,7 @@ export default function BookingStep1() {
                         </div>
                       ))}
                     </div>
-                    
+
                     {/* Slider Dots */}
                     <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-2 z-10">
                       {sliderImages.map((_, idx) => (
@@ -686,74 +950,75 @@ export default function BookingStep1() {
                   </div>
 
                   {/* Right Side Images */}
-                  <div className="w-[25%] flex flex-col relative">
-                    <div className="absolute -top-5 text-[11px] right-0 text-gray-500">
+                  <div className="w-full md:w-[25%] flex flex-col relative overflow-hidden">
+                    <div className="hidden md:block absolute -top-5 text-[11px] right-0 text-gray-500">
                       Available Views
                     </div>
-                    {sliderImages.slice(0, 4).map((src, i) => (
-                      <div
-                        key={i}
-                        onClick={() => setCurrentImageIdx(i)}
-                        className={`flex items-center justify-between outline outline-slate-200 bg-white flex-1 p-3 cursor-pointer hover:bg-gray-50 transition-colors ${
-                          i === 0 ? "rounded-tr-sm" : i === 3 ? "rounded-br-sm" : ""
-                        } ${currentImageIdx === i ? "ring-2 ring-inset ring-[#C89B2B]" : ""}`}
-                      >
-                        {/* Image */}
-                        <div className="relative w-[60%] h-[50px]">
-                          <Image
-                            src={src}
-                            alt={`Dumpster View ${i + 1}`}
-                            fill
-                            sizes="(max-width: 768px) 100vw, 50vw"
-                            className="object-contain"
-                          />
-                        </div>
+                    <div className="flex flex-row md:flex-col overflow-x-auto md:overflow-y-auto h-full" style={{ maxHeight: '340px' }}>
+                      {sliderImages.map((src, i) => (
+                        <div
+                          key={i}
+                          onClick={() => setCurrentImageIdx(i)}
+                          className={`flex items-center justify-between outline outline-slate-200 bg-white shrink-0 p-2 md:p-3 cursor-pointer hover:bg-gray-50 transition-colors ${i === 0 ? "rounded-tr-sm" : i === sliderImages.length - 1 ? "rounded-br-sm" : ""
+                            } ${currentImageIdx === i ? "ring-2 ring-inset ring-[#C89B2B]" : ""} min-w-[80px] md:min-w-0`}
+                        >
+                          {/* Image */}
+                          <div className="relative w-[50px] md:w-[60%] h-[40px] md:h-[50px]">
+                            <Image
+                              src={src}
+                              alt={`Dumpster View ${i + 1}`}
+                              fill
+                              sizes="(max-width: 768px) 100vw, 50vw"
+                              className="object-contain"
+                            />
+                          </div>
 
-                        <div className="w-[40%] text-right">
-                          <p className="text-[9px] text-[#142A52]/60">View</p>
-                          <p className="text-[10px] font-bold">
-                            0{i + 1}
-                          </p>
+                          <div className="hidden md:block w-[40%] text-right">
+                            <p className="text-[9px] text-[#142A52]/60">View</p>
+                            <p className="text-[10px] font-bold">
+                              {String(i + 1).padStart(2, '0')}
+                            </p>
+                          </div>
                         </div>
-                      </div>
-                    ))}
-
+                      ))}
+                    </div>
                   </div>
 
                 </div>
               </div>
             </motion.div>
 
-            {/* Dimension and Capacity Selectors */}
-            <div className="flex flex-col md:flex-row gap-6 mb-8 mt-6">
-              <div className="w-full md:w-1/2">
-                <label className="block text-[12px] font-bold text-[#142A52] mb-2">Dumpster Dimension</label>
-                <Select value={selectedSize?.toString()} onValueChange={(val) => handleSizeChange(parseInt(val))}>
-                  <SelectTrigger className="w-full border-2 border-[#142A52]/30 rounded-lg focus:border-[#C89B2B] focus:outline-none h-[42px] bg-white">
-                    <SelectValue placeholder="Select Dimension" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {sizes.map((s: any) => (
-                      <SelectItem key={s.value} value={s.value.toString()}>{s.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="w-full md:w-1/2">
-                <label className="block text-[12px] font-bold text-[#142A52] mb-2">Dumpster Capacity</label>
-                <Select value={booking.dumpsterCapacity?.toString() || ""} onValueChange={(val) => updateBooking(selectedIndex, { ...booking, dumpsterCapacity: parseInt(val) })}>
-                  <SelectTrigger className="w-full border-2 border-[#142A52]/30 rounded-lg focus:border-[#C89B2B] focus:outline-none h-[42px] bg-white">
-                    <SelectValue placeholder="Select Capacity" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="1">1 Ton</SelectItem>
-                    <SelectItem value="2">2 Tons</SelectItem>
-                    <SelectItem value="3">3 Tons</SelectItem>
-                    <SelectItem value="4">4 Tons</SelectItem>
-                    <SelectItem value="5">5 Tons</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+            {/* Mobile-only ItemsAdder (below images) */}
+            <div className="lg:hidden mb-10 bg-zinc-100 text-black rounded-2xl p-4">
+              <ItemsAdder
+                dumpsterTypes={dbDumpsterTypes.map(t => ({ id: t.id, name: t.name, sizes: t.sizes.map((s: any) => s.value) }))}
+                sizes={Array.from(new Set(dbDumpsterTypes.flatMap(t => t.sizes.map((s: any) => s.value))))}
+                selectedIndex={selectedIndex}
+                onSelect={(idx) => setSelectedIndex(idx)}
+                cartTotal={cartTotal}
+                itemPrices={itemPrices}
+                cartBreakdown={cartBreakdown}
+                accountCreation={accountCreation}
+                onAddMore={(newItem) => {
+                  const addedTypeObj = dbDumpsterTypes.find((t: any) => t.id === newItem.type) || dbDumpsterTypes[0];
+                  const addedSizeObj = addedTypeObj?.sizes.find((s: any) => s.value === newItem.size) || addedTypeObj?.sizes[0];
+                  const itemBasePrice = addedSizeObj?.price || 435;
+                  let extraDaysCost = 0;
+                  if (newItem.rentalPeriod > 14) {
+                    extraDaysCost = (newItem.rentalPeriod - 14) * 25;
+                  }
+                  addBooking({
+                    ...booking,
+                    dumpsterType: newItem.type,
+                    dumpsterSize: newItem.size,
+                    deliveryDate: newItem.deliveryDate,
+                    rentalPeriod: newItem.rentalPeriod,
+                    basePrice: itemBasePrice,
+                    surcharges: extraDaysCost,
+                    totalPrice: itemBasePrice + extraDaysCost
+                  });
+                }}
+              />
             </div>
 
             <ProductInfoSection product={product} />
@@ -762,8 +1027,7 @@ export default function BookingStep1() {
 
               <div className="">
                 {/* Contact Information */}
-                <div id="billing-section" className="mb-8 p-3">
-                  <h2 className="text-2xl font-bold text-[#142A52] mb-6"> Billing Information</h2>
+                <div id="billing-section" className="mb-8">
 
                   {error && (
                     <motion.div
@@ -776,66 +1040,202 @@ export default function BookingStep1() {
                     </motion.div>
                   )}
 
-                  <div className="mb-6">
-                    <label className="block text-[12px] font-bold text-[#142A52] mb-2">
-                      Full Name *
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.fullName || ""}
-                      onChange={(e) => handleInputChange("fullName", e.target.value)}
-                      className="w-full px-4 py-3 border-2 border-[#142A52]/30 rounded-lg focus:border-[#C89B2B] focus:ring-2 focus:ring-[#C89B2B]/20 outline-none transition-all"
-                      placeholder="John Doe"
-                    />
-                  </div>
+                  {/* ── Shipping Details ── */}
+                  <h2 className="text-xl font-bold text-[#142A52] mb-5 pb-2 border-b border-[#142A52]/10">Shipping Details</h2>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                  {/* First / Last name */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                     <div>
-                      <label className="block text-[12px] font-bold text-[#142A52] mb-2 flex items-center gap-2">
-                        <Mail size={16} /> Email *
-                      </label>
+                      <label className="block text-[11px] font-bold text-[#142A52] mb-1">First name *</label>
                       <input
-                        type="email"
-                        value={formData.email}
-                        onChange={(e) => handleInputChange("email", e.target.value)}
-                        className="w-full px-4 py-3 border-2 border-[#142A52]/30 rounded-lg focus:border-[#C89B2B] focus:ring-2 focus:ring-[#C89B2B]/20 outline-none"
-                        placeholder="john@example.com"
+                        type="text"
+                        value={formData.firstName}
+                        onChange={(e) => handleInputChange("firstName", e.target.value)}
+                        className="w-full px-3 py-2.5 text-sm border-2 border-[#142A52]/20 rounded-lg focus:border-[#C89B2B] focus:ring-2 focus:ring-[#C89B2B]/20 outline-none transition-all"
+                        placeholder="John"
                       />
                     </div>
                     <div>
-                      <label className="block text-[12px] font-bold text-[#142A52] mb-2 flex items-center gap-2">
-                        <Phone size={16} /> Phone *
-                      </label>
+                      <label className="block text-[11px] font-bold text-[#142A52] mb-1">Last name *</label>
                       <input
-                        type="tel"
-                        value={formData.phone}
-                        onChange={(e) => handleInputChange("phone", e.target.value)}
-                        className="w-full px-4 py-3 border-2 border-[#142A52]/30 rounded-lg focus:border-[#C89B2B] focus:ring-2 focus:ring-[#C89B2B]/20 outline-none"
-                        placeholder="(586) 412-3762"
+                        type="text"
+                        value={formData.lastName}
+                        onChange={(e) => handleInputChange("lastName", e.target.value)}
+                        className="w-full px-3 py-2.5 text-sm border-2 border-[#142A52]/20 rounded-lg focus:border-[#C89B2B] focus:ring-2 focus:ring-[#C89B2B]/20 outline-none transition-all"
+                        placeholder="Doe"
                       />
                     </div>
                   </div>
 
-                  <div className="mb-6">
-                    <label className="block text-[12px] font-bold text-[#142A52] mb-2">Company (Optional)</label>
+                  {/* Company */}
+                  <div className="mb-4">
+                    <label className="block text-[11px] font-bold text-[#142A52] mb-1">Company name <span className="font-normal text-gray-400">(optional)</span></label>
                     <input
                       type="text"
                       value={formData.company}
                       onChange={(e) => handleInputChange("company", e.target.value)}
-                      className="w-full px-4 py-3 border-2 border-[#142A52]/30 rounded-lg focus:border-[#C89B2B] focus:ring-2 focus:ring-[#C89B2B]/20 outline-none"
+                      className="w-full px-3 py-2.5 text-sm border-2 border-[#142A52]/20 rounded-lg focus:border-[#C89B2B] focus:ring-2 focus:ring-[#C89B2B]/20 outline-none transition-all"
                       placeholder="Your company name"
                     />
                   </div>
 
+                  {/* Country */}
+                  <div className="mb-4">
+                    <label className="block text-[11px] font-bold text-[#142A52] mb-1">Country / Region *</label>
+                    <div className="w-full px-3 py-2.5 text-sm border-2 border-[#142A52]/20 rounded-lg bg-gray-50 text-gray-500 select-none">
+                      United States (US)
+                    </div>
+                  </div>
+
+                  {/* Street address */}
+                  <div className="mb-4">
+                    <label className="block text-[11px] font-bold text-[#142A52] mb-1">Street address *</label>
+                    <input
+                      type="text"
+                      value={formData.shippingStreet}
+                      onChange={(e) => handleInputChange("shippingStreet", e.target.value)}
+                      className="w-full px-3 py-2.5 text-sm border-2 border-[#142A52]/20 rounded-lg focus:border-[#C89B2B] focus:ring-2 focus:ring-[#C89B2B]/20 outline-none transition-all mb-2"
+                      placeholder="House number and street name"
+                    />
+                    <input
+                      type="text"
+                      value={formData.shippingApartment}
+                      onChange={(e) => handleInputChange("shippingApartment", e.target.value)}
+                      className="w-full px-3 py-2.5 text-sm border-2 border-[#142A52]/20 rounded-lg focus:border-[#C89B2B] focus:ring-2 focus:ring-[#C89B2B]/20 outline-none transition-all"
+                      placeholder="Apartment, suite, unit, etc. (optional)"
+                    />
+                  </div>
+
+                  {/* City / State / ZIP */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+                    <div>
+                      <label className="block text-[11px] font-bold text-[#142A52] mb-1">Town / City *</label>
+                      <input
+                        type="text"
+                        value={formData.shippingCity}
+                        onChange={(e) => handleInputChange("shippingCity", e.target.value)}
+                        className="w-full px-3 py-2.5 text-sm border-2 border-[#142A52]/20 rounded-lg focus:border-[#C89B2B] focus:ring-2 focus:ring-[#C89B2B]/20 outline-none transition-all"
+                        placeholder="ALMONT"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-bold text-[#142A52] mb-1">State *</label>
+                      <input
+                        type="text"
+                        value={formData.shippingState}
+                        onChange={(e) => handleInputChange("shippingState", e.target.value)}
+                        className="w-full px-3 py-2.5 text-sm border-2 border-[#142A52]/20 rounded-lg focus:border-[#C89B2B] focus:ring-2 focus:ring-[#C89B2B]/20 outline-none transition-all"
+                        placeholder="Michigan"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-bold text-[#142A52] mb-1">Postcode / ZIP *</label>
+                      <input
+                        type="text"
+                        value={formData.shippingZip}
+                        onChange={(e) => handleInputChange("shippingZip", e.target.value)}
+                        className="w-full px-3 py-2.5 text-sm border-2 border-[#142A52]/20 rounded-lg focus:border-[#C89B2B] focus:ring-2 focus:ring-[#C89B2B]/20 outline-none transition-all"
+                        placeholder="48003"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Phone / Email */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                      <label className="block text-[11px] font-bold text-[#142A52] mb-1">Phone / WhatsApp *</label>
+                      <input
+                        type="tel"
+                        value={formData.phone}
+                        onChange={(e) => handleInputChange("phone", e.target.value)}
+                        className="w-full px-3 py-2.5 text-sm border-2 border-[#142A52]/20 rounded-lg focus:border-[#C89B2B] focus:ring-2 focus:ring-[#C89B2B]/20 outline-none transition-all"
+                        placeholder="(586) 412-3762"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-bold text-[#142A52] mb-1">Email address *</label>
+                      <input
+                        type="email"
+                        value={formData.email}
+                        onChange={(e) => handleInputChange("email", e.target.value)}
+                        className="w-full px-3 py-2.5 text-sm border-2 border-[#142A52]/20 rounded-lg focus:border-[#C89B2B] focus:ring-2 focus:ring-[#C89B2B]/20 outline-none transition-all"
+                        placeholder="john@example.com"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Placement Instructions */}
                   <div className="mb-6">
-                    <label className="block text-[12px] font-bold text-[#142A52] mb-2">Placement Instructions (Optional)</label>
+                    <label className="block text-[11px] font-bold text-[#142A52] mb-1">Placement Instructions *</label>
                     <textarea
                       value={formData.placementInstructions}
                       onChange={(e) => handleInputChange("placementInstructions", e.target.value)}
-                      className="w-full px-4 py-3 border-2 border-[#142A52]/30 rounded-lg focus:border-[#C89B2B] focus:ring-2 focus:ring-[#C89B2B]/20 outline-none"
-                      placeholder="e.g., Driveway, back yard, side entrance..."
+                      className="w-full px-3 py-2.5 text-sm border-2 border-[#142A52]/20 rounded-lg focus:border-[#C89B2B] focus:ring-2 focus:ring-[#C89B2B]/20 outline-none transition-all"
+                      placeholder="Notes about your order, e.g. special notes for delivery."
                       rows={3}
                     />
+                  </div>
+
+                  {/* ── Billing Address ── */}
+                  <h2 className="text-xl font-bold text-[#142A52] mb-4 pb-2 border-b border-[#142A52]/10">Billing Address</h2>
+
+                  <label className="flex items-center gap-3 cursor-pointer mb-5">
+                    <input
+                      type="checkbox"
+                      checked={formData.billingSameAsShipping}
+                      onChange={(e) => handleInputChange("billingSameAsShipping", e.target.checked)}
+                      className="w-4 h-4 accent-[#142A52] rounded"
+                    />
+                    <span className="text-sm text-gray-700">My billing address is the same as my shipping address</span>
+                  </label>
+
+                  {!formData.billingSameAsShipping && (
+                    <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+                      <div className="mb-4">
+                        <label className="block text-[11px] font-bold text-[#142A52] mb-1">Street address *</label>
+                        <input
+                          type="text"
+                          value={formData.billingStreet}
+                          onChange={(e) => handleInputChange("billingStreet", e.target.value)}
+                          className="w-full px-3 py-2.5 text-sm border-2 border-[#142A52]/20 rounded-lg focus:border-[#C89B2B] focus:ring-2 focus:ring-[#C89B2B]/20 outline-none transition-all mb-2"
+                          placeholder="House number and street name"
+                        />
+                        <input
+                          type="text"
+                          value={formData.billingApartment}
+                          onChange={(e) => handleInputChange("billingApartment", e.target.value)}
+                          className="w-full px-3 py-2.5 text-sm border-2 border-[#142A52]/20 rounded-lg focus:border-[#C89B2B] focus:ring-2 focus:ring-[#C89B2B]/20 outline-none transition-all"
+                          placeholder="Apartment, suite, unit, etc. (optional)"
+                        />
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div>
+                          <label className="block text-[11px] font-bold text-[#142A52] mb-1">Town / City *</label>
+                          <input type="text" value={formData.billingCity} onChange={(e) => handleInputChange("billingCity", e.target.value)} className="w-full px-3 py-2.5 text-sm border-2 border-[#142A52]/20 rounded-lg focus:border-[#C89B2B] outline-none" placeholder="ALMONT" />
+                        </div>
+                        <div>
+                          <label className="block text-[11px] font-bold text-[#142A52] mb-1">State *</label>
+                          <input type="text" value={formData.billingState} onChange={(e) => handleInputChange("billingState", e.target.value)} className="w-full px-3 py-2.5 text-sm border-2 border-[#142A52]/20 rounded-lg focus:border-[#C89B2B] outline-none" placeholder="Michigan" />
+                        </div>
+                        <div>
+                          <label className="block text-[11px] font-bold text-[#142A52] mb-1">Postcode / ZIP *</label>
+                          <input type="text" value={formData.billingZip} onChange={(e) => handleInputChange("billingZip", e.target.value)} className="w-full px-3 py-2.5 text-sm border-2 border-[#142A52]/20 rounded-lg focus:border-[#C89B2B] outline-none" placeholder="48003" />
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+
+                  {/* Newsletter + Create Account */}
+                  <div className="mt-6 space-y-3">
+                    <label className="flex items-center gap-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={formData.subscribeNewsletter}
+                        onChange={(e) => handleInputChange("subscribeNewsletter", e.target.checked)}
+                        className="w-4 h-4 accent-[#142A52] rounded"
+                      />
+                      <span className="text-sm text-gray-700">Subscribe to our newsletter</span>
+                    </label>
                   </div>
                 </div>
 
@@ -863,7 +1263,7 @@ export default function BookingStep1() {
 
             </div>
             <motion.div
-              className="lg:col-span-3 space-y-10 mt-14"
+              className="w-full space-y-10 mt-10 lg:mt-14"
             >
 
               {/* Heavy Material Warning */}
@@ -887,125 +1287,155 @@ export default function BookingStep1() {
 
               {/* Pricing Summary Card */}
               <motion.div
-                className="bg-gradient-to-br from-[#142A52] via-[#1a3a6f] to-[#0f1f3a] text-white rounded-2xl shadow-xl p-8 border border-[#C89B2B]/30"
+                className="bg-gradient-to-br from-[#142A52] via-[#1a3a6f] to-[#0f1f3a] text-white rounded-2xl shadow-xl p-8 border border-[#C89B2B]/30 lg:hidden"
               >
                 <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-2xl font-bold">Shipping Address</h3>
+                  <h3 className="text-2xl font-bold">Order Summary</h3>
                   <Zap className="w-6 h-6 text-[#C89B2B]" />
                 </div>
 
-                
+                <div className="space-y-3 mb-6">
+                  <div className="flex justify-between items-center">
+                    <span className="text-white/80">Base Price</span>
+                    <span className="font-bold text-white">${cartBreakdown.basePrice.toFixed(2)}</span>
+                  </div>
+                  {cartBreakdown.surcharges > 0 && (
+                    <div className="flex justify-between items-center text-[#C89B2B]">
+                      <span>Heavy Material Surcharges</span>
+                      <span className="font-bold">${cartBreakdown.surcharges.toFixed(2)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between items-center">
+                    <span className="text-white/80">Shipping & Delivery</span>
+                    <span className="font-bold text-white">${cartBreakdown.shipping.toFixed(2)}</span>
+                  </div>
+                  {cartBreakdown.extraDays > 0 && (
+                    <div className="flex justify-between items-center text-[#C89B2B]">
+                      <span>Extra Rental Charges</span>
+                      <span className="font-bold">${cartBreakdown.extraDays.toFixed(2)}</span>
+                    </div>
+                  )}
+                  {accountCreation && (
+                    <div className="flex justify-between items-center text-green-400">
+                      <span>Account Discount</span>
+                      <span className="font-bold">-${ACCOUNT_DISCOUNT.toFixed(2)}</span>
+                    </div>
+                  )}
+                </div>
+
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.2 }}
-                  className="flex justify-between items-center"
+                  className="flex justify-between items-center pt-4 border-t border-white/20"
                 >
-                  <span className="text-xl pl-2 font-bold">Total (Base Price)</span>
+                  <span className="text-xl pl-2 font-bold">Total Amount</span>
                   <span className="text-3xl font-bold text-[#C89B2B]">${cartTotal.toFixed(2)}</span>
                 </motion.div>
                 <p className="text-xs text-white/60 mt-4">
-                  💡 Rental period and special requests may adjust final price
+                  💡 Includes all selected dumpsters, shipping, and extra rental periods.
                 </p>
               </motion.div>
 
-              <div id="payment-section" className="mb-8">
-                <h2 className="text-2xl font-bold text-[#142A52] mb-6">Payment Method</h2>
+              {formData.firstName && formData.lastName && formData.email && formData.phone && formData.shippingStreet && formData.shippingCity ? (
+                <div id="payment-section" className="mb-8">
+                  <h2 className="text-2xl font-bold text-[#142A52] mb-6">Payment Method</h2>
 
-                {/* Direct Payment Buttons */}
-                <div className="space-y-4 mb-8">
-                <div className="">
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="mb-2"
-                  >
-                    <button
-                      type="button"
-                      onClick={handleStripePayment}
-                      className="w-full p-3 bg-[#635BFF] text-white font-bold rounded flex items-center justify-center gap-2 h-[42px] hover:bg-[#4B45FF] transition-colors"
+                  {/* Direct Payment Buttons */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="w-full"
                     >
-                      Pay with Stripe
-                    </button>
-                  </motion.div>
+                      <button
+                        type="button"
+                        onClick={handleStripePayment}
+                        className="w-full p-3 bg-[#635BFF] text-white font-bold rounded flex items-center justify-center gap-2 h-[42px] hover:bg-[#4B45FF] transition-colors"
+                      >
+                        Pay with Stripe
+                      </button>
+                    </motion.div>
 
-                 <motion.button
-                    onClick={() => handleSubmit2('apple-pay')}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="w-full p-3 bg-black text-white font-bold rounded  flex items-center justify-center gap-2 h-[42px] hover:bg-gray-900 transition-colors"
-                  >
-                    <svg className="w-5 h-5" viewBox="0 0 384 512" fill="currentColor">
-                      <path d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zm-56.6-164.2c27.3-32.4 24.8-61.9 24-72.5-24.1 1.4-52 16.4-67.9 34.9-17.5 19.8-27.8 44.3-25.6 71.9 26.1 2 49.9-11.4 69.5-34.3z"/>
-                    </svg>
-                    Pay with Apple Pay
-                  </motion.button>
-                  </div>
-                  <motion.div
-                    className="mb-2 w-full flex pb-1  [&>div]:w-full pr-2 [&_.google-pay-button-container]:w-full [&_button]:!w-full"
-                    onClickCapture={(e) => {
-                      if (!formData.fullName || !formData.email || !formData.phone) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        setError("Please fill out your contact details (Full Name, Email, and Phone) before proceeding.");
-                        window.scrollTo({ top: 0, behavior: 'smooth' });
-                      }
-                    }}
-                  >
-                    <GPayButton
-                      amount={cartTotal}
-                      // @ts-ignore - Safely pass buttonSizeMode if GPayButton passes props down
-                      buttonSizeMode="fill"
-                      onClick={(e: any) => {
-                        if (!formData.fullName || !formData.email || !formData.phone) {
-                          if (e && e.preventDefault) e.preventDefault();
-                          setError("Please fill out your contact details (Full Name, Email, and Phone) before proceeding.");
+                    <motion.button
+                      onClick={() => handleSubmit('apple-pay')}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="w-full p-3 bg-black text-white font-bold rounded flex items-center justify-center gap-2 h-[42px] hover:bg-gray-900 transition-colors"
+                    >
+                      <svg className="w-5 h-5" viewBox="0 0 384 512" fill="currentColor">
+                        <path d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zm-56.6-164.2c27.3-32.4 24.8-61.9 24-72.5-24.1 1.4-52 16.4-67.9 34.9-17.5 19.8-27.8 44.3-25.6 71.9 26.1 2 49.9-11.4 69.5-34.3z" />
+                      </svg>
+                      Pay with Apple Pay
+                    </motion.button>
+
+                    <motion.div
+                      className="w-full flex [&>div]:w-full [&_.google-pay-button-container]:w-full [&_button]:!w-full"
+                      onClickCapture={(e) => {
+                        if (!validateForm()) {
+                          e.preventDefault();
+                          e.stopPropagation();
                           window.scrollTo({ top: 0, behavior: 'smooth' });
-                          throw new Error("Form incomplete");
                         }
                       }}
-                      onPaymentSuccess={(paymentData) => {
-                        handleGooglePayPayment(paymentData);
+                    >
+                      <GPayButton
+                        amount={cartTotal}
+                        // @ts-ignore - Safely pass buttonSizeMode if GPayButton passes props down
+                        buttonSizeMode="fill"
+                        onClick={(e: any) => {
+                          if (!validateForm()) {
+                            if (e && e.preventDefault) e.preventDefault();
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                            throw new Error("Form incomplete");
+                          }
+                        }}
+                        onPaymentSuccess={(paymentData) => {
+                          handleGooglePayPayment(paymentData);
+                        }}
+                        onPaymentError={(error) => {
+                          setError('Google Pay error: ' + error.message);
+                        }}
+                      />
+                    </motion.div>
+
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="mb-2"
+                      onClickCapture={(e) => {
+                        if (!validateForm()) {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }
                       }}
-                      onPaymentError={(error) => {
-                        setError('Google Pay error: ' + error.message);
-                      }}
-                    />
-                  </motion.div>
-
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="mb-2"
-                    onClickCapture={(e) => {
-                      if (!formData.fullName || !formData.email || !formData.phone) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        setError("Please fill out your contact details (Full Name, Email, and Phone) before proceeding.");
-                        window.scrollTo({ top: 0, behavior: 'smooth' });
-                      }
-                    }}
-                  >
-                    <PayPalButton
-                      amount={cartTotal}
-                      onSuccess={(details) => handlePayPalPayment(details)}
-                      onError={(error) => setError('PayPal error: ' + error.message)}
-                    />
-                  </motion.div>
+                    >
+                      <PayPalButton
+                        amount={cartTotal}
+                        onSuccess={(details) => handlePayPalPayment(details)}
+                        onError={(error) => setError('PayPal error: ' + error.message)}
+                      />
+                    </motion.div>
 
 
-                 
+
+                  </div>
                 </div>
-
-              </div>
+              ) : (
+                <div className="mb-8 p-6 bg-[#f9fafb] border-2 border-dashed border-[#142A52]/20 rounded-xl text-center">
+                  <h3 className="text-lg font-bold text-[#142A52] mb-2">Complete Billing Information</h3>
+                  <p className="text-sm text-[#142A52]/70">Please provide your Full Name, Email, and Phone number above to unlock payment options.</p>
+                </div>
+              )}
               {/* Action Buttons */}
 
             </motion.div>
 
           </div>
-          <div className="w-[35%] px-10">
+          <div className="w-full lg:w-[35%] hidden lg:block">
 
-            <div className="scale-[0.9] mt-5 bg-gradient-to-b from-[#142A52] to-[#142A52]/80 text-white rounded-2xl p-2 ">
+            <div className="mt-5 bg-zinc-100 text-black rounded-2xl p-4 md:p-6 ">
               <ItemsAdder
                 dumpsterTypes={dbDumpsterTypes.map(t => ({ id: t.id, name: t.name, sizes: t.sizes.map((s: any) => s.value) }))}
                 sizes={Array.from(new Set(dbDumpsterTypes.flatMap(t => t.sizes.map((s: any) => s.value))))}
@@ -1013,6 +1443,8 @@ export default function BookingStep1() {
                 onSelect={(idx) => setSelectedIndex(idx)}
                 cartTotal={cartTotal}
                 itemPrices={itemPrices}
+                cartBreakdown={cartBreakdown}
+                accountCreation={accountCreation}
                 onAddMore={(newItem) => {
                   const addedTypeObj = dbDumpsterTypes.find((t: any) => t.id === newItem.type) || dbDumpsterTypes[0];
                   const addedSizeObj = addedTypeObj?.sizes.find((s: any) => s.value === newItem.size) || addedTypeObj?.sizes[0];
@@ -1040,6 +1472,6 @@ export default function BookingStep1() {
       </div>
 
       <Footer />
-    </main>
+    </main >
   );
 }

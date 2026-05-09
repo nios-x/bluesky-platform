@@ -19,7 +19,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Search } from "lucide-react"
+import { Search, User } from "lucide-react"
+import Link from "next/link"
 
 export default function AdminOrdersPage() {
 
@@ -164,7 +165,13 @@ export default function AdminOrdersPage() {
                     </span>
                   </TableCell>
                   <TableCell className="font-medium">
-                    {order.customers?.first_name} {order.customers?.last_name}
+                    <Link 
+                      href={`/admin/customers/${order.customers?.id}`}
+                      className="hover:text-primary hover:underline flex items-center gap-2"
+                    >
+                      <User className="w-4 h-4 text-muted-foreground" />
+                      {order.customers?.first_name} {order.customers?.last_name}
+                    </Link>
                   </TableCell>
                   <TableCell>
                     {order.order_services && order.order_services.length > 0 ? (

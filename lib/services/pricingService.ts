@@ -1,5 +1,5 @@
 import { getDumpsters } from "@/lib/models/pricing";
-import { HEAVY_MATERIALS, HEAVY_MATERIAL_SURCHARGE, ACCOUNT_DISCOUNT } from "@/lib/constants/booking";
+import { HEAVY_MATERIALS, HEAVY_MATERIAL_SURCHARGE, ACCOUNT_DISCOUNT, SHIPPING_PRICE } from "@/lib/constants/booking";
 
 export async function calculateServerSideTotal(bookingsData: any[], contactInfo: any): Promise<number> {
   if (!bookingsData || !bookingsData.length) {
@@ -51,11 +51,19 @@ export async function calculateServerSideTotal(bookingsData: any[], contactInfo:
     }
 
     let extraDaysCost = 0;
-    if (bData.rentalPeriod && bData.rentalPeriod > 14) {
-      extraDaysCost = (bData.rentalPeriod - 14) * 25;
+    let freeDays = 7;
+    if (dData) {
+      const typeObj = Array.isArray(dData.dumpster_types) ? dData.dumpster_types[0] : dData.dumpster_types;
+      if (typeObj?.name?.includes("Rubber")) {
+        freeDays = 14;
+      }
     }
 
-    cartTotal += basePrice + surcharges + extraDaysCost;
+    if (bData.rentalPeriod && bData.rentalPeriod > freeDays) {
+      extraDaysCost = (bData.rentalPeriod - freeDays) * 25;
+    }
+
+    cartTotal += basePrice + surcharges + extraDaysCost + SHIPPING_PRICE;
   }
 
   let finalPrice = cartTotal;
