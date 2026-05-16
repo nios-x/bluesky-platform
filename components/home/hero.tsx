@@ -2,16 +2,17 @@
 
 import { Button } from "@/components/ui/button";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useBooking } from "@/contexts/booking-context";
 import { PROJECT_TYPES, MATERIAL_TYPES } from "@/lib/constants/booking";
-import { LOCATIONS } from "@/lib/constants/locations";
+
 import { SmartRecommendationModal } from "@/components/ai/SmartRecommendationModal";
 import { useSmartRecommendationModal } from "@/hooks/use-smart-recommendation-modal";
 import { Zap } from "lucide-react";
+
 
 const formatLocalDate = (date: Date) => {
   const year = date.getFullYear();
@@ -109,42 +110,145 @@ export function Hero() {
   const [projectType, setProjectType] = useState("");
 
   const [locationQuery, setLocationQuery] = useState("");
-  const [filteredLocations, setFilteredLocations] = useState<any[]>([]);
+  // Combined results: local LOCATIONS matches + Google Places predictions
+  type LocalLocationResult = { type: "local"; zip: string; city: string; state: string };
+  type GoogleLocationResult = { type: "google"; place_id: string; description: string };
+  type LocationResult = LocalLocationResult | GoogleLocationResult;
+
+  const [combinedResults, setCombinedResults] = useState<LocationResult[]>([]);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
 
-  const getMichiganZipCodesByCity = (query: string) => {
-    if (!query) return [];
-    return LOCATIONS.filter((loc: any) =>
-      (loc.city && loc.city.toLowerCase().includes(query.toLowerCase())) ||
-      (loc.zip && loc.zip.toLowerCase().includes(query.toLowerCase())) ||
-      (loc.state && loc.state.toLowerCase().includes(query.toLowerCase()))
-    ).slice(0, 10);
-  };
+  // Debounce timer & race condition guard
+  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const searchRequestId = useRef(0);
 
+  // Cleanup debounce timer on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceTimer.current) {
+        clearTimeout(debounceTimer.current);
+      }
+    };
+  }, []);
+
+  // Stored parsed address parts from selected location (to pass to step-1)
+  const [selectedCity, setSelectedCity] = useState("");
+  const [selectedState, setSelectedState] = useState("");
+  const [selectedStreet, setSelectedStreet] = useState("");
+  const [selectedAddress, setSelectedAddress] = useState("");
+
+  // === Server-side search via /api/locations/search ===
   const handleLocationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value;
     setLocationQuery(query);
-    setZipCode(""); // Reset actual zip code until a valid location is explicitly selected
-    if (query.trim().length > 0) {
-      setFilteredLocations(getMichiganZipCodesByCity(query));
-      setIsDropdownOpen(true);
-    } else {
-      setFilteredLocations([]);
-      setIsDropdownOpen(false);
+
+    // Reset zip and address state when user edits
+    setZipCode("");
+    setSelectedCity("");
+    setSelectedState("");
+    setSelectedStreet("");
+    setSelectedAddress("");
+
+    // Clear previous debounce
+    if (debounceTimer.current) {
+      clearTimeout(debounceTimer.current);
     }
+
+    if (!query.trim()) {
+      setCombinedResults([]);
+      setIsDropdownOpen(false);
+      setIsSearching(false);
+      return;
+    }
+
+    // Debounce API call (300ms)
+    setIsSearching(true);
+    setIsDropdownOpen(true);
+
+    debounceTimer.current = setTimeout(async () => {
+      const currentRequestId = ++searchRequestId.current;
+
+      try {
+        const res = await fetch(`/api/locations/search?q=${encodeURIComponent(query)}`);
+        if (!res.ok) throw new Error("Search API failed");
+
+        // Race condition guard: discard if a newer search was triggered
+        if (currentRequestId !== searchRequestId.current) return;
+
+        const data = await res.json();
+
+        const localResults: LocalLocationResult[] = (data.localResults || []).map((r: any) => ({
+          type: "local" as const,
+          zip: r.zip,
+          city: r.city,
+          state: r.state,
+        }));
+
+        const googleResults: GoogleLocationResult[] = (data.googleResults || []).map((r: any) => ({
+          type: "google" as const,
+          place_id: r.place_id,
+          description: r.description,
+        }));
+
+        const combined: LocationResult[] = [...localResults, ...googleResults];
+        setCombinedResults(combined);
+        setIsDropdownOpen(combined.length > 0);
+      } catch (err) {
+        console.error("Location search error:", err);
+      } finally {
+        if (currentRequestId === searchRequestId.current) {
+          setIsSearching(false);
+        }
+      }
+    }, 300);
   };
 
-  const handleLocationSelect = (loc: any) => {
-    const displayValue = `${loc.zip}, ${loc.city}, ${loc.state || 'MI'}`;
-    setLocationQuery(displayValue);
+  // === Local area selection (city/state/zip quick-pick) ===
+  const handleLocalSelect = (loc: LocalLocationResult) => {
+    const display = `${loc.city}, ${loc.state} ${loc.zip}`;
+    setLocationQuery(display);
     setZipCode(loc.zip);
+    setSelectedCity(loc.city);
+    setSelectedState(loc.state);
+    setSelectedStreet("");
+    setSelectedAddress(display);
     setIsDropdownOpen(false);
   };
 
+  // === Google Place selection — fetch details from server-side API ===
+  const handleGoogleSelect = async (result: GoogleLocationResult) => {
+    setLocationQuery(result.description);
+    setSelectedAddress(result.description);
+    setIsDropdownOpen(false);
+
+    try {
+      const res = await fetch(`/api/locations/details?placeId=${encodeURIComponent(result.place_id)}`);
+      if (!res.ok) return;
+
+      const details = await res.json();
+
+      if (details.zip) setZipCode(details.zip);
+      if (details.city) setSelectedCity(details.city);
+      if (details.state) setSelectedState(details.state);
+      if (details.street) setSelectedStreet(details.street);
+    } catch (err) {
+      console.error("Place details error:", err);
+    }
+  };
+
+  const handleLocationResultSelect = (result: LocationResult) => {
+    if (result.type === "local") {
+      handleLocalSelect(result);
+    } else {
+      handleGoogleSelect(result);
+    }
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter" && isDropdownOpen && filteredLocations.length > 0) {
+    if (e.key === "Enter" && isDropdownOpen && combinedResults.length > 0) {
       e.preventDefault();
-      handleLocationSelect(filteredLocations[0]);
+      handleLocationResultSelect(combinedResults[0]);
     }
   };
 
@@ -245,9 +349,13 @@ export function Hero() {
       return;
     }
 
-    // Update booking context
+    // Update booking context with address + booking details
     updateBooking(0, {
       zipCode,
+      address: selectedAddress || locationQuery,
+      city: selectedCity,
+      state: selectedState,
+      shippingStreet: selectedStreet,
       dumpsterType,
       dumpsterSize: dumpsterSize!,
       deliveryDate,
@@ -306,28 +414,84 @@ export function Hero() {
                 onChange={handleLocationChange}
                 onKeyDown={handleKeyDown}
                 onFocus={() => {
-                  if (locationQuery.length > 0) setIsDropdownOpen(true);
+                  if (locationQuery.length > 0 && combinedResults.length > 0) {
+                    setIsDropdownOpen(true);
+                  }
                 }}
                 onBlur={() => setTimeout(() => setIsDropdownOpen(false), 200)}
                 placeholder="Type city or zip code"
                 className="w-full px-4 py-3 border-2 border-[#142A52]/30 rounded-lg focus:border-[#C89B2B] focus:ring-2 focus:ring-[#C89B2B]/20 outline-none transition h-auto text-base"
               />
-              {isDropdownOpen && filteredLocations.length > 0 && (
-                <ul className="absolute z-50 w-full mt-1 bg-white border-2 border-[#142A52]/10 rounded-lg shadow-xl max-h-60 overflow-y-auto">
-                  {filteredLocations.map((loc: any, index: number) => (
-                    <li
-                      key={index}
-                      onMouseDown={(e) => {
-                        e.preventDefault(); // Prevent input from losing focus
-                        handleLocationSelect(loc);
-                      }}
-                      className="px-4 py-3 hover:bg-[#C89B2B]/10 cursor-pointer text-sm text-[#142A52] border-b border-gray-100 last:border-0 transition-colors"
-                    >
-                      <span className="font-bold">{loc.zip}</span>, {loc.city}, {loc.state || 'MI'}
-                    </li>
-                  ))}
-                </ul>
-              )}
+              {isDropdownOpen && (combinedResults.length > 0 || isSearching) && (() => {
+                const localResults = combinedResults.filter((r): r is LocalLocationResult => r.type === "local");
+                const googleResults = combinedResults.filter((r): r is GoogleLocationResult => r.type === "google");
+                return (
+                  <ul className="absolute z-50 w-full mt-1 bg-white border-2 border-[#142A52]/10 rounded-lg shadow-xl max-h-96 overflow-y-auto">
+                    {/* Local area quick-picks */}
+                    {localResults.length > 0 && (
+                      <>
+                        <li className="px-4 py-1.5 text-[10px] uppercase tracking-widest text-[#142A52]/40 font-bold bg-gray-50 sticky top-0 z-10 border-b border-gray-100">
+                          Areas matching your search
+                        </li>
+                        {localResults.map((result) => (
+                          <li
+                            key={`local-${result.zip}-${result.city}`}
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              handleLocationResultSelect(result);
+                            }}
+                            className="px-4 py-2.5 hover:bg-[#C89B2B]/10 cursor-pointer text-sm text-[#142A52] border-b border-gray-50 transition-colors flex items-center gap-2"
+                          >
+                            <span className="text-[#C89B2B] text-xs flex-shrink-0">📍</span>
+                            <span>
+                              <span className="font-semibold">{result.city}</span>
+                              <span className="text-[#142A52]/60">, {result.state}</span>
+                              <span className="ml-2 text-xs bg-[#142A52]/10 px-1.5 py-0.5 rounded font-mono">{result.zip}</span>
+                            </span>
+                          </li>
+                        ))}
+                      </>
+                    )}
+
+                    {/* Full Google address suggestions */}
+                    {googleResults.length > 0 && (
+                      <>
+                        <li className="px-4 py-1.5 text-[10px] uppercase tracking-widest text-[#142A52]/40 font-bold bg-gray-50 sticky top-0 z-10 border-b border-gray-100">
+                          Address suggestions
+                        </li>
+                        {googleResults.map((result, index) => (
+                          <li
+                            key={`google-${result.place_id}-${index}`}
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              handleLocationResultSelect(result);
+                            }}
+                            className="px-4 py-2.5 hover:bg-[#C89B2B]/10 cursor-pointer text-sm text-[#142A52] border-b border-gray-50 last:border-0 transition-colors flex items-center gap-2"
+                          >
+                            <span className="text-[#142A52]/40 text-xs flex-shrink-0">🔍</span>
+                            <span className="truncate">{result.description}</span>
+                          </li>
+                        ))}
+                      </>
+                    )}
+
+                    {/* Loading indicator while Google results are being fetched */}
+                    {isSearching && (
+                      <li className="px-4 py-2.5 text-xs text-[#142A52]/50 flex items-center gap-2 border-t border-gray-100">
+                        <span className="inline-block w-3 h-3 border-2 border-[#C89B2B]/40 border-t-[#C89B2B] rounded-full animate-spin" />
+                        Loading more suggestions…
+                      </li>
+                    )}
+
+                    {/* No results message */}
+                    {!isSearching && localResults.length === 0 && googleResults.length === 0 && (
+                      <li className="px-4 py-3 text-sm text-[#142A52]/50 text-center">
+                        No locations found. Try a different zip code or city name.
+                      </li>
+                    )}
+                  </ul>
+                );
+              })()}
             </div>
 
             {/* Dumpster Type Selection - Shows only after location is set */}

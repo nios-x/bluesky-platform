@@ -59,11 +59,27 @@ export default function BookingStep1() {
   const [dbDumpsterTypes, setDbDumpsterTypes] = useState<any[]>([]);
 
   useEffect(() => {
-    // Pre-fill Zip from context
-    if (booking.zipCode && !formData.shippingZip) {
-      setFormData(prev => ({ ...prev, shippingZip: booking.zipCode }));
-    }
-  }, [booking.zipCode]);
+    // Pre-fill shipping address from booking context (set on hero page)
+    setFormData(prev => {
+      const updates: any = {};
+      if (booking.zipCode && !prev.shippingZip) {
+        updates.shippingZip = booking.zipCode;
+      }
+      if (booking.city && !prev.shippingCity) {
+        updates.shippingCity = booking.city;
+      }
+      if (booking.state && !prev.shippingState) {
+        updates.shippingState = booking.state;
+      }
+      if (booking.shippingStreet && !prev.shippingStreet) {
+        updates.shippingStreet = booking.shippingStreet;
+      }
+      if (Object.keys(updates).length > 0) {
+        return { ...prev, ...updates };
+      }
+      return prev;
+    });
+  }, [booking.zipCode, booking.city, booking.state, booking.shippingStreet]);
 
   useEffect(() => {
     const fetchFromDB = async () => {
@@ -151,7 +167,9 @@ export default function BookingStep1() {
     ],
   };
 
-  const locationInfo = LOCATIONS.find(loc => loc.zip === booking.zipCode);
+  // Get all locations matching the zip code (multiple places can share a pincode)
+  const locationInfoAll = LOCATIONS.filter(loc => loc.zip === booking.zipCode);
+  const locationInfo = locationInfoAll.length > 0 ? locationInfoAll[0] : undefined;
 
   // Check if heavy material restrictions apply
   const isHeavyMaterial = booking.materialType && HEAVY_MATERIALS.includes(booking.materialType);
