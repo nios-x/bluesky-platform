@@ -19,6 +19,7 @@ export default function ContactSection() {
                 src="/service-map.png"
                 alt="Michigan Service Area Map"
                 fill
+                sizes="(max-width: 768px) 100vw, 50vw"
                 className="object-cover"
               />
             </div>

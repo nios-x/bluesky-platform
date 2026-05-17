@@ -19,19 +19,24 @@ export const PROJECT_TYPES = [
 ];
 
 export const MATERIAL_TYPES = [
-  "Mixed Household Trash",
-  "Construction Debris",
-  "Yard or Organic Material",
-  "Roofing Material",
-  "Siding Material",
-  "Wood Deck Material",
-  "Concrete, Brick, Block, or Asphalt",
-  "Dirt, Gravel, or Rock",
+  "Construction Waste",
+  "Household Waste",
+  "Roofing",
+  "Landscape/Leaves/Trees/Broken Stumps",
+  "Cardboard",
+  "Metal",
+  "Other Waste",
+  "Heavy Material",
 ];
 
+// Heavy materials MUST use 10 Yard Roll-Off ONLY
 export const HEAVY_MATERIALS = [
-  "Concrete, Brick, Block, or Asphalt",
-  "Dirt, Gravel, or Rock",
+  "Dirt",
+  "Brick", 
+  "Block",
+  "Concrete",
+  "Rocks",
+  "Masonry"
 ];
 
 export const RENTAL_PERIODS = [

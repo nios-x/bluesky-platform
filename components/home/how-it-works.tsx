@@ -241,45 +241,7 @@ export default function HowItWorks() {
         </div>
 
         {/* CTA Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="mt-10 md:mt-12 text-center"
-        >
-          <div className="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-2xl border border-blue-200 p-6 md:p-8">
-            <h3 className="text-xl md:text-2xl font-bold text-gray-900 mb-3">
-              Ready to get started?
-            </h3>
-            <p className="text-gray-600 text-sm md:text-base mb-6 max-w-2xl mx-auto">
-              Begin your dumpster rental journey now. Click below to check availability and book your size.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <Link href="/checkout">
-                  <Button className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-bold h-12 px-8 rounded-xl text-base">
-                    Check Availability
-                    <ChevronRight className="ml-2 w-5 h-5" />
-                  </Button>
-                </Link>
-              </motion.div>
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <Link href="/contact">
-                  <Button variant="outline" className="w-full sm:w-auto border-2 border-blue-600 text-blue-600 hover:bg-blue-50 font-bold h-12 px-8 rounded-xl text-base">
-                    Call Our Team
-                    <Phone className="ml-2 w-5 h-5" />
-                  </Button>
-                </Link>
-              </motion.div>
-            </div>
-          </div>
-        </motion.div>
+        
       </div>
     </section>
   );

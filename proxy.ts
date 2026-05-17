@@ -1,7 +1,9 @@
+//middleware.ts
+// This middleware is used to protect the /admin route and its subroutes. It checks if the user is authenticated by using the Supabase client. If the user is not authenticated, it will redirect them to the login page. 
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse } from "next/server";
 
-export async function middleware(req) {
+export async function proxy(req) {
   const res = NextResponse.next();
 
   const supabase = createServerClient(

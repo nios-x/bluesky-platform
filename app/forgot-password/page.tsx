@@ -25,6 +25,7 @@ export default function ForgotPasswordPage() {
             src="https://images.unsplash.com/photo-1532189442095-2cc84918f88f?q=80&w=2000&auto=format&fit=crop"
             alt="Blue Sky Disposal Truck"
             fill
+            sizes="100vw"
             className="object-cover"
             priority
           />

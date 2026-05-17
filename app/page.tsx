@@ -21,7 +21,7 @@ export default function Home() {
       </section>
       
       {/* 3. Find Your Perfect Dumpster - Smart Assessment */}
-      <SmartAssessment />
+      
       
       {/* 4. Cities We Service */}
       <MapSection />
