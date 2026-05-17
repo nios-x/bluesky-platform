@@ -36,6 +36,11 @@ export function Hero() {
         const response = await fetch('/api/pricing/dumpsters');
         const data = await response.json();
 
+        if (!data.dumpsters || !Array.isArray(data.dumpsters)) {
+          console.error('Invalid dumpster data:', data);
+          return;
+        }
+
         const typesMap: Record<string, any> = {};
 
         data.dumpsters.forEach((d: any) => {
@@ -89,7 +94,7 @@ export function Hero() {
 
         setDbDumpsterTypes(Object.values(typesMap));
       } catch (err) {
-        console.error(err);
+        console.error('Failed to fetch dumpster types:', err);
       }
     };
     fetchFromDB();
