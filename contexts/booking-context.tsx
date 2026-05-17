@@ -9,6 +9,7 @@ export interface BookingData {
   rentalPeriod: number;
   state?: string;
   city?: string;
+  shippingStreet?: string;
   
   projectType: string;
   materialType: string;
