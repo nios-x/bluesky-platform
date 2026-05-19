@@ -2,18 +2,20 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { useBooking } from "@/contexts/booking-context";
 import { ACCOUNT_DISCOUNT } from "@/lib/constants/booking";
-import { ChevronLeft, CheckCircle2, Mail, Phone } from "lucide-react";
+import { ChevronLeft, CheckCircle2, Mail, Phone, Share2, Copy, Check, ShieldCheck, Eye, EyeOff, CreditCard, History, MapPin, CalendarClock } from "lucide-react";
 import Image from "next/image";
 import { HEAVY_MATERIALS, HEAVY_MATERIAL_SURCHARGE, SHIPPING_PRICE } from "@/lib/constants/booking";
 import { ChevronRight, AlertCircle, Zap, ArrowLeft, Trash2 } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Lock } from "lucide-react";
 import GPayButton from "@/components/payments/gpay";
 import ProductInfoSection from "@/components/whats-included";
+import { DumpsterDetailSection } from "@/components/booking/dumpster-detail-section";
 import PayPalButton from "./paypal";
 import ItemsAdder from "@/components/order/ItemsAdder";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -53,6 +55,10 @@ export default function BookingStep1() {
   });
 
   const [accountCreation, setAccountCreation] = useState(false);
+  const [accountPassword, setAccountPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [quoteCopied, setQuoteCopied] = useState(false);
   const [selectedDumpsterType, setSelectedDumpsterType] = useState(booking.dumpsterType || "47d87a5e-84c8-431e-b055-c996142352eb");
   const [selectedSize, setSelectedSize] = useState(booking.dumpsterSize || 20);
   const [currentImageIdx, setCurrentImageIdx] = useState(0);
@@ -344,6 +350,18 @@ export default function BookingStep1() {
       }
     }
 
+    // Terms & Conditions
+    if (!termsAccepted) {
+      setError("You must agree to the Terms & Conditions before proceeding.");
+      return false;
+    }
+
+    // Account password validation
+    if (accountCreation && accountPassword.length < 6) {
+      setError("Account password must be at least 6 characters.");
+      return false;
+    }
+
     return true;
   };
 
@@ -619,7 +637,7 @@ export default function BookingStep1() {
           currency: 'USD',
           paymentData,
           bookingsData: bookings,
-          contactInfo: formData,
+          contactInfo: { ...formData, accountCreation, accountPassword: accountCreation ? accountPassword : undefined },
         }),
       });
 
@@ -743,7 +761,7 @@ export default function BookingStep1() {
         body: JSON.stringify({
           amount: cartTotal,
           bookingsData: bookings,
-          contactInfo: formData,
+          contactInfo: { ...formData, accountCreation, accountPassword: accountCreation ? accountPassword : undefined },
         }),
       });
 
@@ -1040,6 +1058,15 @@ export default function BookingStep1() {
             </div>
 
             <ProductInfoSection product={product} />
+
+            {/* Dumpster Detail Section - Size Switcher, What's Included, Restrictions, Instructions */}
+            <DumpsterDetailSection
+              dumpsterType={currentTypeObj?.name || ""}
+              selectedSize={selectedSize}
+              sizes={sizes}
+              onSizeChange={handleSizeChange}
+            />
+
             <div className=" mt-10 gap-8">
               {/* Main Form */}
 
@@ -1243,7 +1270,7 @@ export default function BookingStep1() {
                     </motion.div>
                   )}
 
-                  {/* Newsletter + Create Account */}
+                  {/* Newsletter */}
                   <div className="mt-6 space-y-3">
                     <label className="flex items-center gap-3 cursor-pointer">
                       <input
@@ -1255,25 +1282,115 @@ export default function BookingStep1() {
                       <span className="text-sm text-gray-700">Subscribe to our newsletter</span>
                     </label>
                   </div>
+
+                  {/* Terms & Conditions */}
+                  <div className={`mt-4 p-4 rounded-xl border-2 transition-colors ${termsAccepted ? 'border-green-400 bg-green-50/50' : 'border-[#142A52]/20 bg-white'}`}>
+                    <label className="flex items-start gap-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={termsAccepted}
+                        onChange={(e) => { setTermsAccepted(e.target.checked); setError(""); }}
+                        className="w-5 h-5 accent-[#142A52] rounded mt-0.5 flex-shrink-0"
+                      />
+                      <span className="text-sm text-gray-700">
+                        I agree to the{" "}
+                        <Link
+                          href="/terms-conditions"
+                          target="_blank"
+                          className="text-[#C89B2B] font-bold underline underline-offset-2 hover:text-[#142A52] transition-colors"
+                        >
+                          Terms &amp; Conditions
+                        </Link>{" "}
+                        <span className="text-red-500">*</span>
+                      </span>
+                    </label>
+                    {!termsAccepted && error?.includes("Terms") && (
+                      <motion.p
+                        initial={{ opacity: 0, y: -4 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="text-xs text-red-500 mt-2 ml-8 font-medium"
+                      >
+                        You must accept the Terms and Conditions to proceed with payment.
+                      </motion.p>
+                    )}
+                  </div>
                 </div>
 
                 {/* Account Creation Option */}
-                <div className="bg-[#C89B2B]/10 border-2 border-[#C89B2B] rounded-lg p-6 mb-8">
+                <div className={`rounded-2xl p-6 mb-8 border-2 transition-all ${accountCreation ? 'border-[#C89B2B] bg-gradient-to-br from-[#C89B2B]/10 to-[#C89B2B]/5 shadow-md' : 'border-[#142A52]/15 bg-[#f9fafb]'}`}>
                   <label className="flex items-center gap-3 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={accountCreation}
-                      onChange={(e) => handleInputChange("accountCreation", e.target.checked)}
+                      onChange={(e) => { setAccountCreation(e.target.checked); if (!e.target.checked) setAccountPassword(""); }}
                       className="w-5 h-5 accent-[#C89B2B]"
                     />
-                    <span className="font-bold text-[#142A52]">
-                      Create an account & save ${ACCOUNT_DISCOUNT} on this order
-                    </span>
+                    <div>
+                      <span className="font-bold text-[#142A52] text-[15px]">
+                        Save your order details &mdash; create an account
+                      </span>
+                      <span className="ml-2 inline-block bg-[#C89B2B] text-white text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
+                        Save ${ACCOUNT_DISCOUNT}
+                      </span>
+                    </div>
                   </label>
-                  <p className="text-[12px] text-[#142A52]/70 mt-2 ml-8">
-                    Save cards, track orders, and get exclusive deals
-                  </p>
+
+                  <AnimatePresence>
+                    {accountCreation && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.25 }}
+                        className="overflow-hidden"
+                      >
+                        <div className="grid grid-cols-2 gap-3 mt-5 ml-8">
+                          {[
+                            { icon: <History className="w-4 h-4" />, text: "Order history" },
+                            { icon: <MapPin className="w-4 h-4" />, text: "Saved addresses" },
+                            { icon: <CreditCard className="w-4 h-4" />, text: "Payment on file" },
+                            { icon: <CalendarClock className="w-4 h-4" />, text: "Rental extensions" },
+                          ].map((b, i) => (
+                            <div key={i} className="flex items-center gap-2 text-[12px] text-[#142A52]/80">
+                              <span className="text-[#C89B2B]">{b.icon}</span>
+                              {b.text}
+                            </div>
+                          ))}
+                        </div>
+                        <div className="mt-5 ml-8">
+                          <label className="block text-[11px] font-bold text-[#142A52] mb-1">Create a password *</label>
+                          <div className="relative">
+                            <input
+                              type={showPassword ? "text" : "password"}
+                              value={accountPassword}
+                              onChange={(e) => setAccountPassword(e.target.value)}
+                              className="w-full px-3 py-2.5 text-sm border-2 border-[#142A52]/20 rounded-lg focus:border-[#C89B2B] focus:ring-2 focus:ring-[#C89B2B]/20 outline-none transition-all pr-10"
+                              placeholder="Min 6 characters"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setShowPassword(!showPassword)}
+                              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                            >
+                              {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                            </button>
+                          </div>
+                          {accountPassword.length > 0 && (
+                            <div className="mt-2 flex items-center gap-2">
+                              <div className="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                                <div className={`h-full rounded-full transition-all ${accountPassword.length >= 10 ? 'w-full bg-green-500' : accountPassword.length >= 6 ? 'w-2/3 bg-[#C89B2B]' : 'w-1/3 bg-red-400'}`} />
+                              </div>
+                              <span className={`text-[10px] font-bold ${accountPassword.length >= 10 ? 'text-green-600' : accountPassword.length >= 6 ? 'text-[#C89B2B]' : 'text-red-500'}`}>
+                                {accountPassword.length >= 10 ? 'Strong' : accountPassword.length >= 6 ? 'Good' : 'Weak'}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
+
 
 
               </div>
@@ -1357,70 +1474,112 @@ export default function BookingStep1() {
 
               {formData.firstName && formData.lastName && formData.email && formData.phone && formData.shippingStreet && formData.shippingCity ? (
                 <div id="payment-section" className="mb-8">
-                  <h2 className="text-2xl font-bold text-[#142A52] mb-6">Payment Method</h2>
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-2xl font-bold text-[#142A52]">Payment Method</h2>
+                    <div className="flex items-center gap-1.5 text-[11px] text-gray-500">
+                      <Lock className="w-3.5 h-3.5" />
+                      <span>Secured by Stripe</span>
+                    </div>
+                  </div>
 
-                  {/* Direct Payment Buttons */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
-                    <motion.div
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="w-full"
-                    >
+                  {/* T&C warning if not accepted */}
+                  {!termsAccepted && (
+                    <div className="mb-4 p-3 bg-amber-50 border border-amber-300 rounded-lg flex items-center gap-2 text-sm text-amber-800">
+                      <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                      <span>Please accept the <strong>Terms &amp; Conditions</strong> above to unlock payment.</span>
+                    </div>
+                  )}
+
+                  {/* Credit / Debit Card via Stripe */}
+                  <div className={`rounded-xl border-2 p-4 mb-4 transition-all ${!termsAccepted ? 'opacity-50 pointer-events-none' : 'border-[#142A52]/15 hover:border-[#635BFF]/40'}`}>
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-sm font-bold text-[#142A52]">Credit / Debit Card</span>
+                      <div className="flex items-center gap-1.5">
+                        {/* Visa */}
+                        <span className="inline-flex items-center justify-center w-10 h-6 bg-white border border-gray-200 rounded text-[9px] font-bold text-[#1A1F71]">VISA</span>
+                        {/* MC */}
+                        <span className="inline-flex items-center justify-center w-10 h-6 bg-white border border-gray-200 rounded">
+                          <span className="flex"><span className="w-3 h-3 rounded-full bg-red-500 -mr-1"></span><span className="w-3 h-3 rounded-full bg-yellow-500 opacity-80"></span></span>
+                        </span>
+                        {/* Amex */}
+                        <span className="inline-flex items-center justify-center w-10 h-6 bg-[#006FCF] border border-gray-200 rounded text-[8px] font-bold text-white">AMEX</span>
+                        {/* Discover */}
+                        <span className="inline-flex items-center justify-center w-10 h-6 bg-white border border-gray-200 rounded text-[7px] font-bold text-[#FF6600]">DISC</span>
+                      </div>
+                    </div>
+                    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
                       <button
                         type="button"
                         onClick={handleStripePayment}
-                        className="w-full p-3 bg-[#635BFF] text-white font-bold rounded flex items-center justify-center gap-2 h-[42px] hover:bg-[#4B45FF] transition-colors"
+                        disabled={!termsAccepted || loading}
+                        className="w-full p-3 bg-[#635BFF] text-white font-bold rounded-lg flex items-center justify-center gap-2 h-[44px] hover:bg-[#4B45FF] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        Pay with Stripe
+                        <CreditCard className="w-4 h-4" />
+                        {loading ? 'Processing...' : 'Pay with Stripe'}
                       </button>
                     </motion.div>
+                  </div>
 
-                    <motion.button
-                      onClick={() => handleSubmit('apple-pay')}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="w-full p-3 bg-black text-white font-bold rounded flex items-center justify-center gap-2 h-[42px] hover:bg-gray-900 transition-colors"
-                    >
-                      <svg className="w-5 h-5" viewBox="0 0 384 512" fill="currentColor">
-                        <path d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zm-56.6-164.2c27.3-32.4 24.8-61.9 24-72.5-24.1 1.4-52 16.4-67.9 34.9-17.5 19.8-27.8 44.3-25.6 71.9 26.1 2 49.9-11.4 69.5-34.3z" />
-                      </svg>
-                      Pay with Apple Pay
-                    </motion.button>
-
-                    <motion.div
-                      className="w-full flex [&>div]:w-full [&_.google-pay-button-container]:w-full [&_button]:!w-full"
-                      onClickCapture={(e) => {
-                        if (!validateForm()) {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          window.scrollTo({ top: 0, behavior: 'smooth' });
-                        }
-                      }}
-                    >
-                      <GPayButton
-                        amount={cartTotal}
-                        // @ts-ignore - Safely pass buttonSizeMode if GPayButton passes props down
-                        buttonSizeMode="fill"
-                        onClick={(e: any) => {
+                  {/* Digital Wallets Row */}
+                  <div className={`grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4 transition-all ${!termsAccepted ? 'opacity-50 pointer-events-none' : ''}`}>
+                    {/* Google Pay */}
+                    <div className="rounded-xl border-2 border-[#142A52]/15 p-4 hover:border-[#4285F4]/40 transition-all">
+                      <span className="text-[11px] font-bold text-gray-500 mb-2 block">Google Pay</span>
+                      <motion.div
+                        className="w-full flex [&>div]:w-full [&_.google-pay-button-container]:w-full [&_button]:!w-full"
+                        onClickCapture={(e) => {
                           if (!validateForm()) {
-                            if (e && e.preventDefault) e.preventDefault();
+                            e.preventDefault();
+                            e.stopPropagation();
                             window.scrollTo({ top: 0, behavior: 'smooth' });
-                            throw new Error("Form incomplete");
                           }
                         }}
-                        onPaymentSuccess={(paymentData) => {
-                          handleGooglePayPayment(paymentData);
-                        }}
-                        onPaymentError={(error) => {
-                          setError('Google Pay error: ' + error.message);
-                        }}
-                      />
-                    </motion.div>
+                      >
+                        <GPayButton
+                          amount={cartTotal}
+                          // @ts-ignore
+                          buttonSizeMode="fill"
+                          onClick={(e: any) => {
+                            if (!validateForm()) {
+                              if (e && e.preventDefault) e.preventDefault();
+                              window.scrollTo({ top: 0, behavior: 'smooth' });
+                              throw new Error("Form incomplete");
+                            }
+                          }}
+                          onPaymentSuccess={(paymentData) => {
+                            handleGooglePayPayment(paymentData);
+                          }}
+                          onPaymentError={(error) => {
+                            setError('Google Pay error: ' + error.message);
+                          }}
+                        />
+                      </motion.div>
+                    </div>
 
+                    {/* Apple Pay */}
+                    <div className="rounded-xl border-2 border-[#142A52]/15 p-4 hover:border-black/30 transition-all">
+                      <span className="text-[11px] font-bold text-gray-500 mb-2 block">Apple Pay</span>
+                      <motion.button
+                        onClick={() => handleSubmit('apple-pay')}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        disabled={!termsAccepted || loading}
+                        className="w-full p-3 bg-black text-white font-bold rounded-lg flex items-center justify-center gap-2 h-[42px] hover:bg-gray-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <svg className="w-5 h-5" viewBox="0 0 384 512" fill="currentColor">
+                          <path d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zm-56.6-164.2c27.3-32.4 24.8-61.9 24-72.5-24.1 1.4-52 16.4-67.9 34.9-17.5 19.8-27.8 44.3-25.6 71.9 26.1 2 49.9-11.4 69.5-34.3z" />
+                        </svg>
+                        Pay with Apple Pay
+                      </motion.button>
+                    </div>
+                  </div>
+
+                  {/* PayPal */}
+                  <div className={`rounded-xl border-2 border-[#142A52]/15 p-4 mb-6 hover:border-[#003087]/30 transition-all ${!termsAccepted ? 'opacity-50 pointer-events-none' : ''}`}>
+                    <span className="text-[11px] font-bold text-gray-500 mb-2 block">PayPal</span>
                     <motion.div
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="mb-2"
                       onClickCapture={(e) => {
                         if (!validateForm()) {
                           e.preventDefault();
@@ -1435,10 +1594,32 @@ export default function BookingStep1() {
                         onError={(error) => setError('PayPal error: ' + error.message)}
                       />
                     </motion.div>
-
-
-
                   </div>
+
+                  {/* Share / Save Quote */}
+                  <div className="flex justify-center">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const params = new URLSearchParams({
+                          zip: formData.shippingZip || '',
+                          type: selectedDumpsterType || '',
+                          size: String(selectedSize || ''),
+                          days: String(booking.rentalPeriod || 7),
+                        });
+                        const url = `${window.location.origin}/booking/step-1?${params.toString()}`;
+                        navigator.clipboard.writeText(url).then(() => {
+                          setQuoteCopied(true);
+                          setTimeout(() => setQuoteCopied(false), 2500);
+                        });
+                      }}
+                      className="flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-[#142A52] border-2 border-[#142A52]/20 rounded-xl hover:border-[#C89B2B] hover:text-[#C89B2B] transition-all"
+                    >
+                      {quoteCopied ? <Check className="w-4 h-4 text-green-500" /> : <Share2 className="w-4 h-4" />}
+                      {quoteCopied ? 'Quote link copied!' : 'Share / Save My Quote'}
+                    </button>
+                  </div>
+
                 </div>
               ) : (
                 <div className="mb-8 p-6 bg-[#f9fafb] border-2 border-dashed border-[#142A52]/20 rounded-xl text-center">
