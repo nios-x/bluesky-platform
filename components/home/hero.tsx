@@ -113,6 +113,20 @@ export function Hero() {
   const [deliveryDateObj, setDeliveryDateObj] = useState<Date | undefined>(undefined);
   const [removalDateObj, setRemovalDateObj] = useState<Date | undefined>(undefined);
   const [projectType, setProjectType] = useState("");
+  const [describeProject, setDescribeProject] = useState("");
+
+  // Business logic: heavy material / masonry restrictions
+  const isHeavyProjectType = (pt: string) => {
+    if (!pt) return false;
+    const s = pt.toLowerCase();
+    return s.includes("mason") || s.includes("masonry") || s.includes("concrete") || s.includes("brick") || s.includes("rock") || s.includes("dirt");
+  };
+
+  const isDirtOnlyProject = (pt: string) => {
+    if (!pt) return false;
+    const s = pt.toLowerCase();
+    return s === "dirt" || s.includes("dirt");
+  };
 
   const [locationQuery, setLocationQuery] = useState("");
   // Combined results: local LOCATIONS matches + Google Places predictions
@@ -263,9 +277,32 @@ export function Hero() {
   const isRubber = selectedDumpsterType?.name?.includes("Rubber") || false;
   const freeDays = isRubber ? 14 : 7;
 
+  // Enforce restrictions when project type changes
+  useEffect(() => {
+    const heavy = isHeavyProjectType(projectType);
+    if (!heavy) return;
+
+    // Prefer roll-off dumpster type
+    const rollType = dbDumpsterTypes.find(t => /roll/i.test(t.name));
+    if (rollType && dumpsterType !== rollType.id) {
+      setDumpsterType(rollType.id);
+      setDumpsterSize(10);
+    }
+    // If current selected size isn't 10, enforce 10yd
+    if (selectedSize && selectedSize.value !== 10) {
+      setDumpsterSize(10);
+    }
+  }, [projectType, dbDumpsterTypes]);
+
   // Price calculations
   const SHIPPING_PRICE = 200;
-  const basePrice = selectedSize?.price || 0;
+  // Special-case: Dirt-only 10yd price override
+  const basePrice = ((): number => {
+    if (isDirtOnlyProject(projectType) && selectedSize && selectedSize.value === 10 && selectedDumpsterType?.name?.toLowerCase().includes("roll")) {
+      return 625; // Dirt-only flat price for 10yd
+    }
+    return selectedSize?.price || 0;
+  })();
 
   let totalDays = 0;
   if (deliveryDate && removalDate) {
@@ -282,7 +319,8 @@ export function Hero() {
     if (deliveryDate && !removalDateObj) {
       const delivery = parseLocalDate(deliveryDate);
       const defaultRemoval = new Date(delivery);
-      defaultRemoval.setDate(defaultRemoval.getDate() + freeDays);
+      const daysToAdd = isRubber ? 7 : 14; // Roll-Off: 14d free, Rubber: 7d free
+      defaultRemoval.setDate(defaultRemoval.getDate() + daysToAdd);
 
       // Skip weekends for removal date
       if (defaultRemoval.getDay() === 0) { // Sunday
@@ -294,7 +332,7 @@ export function Hero() {
       setRemovalDateObj(defaultRemoval);
       setRemovalDate(formatLocalDate(defaultRemoval));
     }
-  }, [deliveryDate, removalDateObj, freeDays]);
+  }, [deliveryDate, removalDateObj, isRubber]);
 
   const getAvailableDates = () => {
     const dates = [];
@@ -366,6 +404,7 @@ export function Hero() {
       deliveryDate,
       rentalPeriod: totalDays,
       projectType,
+      projectDescription: describeProject,
       basePrice: selectedSize?.price || 0,
       surcharges: extraRentalCharges,
       totalPrice: totalPrice,
@@ -409,15 +448,19 @@ export function Hero() {
         <div className="max-w-4xl scale-[0.95] mx-auto">
           <div className="bg-white rounded-2xl shadow-2xl p-6 sm:p-10 text-left border-4 border-[#C89B2B]">
 
-
+              <div className=" p-6 sm:p-8 bg-white text-center">
+    <h1 className="text-2xl sm:text-3xl md:text-xl font-bold text-gray-900">
+      Get Instant Pricing and Availability
+    </h1>
+  </div>
             {/* Zip Code */}
             <div className="mb-6 relative">
-              <label className="block text-sm font-bold text-[#142A52] mb-2">1. Select Location</label>
+              <label className="block text-sm font-bold text-[#142A52] mb-2">1. Enter Delivery Address</label>
               <input
                 type="text"
                 value={locationQuery}
                 onChange={handleLocationChange}
-                onKeyDown={handleKeyDown}
+                onKeyDown={handleKeyDown} 
                 onFocus={() => {
                   if (locationQuery.length > 0 && combinedResults.length > 0) {
                     setIsDropdownOpen(true);
@@ -509,7 +552,12 @@ export function Hero() {
               <div className="mb-6">
                 <label className="block text-sm font-bold text-[#142A52] mb-3">2. Type of Dumpster</label>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {dbDumpsterTypes.map((type) => (
+                  {(() => {
+                    const heavy = isHeavyProjectType(projectType);
+                    const visibleTypes = heavy
+                      ? dbDumpsterTypes.filter(t => /roll/i.test(t.name))
+                      : dbDumpsterTypes;
+                    return visibleTypes.map((type) => (
                     <button
                       key={type.id}
                       onClick={() => {
@@ -531,7 +579,8 @@ export function Hero() {
                       <h3 className="font-bold text-[#142A52] text-sm">{type.name}</h3>
                       <p className="text-xs text-[#142A52]/70">{type.description || type.name}</p>
                     </button>
-                  ))}
+                    ));
+                  })()}
                 </div>
               </div>
             </div>
@@ -556,11 +605,17 @@ export function Hero() {
                       <SelectValue placeholder="Select dumpster size" />
                     </SelectTrigger>
                     <SelectContent>
-                      {selectedDumpsterType?.sizes.map((size) => (
-                        <SelectItem key={size.value} value={size.value.toString()}>
-                          {size.label}
-                        </SelectItem>
-                      ))}
+                      {(() => {
+                        const heavy = isHeavyProjectType(projectType);
+                        const availableSizes = heavy
+                          ? selectedDumpsterType?.sizes.filter((s: any) => s.value === 10) || []
+                          : selectedDumpsterType?.sizes || [];
+                        return availableSizes.map((size) => (
+                          <SelectItem key={size.value} value={size.value.toString()}>
+                            {size.label}
+                          </SelectItem>
+                        ));
+                      })()}
                     </SelectContent>
                   </Select>
                 </div>
@@ -570,7 +625,10 @@ export function Hero() {
                   <label className="block text-sm font-bold text-[#142A52] mb-2">
                     4. Project Type
                   </label>
-                  <Select value={projectType} onValueChange={setProjectType}>
+                  <Select value={projectType} onValueChange={(val) => {
+                    setProjectType(val);
+                    setDescribeProject(""); // Reset description when type changes
+                  }}>
                     <SelectTrigger className="w-full border-2 border-[#142A52]/30 focus:border-[#C89B2B]">
                       <SelectValue placeholder="Select project type" />
                     </SelectTrigger>
@@ -584,7 +642,44 @@ export function Hero() {
                   </Select>
                 </div>
               </div>
+
+              {/* Free-text description for 'Not Sure Yet' or 'Other Project' */}
+              {(projectType === "Not Sure Yet" || projectType === "Other Project") && (
+                <div className="mb-6 w-full">
+                  <label className="block text-sm font-bold text-[#142A52] mb-2">
+                    Describe what you are throwing away
+                  </label>
+                  <textarea
+                    value={describeProject}
+                    onChange={(e) => setDescribeProject(e.target.value)}
+                    placeholder="E.g., mix of old furniture, boxes, and household items"
+                    rows={3}
+                    className="w-full px-4 py-3 border-2 border-[#142A52]/30 rounded-lg focus:border-[#C89B2B] focus:ring-2 focus:ring-[#C89B2B]/20 outline-none transition"
+                  />
+                  <div className="mt-3 text-center">
+                    <button
+                      type="button"
+                      onClick={handleHelpMeChoose}
+                      className="text-sm text-[#C89B2B] font-semibold hover:underline"
+                    >
+                      Or chat with our AI Dumpster Expert →
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
+            {/* Heavy material explanatory message */}
+            {isHeavyProjectType(projectType) && (
+              <div className="mb-4 p-3 bg-yellow-50 border-l-4 border-yellow-400 text-yellow-800 rounded">
+                <strong>Due to weight restrictions</strong>: only 10yd Roll-Off dumpsters are available for heavy materials such as dirt, concrete, brick, and masonry.
+                {isDirtOnlyProject(projectType) && (
+                  <div className="mt-2 text-sm text-yellow-900">
+                    Special pricing: 10yd dirt-only option available at $625.
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Step 5 & 6: Delivery & Removal Dates - Shows only after size and project type are selected */}
             <div
               className={`transition-all duration-500 ease-in-out overflow-hidden ${showStep56
@@ -648,7 +743,7 @@ export function Hero() {
                 {/* Removal Date */}
                 <div className="mb-6 w-full md:w-[48%]">
                   <label className="block text-sm font-bold text-[#142A52] mb-2">
-                    6. Removal Date ({freeDays} days free, $25/day after)
+                    6. Removal Date ({isRubber ? "7" : "14"} days free, $25/day after)
                   </label>
                   <Popover
                     open={showRemovalCalendar}
@@ -700,7 +795,7 @@ export function Hero() {
                     </PopoverContent>
                   </Popover>
                   <p className="text-xs text-[#142A52]/60 mt-1">
-                    {freeDays} days free rental included. Additional days: $25 per day.
+                    {isRubber ? "7" : "14"} days free rental included. Additional days: $25 per day.
                   </p>
                 </div>
               </div>
@@ -748,13 +843,7 @@ export function Hero() {
             )}
 
             {/* Action Buttons - Always visible, with dynamic text */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <button
-                onClick={handleHelpMeChoose}
-                className="w-full bg-white border-2 border-[#142A52] text-[#142A52] font-bold py-4 rounded-lg transition-all shadow-md hover:bg-[#142A52]/5 text-lg flex items-center justify-center gap-2"
-              >
-                ✨ Meet Your AI Dumpster Expert
-              </button>
+            <div className="mb-3">
               <button
                 onClick={handleStartBooking}
                 disabled={!isStep1Done || !isStep2Done || !isStep3Done || !isStep4Done || !isStep5Done || !isStep6Done}
@@ -763,8 +852,11 @@ export function Hero() {
                   : "bg-gradient-to-r from-[#142A52]/60 to-[#C89B2B]/60 text-white/80 cursor-not-allowed"
                   }`}
               >
-                {getButtonText()}
+                Get My Price →
               </button>
+            </div>
+            <div className="text-center text-xs text-[#142A52]/70">
+              Need help choosing? <button onClick={handleHelpMeChoose} className="font-semibold text-[#C89B2B] hover:underline">Meet Our Dumpster Expert</button>
             </div>
 
             <p className="text-xs text-[#142A52]/60 text-center mt-4">
