@@ -443,11 +443,11 @@ export function Hero() {
         <div className="max-w-4xl scale-[0.95] mx-auto">
           <div className="bg-white rounded-2xl shadow-2xl p-6 sm:p-10 text-left border-4 border-[#C89B2B]">
 
-              <div className=" p-6 sm:p-8 bg-white text-center">
-    <h1 className="text-2xl sm:text-3xl md:text-xl font-bold text-gray-900">
-      Get Instant Pricing and Availability
-    </h1>
-  </div>
+            <div className=" p-6 sm:p-8 bg-white text-center">
+              <h1 className="text-2xl sm:text-3xl md:text-xl font-bold text-gray-900">
+                Get Instant Pricing and Availability
+              </h1>
+            </div>
             {/* Zip Code */}
             <div className="mb-6 relative">
               <label className="block text-sm font-bold text-[#142A52] mb-2">1. Enter Delivery Address</label>
@@ -455,7 +455,7 @@ export function Hero() {
                 type="text"
                 value={locationQuery}
                 onChange={handleLocationChange}
-                onKeyDown={handleKeyDown} 
+                onKeyDown={handleKeyDown}
                 onFocus={() => {
                   if (locationQuery.length > 0 && combinedResults.length > 0) {
                     setIsDropdownOpen(true);
@@ -470,7 +470,29 @@ export function Hero() {
                 const googleResults = combinedResults.filter((r): r is GoogleLocationResult => r.type === "google");
                 return (
                   <ul className="absolute z-50 w-full mt-1 bg-white border-2 border-[#142A52]/10 rounded-lg shadow-xl max-h-96 overflow-y-auto">
+                    {/* Full Google address suggestions */}
+                    {googleResults.length > 0 && (
+                      <>
+                        <li className="px-4 py-1.5 text-[10px] uppercase tracking-widest text-[#142A52]/40 font-bold bg-gray-50 sticky top-0 z-10 border-b border-gray-100">
+                          Address suggestions
+                        </li>
+                        {googleResults.map((result, index) => (
+                          <li
+                            key={`google-${result.place_id}-${index}`}
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              handleLocationResultSelect(result);
+                            }}
+                            className="px-4 py-2.5 hover:bg-[#C89B2B]/10 cursor-pointer text-sm text-[#142A52] border-b border-gray-50 last:border-0 transition-colors flex items-center gap-2"
+                          >
+                            <span className="text-[#142A52]/40 text-xs flex-shrink-0">🔍</span>
+                            <span className="truncate">{result.description}</span>
+                          </li>
+                        ))}
+                      </>
+                    )}
                     {/* Local area quick-picks */}
+
                     {localResults.length > 0 && (
                       <>
                         <li className="px-4 py-1.5 text-[10px] uppercase tracking-widest text-[#142A52]/40 font-bold bg-gray-50 sticky top-0 z-10 border-b border-gray-100">
@@ -496,27 +518,7 @@ export function Hero() {
                       </>
                     )}
 
-                    {/* Full Google address suggestions */}
-                    {googleResults.length > 0 && (
-                      <>
-                        <li className="px-4 py-1.5 text-[10px] uppercase tracking-widest text-[#142A52]/40 font-bold bg-gray-50 sticky top-0 z-10 border-b border-gray-100">
-                          Address suggestions
-                        </li>
-                        {googleResults.map((result, index) => (
-                          <li
-                            key={`google-${result.place_id}-${index}`}
-                            onMouseDown={(e) => {
-                              e.preventDefault();
-                              handleLocationResultSelect(result);
-                            }}
-                            className="px-4 py-2.5 hover:bg-[#C89B2B]/10 cursor-pointer text-sm text-[#142A52] border-b border-gray-50 last:border-0 transition-colors flex items-center gap-2"
-                          >
-                            <span className="text-[#142A52]/40 text-xs flex-shrink-0">🔍</span>
-                            <span className="truncate">{result.description}</span>
-                          </li>
-                        ))}
-                      </>
-                    )}
+
 
                     {/* Loading indicator while Google results are being fetched */}
                     {isSearching && (
@@ -553,27 +555,27 @@ export function Hero() {
                       ? dbDumpsterTypes.filter(t => /roll/i.test(t.name))
                       : dbDumpsterTypes;
                     return visibleTypes.map((type) => (
-                    <button
-                      key={type.id}
-                      onClick={() => {
-                        setDumpsterType(type.id);
-                        setDumpsterSize(null); // Reset size when type changes
-                      }}
-                      className={`p-4 rounded-lg border-2 transition-all text-left ${dumpsterType === type.id
-                        ? "border-[#C89B2B] bg-[#C89B2B]/10"
-                        : "border-[#142A52]/30 hover:border-[#C89B2B]/50"
-                        }`}
-                    >
-                      <div className="flex justify-center items-center w-full h-20 overflow-hidden rounded-xl mb-2">
-                        <img
-                          src={type.image}
-                          alt={type.name}
-                          className="w-full h-full object-contain"
-                        />
-                      </div>
-                      <h3 className="font-bold text-[#142A52] text-sm">{type.name}</h3>
-                      <p className="text-xs text-[#142A52]/70">{type.description || type.name}</p>
-                    </button>
+                      <button
+                        key={type.id}
+                        onClick={() => {
+                          setDumpsterType(type.id);
+                          setDumpsterSize(null); // Reset size when type changes
+                        }}
+                        className={`p-4 rounded-lg border-2 transition-all text-left ${dumpsterType === type.id
+                          ? "border-[#C89B2B] bg-[#C89B2B]/10"
+                          : "border-[#142A52]/30 hover:border-[#C89B2B]/50"
+                          }`}
+                      >
+                        <div className="flex justify-center items-center w-full h-20 overflow-hidden rounded-xl mb-2">
+                          <img
+                            src={type.image}
+                            alt={type.name}
+                            className="w-full h-full object-contain"
+                          />
+                        </div>
+                        <h3 className="font-bold text-[#142A52] text-sm">{type.name}</h3>
+                        <p className="text-xs text-[#142A52]/70">{type.description || type.name}</p>
+                      </button>
                     ));
                   })()}
                 </div>

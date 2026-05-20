@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Header } from "@/components/header";
@@ -311,7 +311,7 @@ export default function BookingStep1() {
     setError("");
   };
 
-  const validateForm = () => {
+  const validateForm = useCallback(() => {
     if (!formData.firstName.trim() || !formData.lastName.trim()) {
       setError("First and Last name are required");
       return false;
@@ -363,7 +363,7 @@ export default function BookingStep1() {
     }
 
     return true;
-  };
+  }, [formData, termsAccepted, accountCreation, accountPassword]);
 
   const handleSubmit = async (methodOverride?: string | React.MouseEvent) => {
     const methodToUse = typeof methodOverride === 'string' ? methodOverride : paymentMethod;
@@ -661,7 +661,7 @@ export default function BookingStep1() {
     }
   };
 
-  const handlePayPalPayment = async (details: any) => {
+  const handlePayPalPayment = useCallback(async (details: any) => {
     if (!validateForm()) return;
     setLoading(true);
     setError("");
@@ -710,7 +710,11 @@ export default function BookingStep1() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [formData, validateForm, updateBooking, router]);
+
+  const handlePayPalError = useCallback((error: any) => {
+    setError('PayPal error: ' + error.message);
+  }, []);
 
   const handleStripePayment = async () => {
     if (!validateForm()) return;
@@ -1577,23 +1581,26 @@ export default function BookingStep1() {
                   {/* PayPal */}
                   <div className={`rounded-xl border-2 border-[#142A52]/15 p-4 mb-6 hover:border-[#003087]/30 transition-all ${!termsAccepted ? 'opacity-50 pointer-events-none' : ''}`}>
                     <span className="text-[11px] font-bold text-gray-500 mb-2 block">PayPal</span>
-                    <motion.div
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      onClickCapture={(e) => {
-                        if (!validateForm()) {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          window.scrollTo({ top: 0, behavior: 'smooth' });
-                        }
-                      }}
-                    >
-                      <PayPalButton
-                        amount={cartTotal}
-                        onSuccess={(details) => handlePayPalPayment(details)}
-                        onError={(error) => setError('PayPal error: ' + error.message)}
-                      />
-                    </motion.div>
+                    {termsAccepted && cartTotal > 0 && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        onClickCapture={(e) => {
+                          if (!validateForm()) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                          }
+                        }}
+                      >
+                        <PayPalButton
+                          key={`paypal-${cartTotal}`}
+                          amount={cartTotal}
+                          onSuccess={handlePayPalPayment}
+                          onError={handlePayPalError}
+                        />
+                      </motion.div>
+                    )}
                   </div>
 
                   {/* Share / Save Quote */}
