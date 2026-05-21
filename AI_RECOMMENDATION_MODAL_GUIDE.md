@@ -78,7 +78,7 @@ const { isOpen, openModal, closeModal, toggleModal } =
    ↓
 7. User clicks "Continue with this"
    ↓
-8. Redirect to /booking/step-1 with pre-filled data
+8. Redirect to /booking/order with pre-filled data
    - size, type, zipCode
 ```
 
@@ -207,7 +207,7 @@ const handleContinueWithRecommendation = (recommendation) => {
   });
 
   // Redirect to booking with query params
-  router.push(`/booking/step-1?size=${size}&type=${type}&source=ai`);
+  router.push(`/booking/order?size=${size}&type=${type}&source=ai`);
 };
 ```
 
@@ -282,7 +282,7 @@ Catches error and shows fallback recommendation
 - [ ] Image upload converts to base64 and sends
 - [ ] Voice input works (test in Chrome/Safari)
 - [ ] Recommendation displays correctly
-- [ ] "Continue with this" redirects to /booking/step-1
+- [ ] "Continue with this" redirects to /booking/order
 - [ ] Booking context pre-filled with recommendation
 - [ ] Fallback recommendation shows on API error
 - [ ] Modal closes and resets on close
@@ -322,7 +322,7 @@ Catches error and shows fallback recommendation
 
 ### Q: Will this break existing bookings?
 
-**A:** No. Both paths lead to the same `/booking/step-1` flow with pre-filled data.
+**A:** No. Both paths lead to the same `/booking/order` flow with pre-filled data.
 
 ### Q: Can users still use the manual assessment?
 

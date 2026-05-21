@@ -51,7 +51,7 @@ export function SmartRecommendationModal({
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [showProjectTypes, setShowProjectTypes] = useState(false);
   const [zipcode, setZipcode] = useState(initialZipCode);
-  
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
@@ -293,7 +293,7 @@ export function SmartRecommendationModal({
     // Close modal and redirect with source=ai
     onClose();
     router.push(
-      `/booking/step-1?size=${rec.size}&type=${rec.type.toLowerCase()}&project=${encodeURIComponent(
+      `/booking/order?size=${rec.size}&type=${rec.type.toLowerCase()}&project=${encodeURIComponent(
         rec.projectType || "Other Project"
       )}&material=${encodeURIComponent(rec.materialType || "Other Waste")}&source=ai`
     );
@@ -312,7 +312,7 @@ export function SmartRecommendationModal({
         {/* Header */}
         <div className="border-b border-gray-100 px-6 py-4 flex items-center justify-between bg-gradient-to-r from-[#0A1628] to-[#1B3A6B]">
           <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-[#DAA520] text-[#0A1628] flex items-center justify-center text-lg font-bold">
+            <div className="h-10 w-10 rounded-xl bg-[#DAA520] text-[#0A1628] flex items-center justify-center text-lg font-bold">
               🏢
             </div>
             <div>
@@ -406,9 +406,8 @@ export function SmartRecommendationModal({
                     key={msg.id}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className={`flex ${
-                      msg.role === "user" ? "justify-end" : "justify-start"
-                    }`}
+                    className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"
+                      }`}
                   >
                     {msg.role === "user" ? (
                       // User Message
@@ -552,11 +551,10 @@ export function SmartRecommendationModal({
                   {/* Voice Input */}
                   <button
                     onClick={toggleListening}
-                    className={`p-2 rounded-lg transition ${
-                      isListening
+                    className={`p-2 rounded-lg transition ${isListening
                         ? "bg-red-100 text-red-600"
                         : "hover:bg-gray-200 text-gray-600"
-                    }`}
+                      }`}
                     title="Voice input"
                   >
                     <Mic className="w-4 h-4" />

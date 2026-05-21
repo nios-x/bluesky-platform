@@ -7,6 +7,8 @@ interface DumpsterDetailSectionProps {
   selectedSize: number;
   sizes: Array<{ value: number; label: string; dimensions: string }>;
   onSizeChange: (size: number) => void;
+  weeklyPickup?: string;
+  onWeeklyPickupChange?: (val: string) => void;
 }
 
 const DUMPSTER_SPECS: Record<string, Record<number, { included: string; tons: number }>> = {
@@ -97,6 +99,8 @@ export function DumpsterDetailSection({
   selectedSize,
   sizes,
   onSizeChange,
+  weeklyPickup,
+  onWeeklyPickupChange,
 }: DumpsterDetailSectionProps) {
   // Determine dumpster category
   let category = "roll-off";
@@ -120,11 +124,10 @@ export function DumpsterDetailSection({
             <button
               key={size.value}
               onClick={() => onSizeChange(size.value)}
-              className={`p-4 rounded-lg border-2 transition-all text-center ${
-                selectedSize === size.value
+              className={`p-4 rounded-lg border-2 transition-all text-center ${selectedSize === size.value
                   ? "border-[#C89B2B] bg-[#C89B2B]/10"
                   : "border-[#142A52]/30 hover:border-[#C89B2B]/50 bg-white"
-              }`}
+                }`}
             >
               <div className="font-bold text-[#142A52]">{size.label}</div>
               <div className="text-xs text-[#142A52]/60 mt-1">{size.dimensions}</div>
@@ -132,6 +135,25 @@ export function DumpsterDetailSection({
           ))}
         </div>
       </div>
+
+      {/* Service Frequency (Permanent Dumpsters Only) */}
+      {category === "permanent" && weeklyPickup !== undefined && onWeeklyPickupChange && (
+        <div className="bg-white border-2 border-[#142A52]/10 rounded-lg p-6">
+          <h3 className="text-lg font-bold text-[#142A52] mb-4">
+            Service Frequency *
+          </h3>
+          <select
+            value={weeklyPickup}
+            onChange={(e) => onWeeklyPickupChange(e.target.value)}
+            className="w-full px-4 py-3 text-sm border-2 border-[#142A52]/20 rounded-lg focus:border-[#C89B2B] focus:ring-2 focus:ring-[#C89B2B]/20 outline-none transition-all bg-white font-bold text-[#142A52]"
+          >
+            <option value="Twice a week x2">Twice a week x2</option>
+            <option value="Three a week x3">Three a week x3</option>
+            <option value="Four a week x4">Four a week x4</option>
+            <option value="Five a week x5">Five a week x5</option>
+          </select>
+        </div>
+      )}
 
       {/* What's Included */}
       {spec && (

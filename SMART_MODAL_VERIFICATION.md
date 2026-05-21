@@ -42,7 +42,7 @@
 - ✅ Hero "Help me choose" → Modal → Chat → Booking
 - ✅ Smart Assessment AI option → Modal → Chat → Booking
 - ✅ Manual assessment still works (backward compatible)
-- ✅ Both flows lead to `/booking/step-1` with pre-filled data
+- ✅ Both flows lead to `/booking/order` with pre-filled data
 
 ### API Integration
 
@@ -142,7 +142,7 @@
 6. API returns recommendation
 7. Modal shows "20 Yard Roll-off"
 8. User clicks "Continue with this"
-9. Redirects to `/booking/step-1?size=20&type=rolloff&source=ai`
+9. Redirects to `/booking/order?size=20&type=rolloff&source=ai`
 10. Booking context has pre-filled data
     **Result:** ✅ PASS
 

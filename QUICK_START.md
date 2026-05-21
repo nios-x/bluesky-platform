@@ -22,7 +22,7 @@ Visit: `http://localhost:3000`
 ---
 
 ### **Step 2: Dumpster Selection**
-URL: `http://localhost:3000/booking/step-1`
+URL: `http://localhost:3000/booking/order`
 
 **Features to test:**
 - ✅ Select dumpster type (Roll-Off, Rubber Wheel, Front Load)
@@ -196,7 +196,7 @@ All displayed consistently:
 ```
 Key New/Updated Files:
 
-✅ /app/booking/step-1/page.tsx       (Dumpster selection)
+✅ /app/booking/order/page.tsx       (Dumpster selection)
 ✅ /app/booking/step-2/page.tsx       (Contact & payment)
 ✅ /app/booking/confirmation/page.tsx (Confirmation page)
 ✅ /app/cities/page.tsx               (Cities directory)

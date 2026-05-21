@@ -147,7 +147,7 @@ Background:        White with navy accents
 ### New Pages Created
 ```
 /app/booking/
-├── step-1/page.tsx        (370 lines) - Dumpster selection
+├── order/page.tsx        (370 lines) - Dumpster selection
 ├── step-2/page.tsx        (380 lines) - Contact & payment
 └── confirmation/page.tsx  (280 lines) - Order confirmation
 
