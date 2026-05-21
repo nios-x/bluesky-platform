@@ -61,30 +61,15 @@ export function Hero() {
           const sizeVal = sizeValMatch ? parseInt(sizeValMatch[1], 10) : 0;
           if (sizeVal === 0) return;
 
-          let price = 435;
-          if (d.dumpster_types.name.includes("Roll Off") || d.dumpster_types.name.includes("Roll-off")) {
-            if (sizeVal === 10) price = 435;
-            if (sizeVal === 20) price = 455;
-            if (sizeVal === 30) price = 475;
-            if (sizeVal === 40) price = 555;
-          } else if (d.dumpster_types.name.includes("Rubber")) {
-            if (sizeVal === 10) price = 445;
-            if (sizeVal === 20) price = 525;
-            if (sizeVal === 30) price = 655;
-          } else {
-            if (sizeVal === 2) price = 250;
-            if (sizeVal === 4) price = 350;
-            if (sizeVal === 6) price = 450;
-            if (sizeVal === 8) price = 550;
-          }
-
+          // Price is NOT set here — fetched from DB in step-1 by ZIP
           typesMap[typeId].sizes.push({
             dumpster_id: d.id,
             size_id: d.dumpster_sizes?.id,
+            type_id: typeId,
             value: sizeVal,
             label: `${sizeVal} Yard`,
             dimensions: d.dumpster_sizes ? `${d.dumpster_sizes.length_ft}' × ${d.dumpster_sizes.width_ft}' × ${d.dumpster_sizes.height_ft}'` : "",
-            price: price
+            price: null,
           });
         });
 
@@ -275,7 +260,8 @@ export function Hero() {
   const selectedDumpsterType = dbDumpsterTypes.find(type => type.id === dumpsterType);
   const selectedSize = selectedDumpsterType?.sizes.find(size => size.value === dumpsterSize);
   const isRubber = selectedDumpsterType?.name?.includes("Rubber") || false;
-  const freeDays = isRubber ? 14 : 7;
+  // DB data: Roll-Off included_days=14, Rubber-wheeled included_days=7
+  const freeDays = isRubber ? 7 : 14;
 
   // Enforce restrictions when project type changes
   useEffect(() => {
@@ -294,15 +280,46 @@ export function Hero() {
     }
   }, [projectType, dbDumpsterTypes]);
 
-  // Price calculations
-  const SHIPPING_PRICE = 200;
-  // Special-case: Dirt-only 10yd price override
-  const basePrice = ((): number => {
-    if (isDirtOnlyProject(projectType) && selectedSize && selectedSize.value === 10 && selectedDumpsterType?.name?.toLowerCase().includes("roll")) {
-      return 625; // Dirt-only flat price for 10yd
+  // ── Fetch real base price from /api/pricing when ZIP + selection are ready ──
+  const [basePrice, setBasePrice] = useState<number | null>(null);
+  const [shippingPrice, setShippingPrice] = useState<number>(0);
+  const [priceLoading, setPriceLoading] = useState(false);
+  const [priceError, setPriceError] = useState("");
+
+  useEffect(() => {
+    const sizeId = selectedSize?.size_id;
+    const typeId = selectedSize?.type_id;
+
+    if (!zipCode || !sizeId || !typeId) {
+      setBasePrice(null);
+      setPriceError("");
+      return;
     }
-    return selectedSize?.price || 0;
-  })();
+
+    const fetchPrice = async () => {
+      setPriceLoading(true);
+      setPriceError("");
+      try {
+        const params = new URLSearchParams({
+          zip: zipCode,
+          dumpster_size_id: sizeId,
+          dumpster_type_id: typeId,
+        });
+        const res = await fetch(`/api/pricing?${params.toString()}`);
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Pricing unavailable");
+        setBasePrice(Number(data.base_price));
+        setShippingPrice(Number(data.shipping_price ?? 0));
+      } catch (err: any) {
+        setBasePrice(null);
+        setPriceError(err.message);
+      } finally {
+        setPriceLoading(false);
+      }
+    };
+
+    fetchPrice();
+  }, [zipCode, selectedSize?.size_id, selectedSize?.type_id]);
 
   let totalDays = 0;
   if (deliveryDate && removalDate) {
@@ -312,7 +329,8 @@ export function Hero() {
 
   const extraDays = Math.max(0, totalDays - freeDays);
   const extraRentalCharges = extraDays * 25;
-  const totalPrice = basePrice + SHIPPING_PRICE + extraRentalCharges;
+  const totalPrice = (basePrice ?? 0) + shippingPrice + extraRentalCharges;
+
 
   // Set default removal date when delivery date changes
   useEffect(() => {
@@ -392,7 +410,7 @@ export function Hero() {
       return;
     }
 
-    // Update booking context with address + booking details
+    // Pass ZIP, selection, and the DB-fetched price into booking context
     updateBooking(0, {
       zipCode,
       address: selectedAddress || locationQuery,
@@ -401,11 +419,12 @@ export function Hero() {
       shippingStreet: selectedStreet,
       dumpsterType,
       dumpsterSize: dumpsterSize!,
+      dumpsterSizeId: selectedSize?.size_id,
       deliveryDate,
       rentalPeriod: totalDays,
       projectType,
       projectDescription: describeProject,
-      basePrice: selectedSize?.price || 0,
+      basePrice: basePrice ?? 0,
       surcharges: extraRentalCharges,
       totalPrice: totalPrice,
     });
@@ -803,7 +822,7 @@ export function Hero() {
               </div>
             </div>
 
-            {/* Pricing Summary Card */}
+            {/* Order Summary Card — shown when size + dates are selected */}
             {selectedSize && removalDate && (
               <div className="mb-8 bg-gradient-to-br from-[#142A52] via-[#1a3a6f] to-[#0f1f3a] text-white rounded-2xl shadow-xl p-6 border border-[#C89B2B]/30">
                 <div className="flex items-center justify-between mb-4">
@@ -813,30 +832,53 @@ export function Hero() {
 
                 <div className="space-y-2 mb-4">
                   <div className="flex justify-between items-center text-sm">
-                    <span className="text-white/80">Base Price</span>
-                    <span className="font-bold text-white">${basePrice.toFixed(2)}</span>
+                    <span className="text-white/80">Dumpster</span>
+                    <span className="font-bold text-white">
+                      {selectedDumpsterType?.name} — {selectedSize?.label}
+                    </span>
                   </div>
                   <div className="flex justify-between items-center text-sm">
-                    <span className="text-white/80">Shipping & Delivery</span>
-                    <span className="font-bold text-white">${SHIPPING_PRICE.toFixed(2)}</span>
+                    <span className="text-white/80">Rental Period</span>
+                    <span className="font-bold text-white">{totalDays} day{totalDays !== 1 ? "s" : ""}</span>
                   </div>
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-white/80">Base Price</span>
+                    <span className="font-bold text-white">
+                      {priceLoading ? "Loading..." : basePrice !== null ? `$${basePrice.toFixed(2)}` : priceError ? "—" : "Enter ZIP"}
+                    </span>
+                  </div>
+                  {shippingPrice > 0 && (
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-white/80">Shipping & Delivery</span>
+                      <span className="font-bold text-white">${shippingPrice.toFixed(2)}</span>
+                    </div>
+                  )}
                   {extraDays > 0 && (
                     <div className="flex justify-between items-center text-sm text-[#C89B2B]">
-                      <span>Extra Rental Charges ({extraDays} days)</span>
+                      <span>Extra Rental ({extraDays} days @ $25)</span>
                       <span className="font-bold">${extraRentalCharges.toFixed(2)}</span>
                     </div>
                   )}
                 </div>
 
                 <div className="flex justify-between items-center pt-3 border-t border-white/20">
-                  <span className="text-lg font-bold">Total Amount</span>
-                  <span className="text-2xl font-bold text-[#C89B2B]">${totalPrice.toFixed(2)}</span>
+                  <span className="text-lg font-bold">Total</span>
+                  <span className="text-2xl font-bold text-[#C89B2B]">
+                    {priceLoading ? "Calculating..." : basePrice !== null ? `$${totalPrice.toFixed(2)}` : "—"}
+                  </span>
                 </div>
-                <p className="text-xs text-white/60 mt-3">
-                  💡 Includes dumpster base price, shipping, and extra rental periods.
-                </p>
+
+                {priceError && (
+                  <p className="text-xs text-red-300 mt-2">⚠️ {priceError}</p>
+                )}
+                {!priceError && (
+                  <p className="text-xs text-white/60 mt-3">
+                    💡 Price based on your ZIP code and selected dumpster.
+                  </p>
+                )}
               </div>
             )}
+
 
             {searchError && (
               <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded">

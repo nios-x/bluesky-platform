@@ -202,13 +202,13 @@ export default function PermanentProductPage({ params }: { params: { slug: strin
               </div>
               <p className="text-sm text-gray-600 mb-6">{product.description}</p>
               <div className="flex gap-3">
-                <Button 
+                <Button
                   onClick={handleBuyNow}
                   className="flex-1 h-12 bg-green-500 hover:bg-green-600 text-white font-bold text-lg rounded-lg"
                 >
                   Buy Now
                 </Button>
-                <Button 
+                <Button
                   onClick={handleBuyNow}
                   variant="outline"
                   className="flex-1 h-12 border-green-500 text-green-600 hover:bg-green-50 font-bold text-lg rounded-lg"
@@ -347,9 +347,8 @@ export default function PermanentProductPage({ params }: { params: { slug: strin
                 {[1, 2, 3].map((step) => (
                   <div
                     key={step}
-                    className={`flex-1 h-1 rounded-full transition-all ${
-                      step <= checkoutStep ? "bg-green-500" : "bg-gray-200"
-                    }`}
+                    className={`flex-1 h-1 rounded-full transition-all ${step <= checkoutStep ? "bg-green-500" : "bg-gray-200"
+                      }`}
                   />
                 ))}
               </div>

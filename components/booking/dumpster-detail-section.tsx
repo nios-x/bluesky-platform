@@ -120,11 +120,10 @@ export function DumpsterDetailSection({
             <button
               key={size.value}
               onClick={() => onSizeChange(size.value)}
-              className={`p-4 rounded-lg border-2 transition-all text-center ${
-                selectedSize === size.value
+              className={`p-4 rounded-lg border-2 transition-all text-center ${selectedSize === size.value
                   ? "border-[#C89B2B] bg-[#C89B2B]/10"
                   : "border-[#142A52]/30 hover:border-[#C89B2B]/50 bg-white"
-              }`}
+                }`}
             >
               <div className="font-bold text-[#142A52]">{size.label}</div>
               <div className="text-xs text-[#142A52]/60 mt-1">{size.dimensions}</div>
