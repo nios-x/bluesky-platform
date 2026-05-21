@@ -21,9 +21,12 @@ export default function TermsConditionsPage() {
           </p>
 
           <div className="prose prose-slate max-w-none space-y-12 text-[15px] leading-relaxed text-gray-700">
-            
+
             {/* General Terms (Roll Off / Rubber Wheel) */}
             <div className="space-y-6">
+              <h2 className="text-2xl font-bold text-[#0A1628] mb-6">
+                Terms &amp; Condition applied to Roll-off & Rubber Wheeled
+              </h2>
               <section>
                 <p>
                   <strong>1. Invoice Charges and Payments.</strong> Customer shall pay the contractor in accordance with charges, or any increases thereto as set forth in this Agreement. Contractors, homeowners shall be charged upfront on the first day the order is placed for all roll off and rubber wheel dumpster services.
