@@ -896,7 +896,7 @@ export function Hero() {
                   : "bg-gradient-to-r from-[#142A52]/60 to-[#C89B2B]/60 text-white/80 cursor-not-allowed"
                   }`}
               >
-                Get My Price →
+                Get My Dumpster →
               </button>
             </div>
             <div className="text-center text-xs text-[#142A52]/70">
