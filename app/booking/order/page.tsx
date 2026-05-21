@@ -63,8 +63,8 @@ export default function BookingStep1() {
   const [selectedSize, setSelectedSize] = useState(booking.dumpsterSize || 20);
   const [currentImageIdx, setCurrentImageIdx] = useState(0);
   const [dbDumpsterTypes, setDbDumpsterTypes] = useState<any[]>([]);
-  // priceMap: key = `${dumpster_size_id}:${dumpster_type_id}`, value = base_price from DB
-  const [priceMap, setPriceMap] = useState<Record<string, number>>({});
+  // priceMap: key = `${dumpster_size_id}:${dumpster_type_id}`, value = { basePrice, shippingPrice } from DB
+  const [priceMap, setPriceMap] = useState<Record<string, { basePrice: number; shippingPrice: number }>>({});
   const [priceLoading, setPriceLoading] = useState(false);
 
   useEffect(() => {
@@ -154,7 +154,7 @@ export default function BookingStep1() {
     const fetchPrices = async () => {
       setPriceLoading(true);
       try {
-        const newPriceMap: Record<string, number> = {};
+        const newPriceMap: Record<string, { basePrice: number; shippingPrice: number }> = {};
 
         // Fetch price for every size in the current dumpster type
         await Promise.all(
@@ -168,7 +168,10 @@ export default function BookingStep1() {
               if (res.ok) {
                 const data = await res.json();
                 const key = `${s.size_id}:${s.type_id}`;
-                newPriceMap[key] = data.base_price;
+                newPriceMap[key] = {
+                  basePrice: data.base_price,
+                  shippingPrice: data.shipping_price ?? 0
+                };
               }
             } catch {
               // individual size fetch failed — leave null, UI shows "—"
@@ -195,7 +198,9 @@ export default function BookingStep1() {
   const selectedSizeObj = sizes.find((s: any) => s.value === selectedSize) || sizes[0];
   // ── Step 3: Read price from priceMap (DB-driven) ─────────────────────────
   const selectedPriceKey = selectedSizeObj ? `${selectedSizeObj.size_id}:${selectedSizeObj.type_id}` : null;
-  const basePrice = (selectedPriceKey && priceMap[selectedPriceKey]) ?? selectedSizeObj?.price ?? null;
+  const priceData = selectedPriceKey ? priceMap[selectedPriceKey] : null;
+  const basePrice = priceData?.basePrice ?? selectedSizeObj?.price ?? null;
+  const currentShippingPrice = priceData?.shippingPrice ?? SHIPPING_PRICE;
 
   const product = {
     idealFor: [
@@ -235,6 +240,7 @@ export default function BookingStep1() {
 
     return bookings.map((b: any, index: number) => {
       let bBasePrice = 0;
+      let bShippingPrice = SHIPPING_PRICE;
       const bDumpsterType = index === selectedIndex ? selectedDumpsterType : b.dumpsterType;
       const bSize = parseInt((index === selectedIndex ? selectedSize : b.dumpsterSize) || 20);
       const bMaterialType = b.materialType;
@@ -247,7 +253,11 @@ export default function BookingStep1() {
           if (sizeObj) {
             // Read from priceMap (DB) first, fall back to sizeObj.price if not yet loaded
             const key = `${sizeObj.size_id}:${sizeObj.type_id}`;
-            bBasePrice = priceMap[key] ?? sizeObj.price ?? 0;
+            const pData = priceMap[key];
+            bBasePrice = pData?.basePrice ?? sizeObj.price ?? 0;
+            if (pData?.shippingPrice !== undefined) {
+              bShippingPrice = pData.shippingPrice;
+            }
           }
         }
       }
@@ -265,7 +275,7 @@ export default function BookingStep1() {
         bExtraDays = (bRentalPeriod - bFreeDays) * 25;
       }
 
-      return bBasePrice + bSurcharges + bExtraDays + SHIPPING_PRICE;
+      return bBasePrice + bSurcharges + bExtraDays + bShippingPrice;
     });
   };
 
@@ -283,6 +293,7 @@ export default function BookingStep1() {
 
     bookings.forEach((b: any, index: number) => {
       let bBasePrice = 0;
+      let bShippingPrice = SHIPPING_PRICE;
       const bDumpsterType = index === selectedIndex ? selectedDumpsterType : b.dumpsterType;
       const bSize = parseInt((index === selectedIndex ? selectedSize : b.dumpsterSize) || 20);
       const bMaterialType = b.materialType;
@@ -295,7 +306,11 @@ export default function BookingStep1() {
           if (sizeObj) {
             // Read from priceMap (DB) first, fall back to sizeObj.price if not yet loaded
             const key = `${sizeObj.size_id}:${sizeObj.type_id}`;
-            bBasePrice = priceMap[key] ?? sizeObj.price ?? 0;
+            const pData = priceMap[key];
+            bBasePrice = pData?.basePrice ?? sizeObj.price ?? 0;
+            if (pData?.shippingPrice !== undefined) {
+              bShippingPrice = pData.shippingPrice;
+            }
           }
         }
       }
@@ -316,7 +331,7 @@ export default function BookingStep1() {
       breakdown.basePrice += bBasePrice;
       breakdown.surcharges += bSurcharges;
       breakdown.extraDays += bExtraDays;
-      breakdown.shipping += SHIPPING_PRICE;
+      breakdown.shipping += bShippingPrice;
     });
 
     return breakdown;
