@@ -1,3 +1,4 @@
+// app/layout.tsx
 import { Analytics } from '@vercel/analytics/next'
 import type { Metadata } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
@@ -5,7 +6,21 @@ import React from "react"
 import './globals.css'
 import { AuthProvider } from "@/contexts/auth-context"
 import { BookingProvider } from "@/contexts/booking-context"
+import {
+Montserrat,
+Open_Sans
+} from "next/font/google";
 
+const montserrat=Montserrat({
+subsets:["latin"],
+weight:["700","800","900"],
+variable:"--font-heading"
+})
+
+const openSans=Open_Sans({
+subsets:["latin"],
+variable:"--font-body"
+})
 const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
 

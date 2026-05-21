@@ -2,6 +2,20 @@
 @import "tailwindcss";
 
 @custom-variant dark (&:is(.dark *));
+h1,h2,h3,h4{
+font-family:var(--font-heading);
+}
+
+body{
+font-family:var(--font-body);
+}
+
+:root{
+--color-navy:#0A1628;
+--color-navy-mid:#1B3A6B;
+--color-gold:#DAA520;
+--color-gold-light:#FFD700;
+}
 
 :root {
   /* Official Brand Colors */

@@ -1,3 +1,4 @@
+//next.config.mjs
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
@@ -6,13 +7,14 @@ const nextConfig = {
         protocol: "https",
         hostname: "images.unsplash.com",
       },
-      {
-        protocol: "https",
-        hostname: "*.supabase.co",
-      },
+
       {
         protocol: "https",
         hostname: "www.blueskydisposal.com",
+      },
+      {
+        protocol: "https",
+        hostname: "res.cloudinary.com",
       },
     ],
   },
