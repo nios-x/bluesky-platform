@@ -20,6 +20,42 @@ import PayPalButton from "./paypal";
 import ItemsAdder from "@/components/order/ItemsAdder";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { LOCATIONS } from "@/lib/constants/locations";
+import { TermsModal, PrivacyModal } from "@/components/order/LegalModals";
+
+// Session Storage Keys
+const SESSION_STORAGE_KEYS = {
+  FORM_DATA: "booking_order_formData",
+  SELECTED_INDEX: "booking_order_selectedIndex",
+  SELECTED_DUMPSTER_TYPE: "booking_order_selectedDumpsterType",
+  SELECTED_SIZE: "booking_order_selectedSize",
+  ACCOUNT_CREATION: "booking_order_accountCreation",
+  ACCOUNT_PASSWORD: "booking_order_accountPassword",
+  BOOKINGS: "booking_order_bookings",
+};
+
+// Utility functions for session storage
+const saveToSessionStorage = (key: string, value: any) => {
+  if (typeof window !== "undefined") {
+    try {
+      sessionStorage.setItem(key, JSON.stringify(value));
+    } catch (err) {
+      console.error(`Failed to save to sessionStorage: ${key}`, err);
+    }
+  }
+};
+
+const getFromSessionStorage = (key: string, defaultValue: any = null) => {
+  if (typeof window !== "undefined") {
+    try {
+      const item = sessionStorage.getItem(key);
+      return item ? JSON.parse(item) : defaultValue;
+    } catch (err) {
+      console.error(`Failed to read from sessionStorage: ${key}`, err);
+      return defaultValue;
+    }
+  }
+  return defaultValue;
+};
 
 export default function BookingStep1() {
   const router = useRouter();
@@ -66,6 +102,35 @@ export default function BookingStep1() {
   // priceMap: key = `${dumpster_size_id}:${dumpster_type_id}`, value = { basePrice, shippingPrice } from DB
   const [priceMap, setPriceMap] = useState<Record<string, { basePrice: number; shippingPrice: number }>>({});
   const [priceLoading, setPriceLoading] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState(false);
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
+
+  // ── Initialize from Session Storage on mount ────────────────────────────────
+  useEffect(() => {
+    const savedFormData = getFromSessionStorage(SESSION_STORAGE_KEYS.FORM_DATA);
+    if (savedFormData) {
+      setFormData(savedFormData);
+    }
+
+    const savedSelectedIndex = getFromSessionStorage(SESSION_STORAGE_KEYS.SELECTED_INDEX, 0);
+    setSelectedIndex(savedSelectedIndex);
+
+    const savedDumpsterType = getFromSessionStorage(SESSION_STORAGE_KEYS.SELECTED_DUMPSTER_TYPE);
+    if (savedDumpsterType) {
+      setSelectedDumpsterType(savedDumpsterType);
+    }
+
+    const savedSize = getFromSessionStorage(SESSION_STORAGE_KEYS.SELECTED_SIZE);
+    if (savedSize) {
+      setSelectedSize(savedSize);
+    }
+
+    const savedAccountCreation = getFromSessionStorage(SESSION_STORAGE_KEYS.ACCOUNT_CREATION, false);
+    setAccountCreation(savedAccountCreation);
+
+    const savedAccountPassword = getFromSessionStorage(SESSION_STORAGE_KEYS.ACCOUNT_PASSWORD, "");
+    setAccountPassword(savedAccountPassword);
+  }, []);
 
   useEffect(() => {
     // Pre-fill shipping address from booking context (set on hero page)
@@ -80,15 +145,18 @@ export default function BookingStep1() {
       if (booking.state && !prev.shippingState) {
         updates.shippingState = booking.state;
       }
+      // Prefer explicit shippingStreet, fallback to booking.address (full address string) if available
       if (booking.shippingStreet && !prev.shippingStreet) {
         updates.shippingStreet = booking.shippingStreet;
+      } else if (booking.address && !prev.shippingStreet) {
+        updates.shippingStreet = booking.address;
       }
       if (Object.keys(updates).length > 0) {
         return { ...prev, ...updates };
       }
       return prev;
     });
-  }, [booking.zipCode, booking.city, booking.state, booking.shippingStreet]);
+  }, [booking.zipCode, booking.city, booking.state, booking.shippingStreet, booking.address]);
 
   // ── Step 1: Load dumpster catalog (NO pricing) ─────────────────────────────
   useEffect(() => {
@@ -367,10 +435,33 @@ export default function BookingStep1() {
       if (field === 'firstName' || field === 'lastName') {
         updated.fullName = `${field === 'firstName' ? value : prev.firstName} ${field === 'lastName' ? value : prev.lastName}`.trim();
       }
+      // Sync to session storage
+      saveToSessionStorage(SESSION_STORAGE_KEYS.FORM_DATA, updated);
       return updated;
     });
     setError("");
   };
+
+  // ── Sync state changes to session storage ──────────────────────────────────
+  useEffect(() => {
+    saveToSessionStorage(SESSION_STORAGE_KEYS.SELECTED_INDEX, selectedIndex);
+  }, [selectedIndex]);
+
+  useEffect(() => {
+    saveToSessionStorage(SESSION_STORAGE_KEYS.SELECTED_DUMPSTER_TYPE, selectedDumpsterType);
+  }, [selectedDumpsterType]);
+
+  useEffect(() => {
+    saveToSessionStorage(SESSION_STORAGE_KEYS.SELECTED_SIZE, selectedSize);
+  }, [selectedSize]);
+
+  useEffect(() => {
+    saveToSessionStorage(SESSION_STORAGE_KEYS.ACCOUNT_CREATION, accountCreation);
+  }, [accountCreation]);
+
+  useEffect(() => {
+    saveToSessionStorage(SESSION_STORAGE_KEYS.ACCOUNT_PASSWORD, accountPassword);
+  }, [accountPassword]);
 
   const validateForm = useCallback(() => {
     if (!formData.firstName.trim() || !formData.lastName.trim()) {
@@ -469,13 +560,27 @@ export default function BookingStep1() {
         subscribeNewsletter: formData.subscribeNewsletter,
       });
 
-      // Navigate to payment step
+      // Clear session storage and navigate to payment step
+      Object.values(SESSION_STORAGE_KEYS).forEach(key => {
+        if (typeof window !== "undefined") {
+          sessionStorage.removeItem(key);
+        }
+      });
       router.push("/booking/step-2");
     } catch (err: any) {
       setError(err.message || "An error occurred. Please try again.");
     } finally {
       setLoading(false);
     }
+  };
+
+  // Clear all booking session storage (for starting fresh)
+  const clearBookingSessionStorage = () => {
+    Object.values(SESSION_STORAGE_KEYS).forEach(key => {
+      if (typeof window !== "undefined") {
+        sessionStorage.removeItem(key);
+      }
+    });
   };
 
   const handleGooglePayError = (error: any) => {
@@ -1364,14 +1469,22 @@ export default function BookingStep1() {
                       />
                       <span className="text-sm text-gray-700">
                         I agree to the{" "}
-                        <Link
-                          href="/terms-conditions"
-                          target="_blank"
+                        <button
+                          type="button"
+                          onClick={(e) => { e.preventDefault(); setShowTermsModal(true); }}
                           className="text-[#DAA520] font-bold underline underline-offset-2 hover:text-[#0A1628] transition-colors"
                         >
                           Terms &amp; Conditions
-                        </Link>{" "}
-                        <span className="text-red-500">*</span>
+                        </button>
+                        {" "}and{" "}
+                        <button
+                          type="button"
+                          onClick={(e) => { e.preventDefault(); setShowPrivacyModal(true); }}
+                          className="text-[#DAA520] font-bold underline underline-offset-2 hover:text-[#0A1628] transition-colors"
+                        >
+                          Privacy Policy
+                        </button>
+                        <span className="text-red-500"> *</span>
                       </span>
                     </label>
                     {!termsAccepted && error?.includes("Terms") && (
@@ -1492,7 +1605,7 @@ export default function BookingStep1() {
 
               {/* Pricing Summary Card */}
               <motion.div
-                className="bg-gradient-to-br from-[#0A1628] via-[#1a3a6f] to-[#0f1f3a] text-white rounded-2xl shadow-xl p-8 border border-[#DAA520]/30 lg:hidden"
+                className="hidden bg-gradient-to-br from-[#0A1628] via-[#1a3a6f] to-[#0f1f3a] text-white rounded-2xl shadow-xl p-8 border border-[#DAA520]/30 lg:hidden"
               >
                 <div className="flex items-center justify-between mb-6">
                   <h3 className="text-2xl font-bold">Order Summary</h3>
@@ -1544,6 +1657,71 @@ export default function BookingStep1() {
 
               {formData.firstName && formData.lastName && formData.email && formData.phone && formData.shippingStreet && formData.shippingCity ? (
                 <div id="payment-section" className="mb-8">
+                  {/* Price Summary Before Payment */}
+                  <div className="bg-gradient-to-br from-[#142A52] via-[#1a3a6f] to-[#0f1f3a] text-white rounded-2xl shadow-lg p-6 border border-[#DAA520]/30 mb-6">
+                    <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+                      <Zap className="w-5 h-5 text-[#DAA520]" />
+                      Order Summary
+                    </h3>
+
+                    {/* Products/Items Details */}
+                    <div className="mb-6 pb-6 border-b border-white/20">
+                      <h4 className="text-sm font-bold text-[#DAA520] mb-3">Items Selected ({bookings.length})</h4>
+                      <div className="space-y-2">
+                        {bookings.map((b: any, idx: number) => {
+                          const dumpsterTypeName = dbDumpsterTypes.find(t => t.id === b.dumpsterType)?.name || b.dumpsterType || 'Dumpster';
+                          const itemPrice = itemPrices[idx] || 0;
+                          return (
+                            <div key={idx} className="flex justify-between items-start text-xs bg-white/5 rounded-lg p-3">
+                              <div className="flex-1">
+                                <p className="font-semibold text-white">{b.dumpsterSize}yd {dumpsterTypeName}</p>
+                                <p className="text-white/70 text-[11px]">
+                                  {b.rentalPeriod ? `${b.rentalPeriod} days rental` : 'Standard rental'}
+                                  {b.deliveryDate && ` • From ${new Date(b.deliveryDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`}
+                                </p>
+                              </div>
+                              <span className="font-bold text-[#DAA520] ml-4">${itemPrice.toFixed(2)}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Price Breakdown */}
+                    <div className="space-y-3 mb-4">
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="text-white/80">Base Price</span>
+                        <span className="font-semibold text-white">${cartBreakdown.basePrice.toFixed(2)}</span>
+                      </div>
+                      {cartBreakdown.surcharges > 0 && (
+                        <div className="flex justify-between items-center text-sm text-[#DAA520]">
+                          <span>Heavy Material Surcharges</span>
+                          <span className="font-semibold">${cartBreakdown.surcharges.toFixed(2)}</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="text-white/80">Shipping & Delivery</span>
+                        <span className="font-semibold text-white">${cartBreakdown.shipping.toFixed(2)}</span>
+                      </div>
+                      {cartBreakdown.extraDays > 0 && (
+                        <div className="flex justify-between items-center text-sm text-[#DAA520]">
+                          <span>Extra Rental Charges</span>
+                          <span className="font-semibold">${cartBreakdown.extraDays.toFixed(2)}</span>
+                        </div>
+                      )}
+                      {accountCreation && (
+                        <div className="flex justify-between items-center text-sm text-green-400">
+                          <span>Account Discount</span>
+                          <span className="font-semibold">-${ACCOUNT_DISCOUNT.toFixed(2)}</span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex justify-between items-center pt-4 border-t border-white/20">
+                      <span className="font-bold text-white">Total to Pay</span>
+                      <span className="text-3xl font-bold text-[#DAA520]">${cartTotal.toFixed(2)}</span>
+                    </div>
+                  </div>
+
                   <div className="flex items-center justify-between mb-4">
                     <h2 className="text-2xl font-bold text-[#0A1628]">Payment Method</h2>
                     <div className="flex items-center gap-1.5 text-[11px] text-gray-500">
@@ -1744,6 +1922,9 @@ export default function BookingStep1() {
       </div>
 
       <Footer />
+
+      <TermsModal isOpen={showTermsModal} onClose={() => setShowTermsModal(false)} />
+      <PrivacyModal isOpen={showPrivacyModal} onClose={() => setShowPrivacyModal(false)} />
     </main >
   );
 }

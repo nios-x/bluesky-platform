@@ -42,6 +42,10 @@ export default function OrderDetailsCard({
     const [isAddingNew, setIsAddingNew] = useState(false);
     const [deliveryDateObj, setDeliveryDateObj] = useState<Date | undefined>(undefined);
     const [removalDateObj, setRemovalDateObj] = useState<Date | undefined>(undefined);
+    const [editDeliveryDateIdx, setEditDeliveryDateIdx] = useState<number | null>(null);
+    const [editRemovalDateIdx, setEditRemovalDateIdx] = useState<number | null>(null);
+    const [showEditDeliveryCalendar, setShowEditDeliveryCalendar] = useState(false);
+    const [showEditRemovalCalendar, setShowEditRemovalCalendar] = useState(false);
 
     const handleAddMore = () => {
         if (type && size && deliveryDate && removalDate && onAddMore) {
@@ -160,6 +164,75 @@ export default function OrderDetailsCard({
                                                     </SelectContent>
                                                 </Select>
                                             </div>
+                                            <div>
+                                                <label className="block text-xs font-bold text-[#0A1628] mb-1.5">Change Delivery Date</label>
+                                                <Popover open={showEditDeliveryCalendar && editDeliveryDateIdx === idx} onOpenChange={(open) => { setShowEditDeliveryCalendar(open); setEditDeliveryDateIdx(open ? idx : null); }}>
+                                                    <PopoverTrigger asChild>
+                                                        <Button variant="outline" className="w-full h-8 text-xs justify-start font-normal border border-[#142A52]/30 px-2 focus:ring-0 focus:border-[#C89B2B] text-black">
+                                                            {b.deliveryDate ? new Date(b.deliveryDate).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "Select date"}
+                                                        </Button>
+                                                    </PopoverTrigger>
+                                                    <PopoverContent className="w-auto p-0" align="start">
+                                                        <Calendar
+                                                            mode="single"
+                                                            selected={b.deliveryDate ? new Date(b.deliveryDate) : undefined}
+                                                            onSelect={(selectedDate) => {
+                                                                if (selectedDate) {
+                                                                    const newDeliveryDate = selectedDate.toISOString().split("T")[0];
+                                                                    
+                                                                    // Auto-set removal date to 7 days later, excluding weekends
+                                                                    const defaultRemoval = new Date(selectedDate);
+                                                                    defaultRemoval.setDate(defaultRemoval.getDate() + 7);
+                                                                    if (defaultRemoval.getDay() === 0) defaultRemoval.setDate(defaultRemoval.getDate() + 1);
+                                                                    else if (defaultRemoval.getDay() === 6) defaultRemoval.setDate(defaultRemoval.getDate() + 2);
+                                                                    
+                                                                    const newRemovalDate = defaultRemoval.toISOString().split("T")[0];
+                                                                    
+                                                                    updateBooking(idx, { deliveryDate: newDeliveryDate, removalDate: newRemovalDate });
+                                                                    setShowEditDeliveryCalendar(false);
+                                                                    setEditDeliveryDateIdx(null);
+                                                                }
+                                                            }}
+                                                            disabled={(date) => {
+                                                                const today = new Date();
+                                                                today.setHours(0, 0, 0, 0);
+                                                                if (date < today) return true;
+                                                                const dayOfWeek = date.getDay();
+                                                                return dayOfWeek === 0 || dayOfWeek === 6;
+                                                            }}
+                                                        />
+                                                    </PopoverContent>
+                                                </Popover>
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-bold text-[#0A1628] mb-1.5">Change Removal Date</label>
+                                                <Popover open={showEditRemovalCalendar && editRemovalDateIdx === idx} onOpenChange={(open) => { setShowEditRemovalCalendar(open); setEditRemovalDateIdx(open ? idx : null); }}>
+                                                    <PopoverTrigger asChild>
+                                                        <Button variant="outline" className="w-full h-8 text-xs justify-start font-normal border border-[#142A52]/30 px-2 focus:ring-0 focus:border-[#C89B2B] text-black">
+                                                            {b.removalDate ? new Date(b.removalDate).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "Select date"}
+                                                        </Button>
+                                                    </PopoverTrigger>
+                                                    <PopoverContent className="w-auto p-0" align="start">
+                                                        <Calendar
+                                                            mode="single"
+                                                            selected={b.removalDate ? new Date(b.removalDate) : undefined}
+                                                            onSelect={(selectedDate) => {
+                                                                if (selectedDate) {
+                                                                    updateBooking(idx, { removalDate: selectedDate.toISOString().split("T")[0] });
+                                                                    setShowEditRemovalCalendar(false);
+                                                                    setEditRemovalDateIdx(null);
+                                                                }
+                                                            }}
+                                                            disabled={(date) => {
+                                                                const dayOfWeek = date.getDay();
+                                                                if (dayOfWeek === 0 || dayOfWeek === 6) return true;
+                                                                if (b.deliveryDate && date < new Date(b.deliveryDate)) return true;
+                                                                return false;
+                                                            }}
+                                                        />
+                                                    </PopoverContent>
+                                                </Popover>
+                                            </div>
                                         </div>
                                     )}
                                 </div>
@@ -235,6 +308,75 @@ export default function OrderDetailsCard({
                                             ))}
                                         </SelectContent>
                                     </Select>
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-[#142A52] mb-2">Change Delivery Date</label>
+                                    <Popover open={showEditDeliveryCalendar && editDeliveryDateIdx === idx} onOpenChange={(open) => { setShowEditDeliveryCalendar(open); setEditDeliveryDateIdx(open ? idx : null); }}>
+                                        <PopoverTrigger asChild>
+                                            <Button variant="outline" className="w-full h-8 text-xs justify-start font-normal border-2 border-[#142A52]/30 px-2 focus:ring-[#C89B2B]/20 focus:border-[#C89B2B] text-black">
+                                                {b.deliveryDate ? new Date(b.deliveryDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "Select date"}
+                                            </Button>
+                                        </PopoverTrigger>
+                                        <PopoverContent className="w-auto p-0" align="start">
+                                            <Calendar
+                                                mode="single"
+                                                selected={b.deliveryDate ? new Date(b.deliveryDate) : undefined}
+                                                onSelect={(selectedDate) => {
+                                                    if (selectedDate) {
+                                                        const newDeliveryDate = selectedDate.toISOString().split("T")[0];
+                                                        
+                                                        // Auto-set removal date to 7 days later, excluding weekends
+                                                        const defaultRemoval = new Date(selectedDate);
+                                                        defaultRemoval.setDate(defaultRemoval.getDate() + 7);
+                                                        if (defaultRemoval.getDay() === 0) defaultRemoval.setDate(defaultRemoval.getDate() + 1);
+                                                        else if (defaultRemoval.getDay() === 6) defaultRemoval.setDate(defaultRemoval.getDate() + 2);
+                                                        
+                                                        const newRemovalDate = defaultRemoval.toISOString().split("T")[0];
+                                                        
+                                                        updateBooking(idx, { deliveryDate: newDeliveryDate, removalDate: newRemovalDate });
+                                                        setShowEditDeliveryCalendar(false);
+                                                        setEditDeliveryDateIdx(null);
+                                                    }
+                                                }}
+                                                disabled={(date) => {
+                                                    const today = new Date();
+                                                    today.setHours(0, 0, 0, 0);
+                                                    if (date < today) return true;
+                                                    const dayOfWeek = date.getDay();
+                                                    return dayOfWeek === 0 || dayOfWeek === 6;
+                                                }}
+                                            />
+                                        </PopoverContent>
+                                    </Popover>
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-[#142A52] mb-2">Change Removal Date</label>
+                                    <Popover open={showEditRemovalCalendar && editRemovalDateIdx === idx} onOpenChange={(open) => { setShowEditRemovalCalendar(open); setEditRemovalDateIdx(open ? idx : null); }}>
+                                        <PopoverTrigger asChild>
+                                            <Button variant="outline" className="w-full h-8 text-xs justify-start font-normal border-2 border-[#142A52]/30 px-2 focus:ring-[#C89B2B]/20 focus:border-[#C89B2B] text-black">
+                                                {b.removalDate ? new Date(b.removalDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "Select date"}
+                                            </Button>
+                                        </PopoverTrigger>
+                                        <PopoverContent className="w-auto p-0" align="start">
+                                            <Calendar
+                                                mode="single"
+                                                selected={b.removalDate ? new Date(b.removalDate) : undefined}
+                                                onSelect={(selectedDate) => {
+                                                    if (selectedDate) {
+                                                        updateBooking(idx, { removalDate: selectedDate.toISOString().split("T")[0] });
+                                                        setShowEditRemovalCalendar(false);
+                                                        setEditRemovalDateIdx(null);
+                                                    }
+                                                }}
+                                                disabled={(date) => {
+                                                    const dayOfWeek = date.getDay();
+                                                    if (dayOfWeek === 0 || dayOfWeek === 6) return true;
+                                                    if (b.deliveryDate && date < new Date(b.deliveryDate)) return true;
+                                                    return false;
+                                                }}
+                                            />
+                                        </PopoverContent>
+                                    </Popover>
                                 </div>
                             </div>
                         </div>

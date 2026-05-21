@@ -11,7 +11,7 @@ import { PROJECT_TYPES, MATERIAL_TYPES } from "@/lib/constants/booking";
 
 import { SmartRecommendationModal } from "@/components/ai/SmartRecommendationModal";
 import { useSmartRecommendationModal } from "@/hooks/use-smart-recommendation-modal";
-import { Zap } from "lucide-react";
+import { Zap, X } from "lucide-react";
 
 
 const formatLocalDate = (date: Date) => {
@@ -347,8 +347,9 @@ export function Hero() {
         defaultRemoval.setDate(defaultRemoval.getDate() + 2);
       }
 
-      setRemovalDateObj(defaultRemoval);
-      setRemovalDate(formatLocalDate(defaultRemoval));
+      // Set computed default removal date in component state
+      // setRemovalDateObj(defaultRemoval);
+      // setRemovalDate(formatLocalDate(defaultRemoval));
     }
   }, [deliveryDate, removalDateObj, isRubber]);
 
@@ -421,6 +422,7 @@ export function Hero() {
       dumpsterSize: dumpsterSize!,
       dumpsterSizeId: selectedSize?.size_id,
       deliveryDate,
+      removalDate,
       rentalPeriod: totalDays,
       projectType,
       projectDescription: describeProject,
@@ -475,20 +477,45 @@ export function Hero() {
             {/* Zip Code */}
             <div className="mb-6 relative">
               <label className="block text-sm font-bold text-[#142A52] mb-2">1. Enter Delivery Address</label>
-              <input
-                type="text"
-                value={locationQuery}
-                onChange={handleLocationChange}
-                onKeyDown={handleKeyDown}
-                onFocus={() => {
-                  if (locationQuery.length > 0 && combinedResults.length > 0) {
-                    setIsDropdownOpen(true);
-                  }
-                }}
-                onBlur={() => setTimeout(() => setIsDropdownOpen(false), 200)}
-                placeholder="Type city or zip code"
-                className="w-full px-4 py-3 border-2 border-[#142A52]/30 rounded-lg focus:border-[#C89B2B] focus:ring-2 focus:ring-[#C89B2B]/20 outline-none transition h-auto text-base"
-              />
+              <div className="relative">
+                <input
+                  type="text"
+                  value={locationQuery}
+                  onChange={handleLocationChange}
+                  onKeyDown={handleKeyDown}
+                  onFocus={() => {
+                    if (locationQuery.length > 0 && combinedResults.length > 0) {
+                      setIsDropdownOpen(true);
+                    }
+                  }}
+                  onBlur={() => setTimeout(() => setIsDropdownOpen(false), 200)}
+                  placeholder="Type city or zip code"
+                  className="w-full px-4 py-3 pr-10 border-2 border-[#142A52]/30 rounded-lg focus:border-[#C89B2B] focus:ring-2 focus:ring-[#C89B2B]/20 outline-none transition h-auto text-base"
+                />
+                {locationQuery && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setLocationQuery("");
+                      setZipCode("");
+                      setSelectedCity("");
+                      setSelectedState("");
+                      setSelectedStreet("");
+                      setSelectedAddress("");
+                      setCombinedResults([]);
+                      setIsDropdownOpen(false);
+                      setIsSearching(false);
+                      if (debounceTimer.current) {
+                        clearTimeout(debounceTimer.current);
+                      }
+                    }}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none"
+                    aria-label="Clear location search"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                )}
+              </div>
               {isDropdownOpen && (combinedResults.length > 0 || isSearching) && (() => {
                 const localResults = combinedResults.filter((r): r is LocalLocationResult => r.type === "local");
                 const googleResults = combinedResults.filter((r): r is GoogleLocationResult => r.type === "google");
@@ -598,7 +625,6 @@ export function Hero() {
                           />
                         </div>
                         <h3 className="font-bold text-[#142A52] text-sm">{type.name}</h3>
-                        <p className="text-xs text-[#142A52]/70">{type.description || type.name}</p>
                       </button>
                     ));
                   })()}
@@ -741,9 +767,6 @@ export function Hero() {
                             setDeliveryDateObj(selectedDate);
                             setDeliveryDate(formatLocalDate(selectedDate));
                             setShowDeliveryCalendar(false);
-                            // Reset removal date when delivery date changes
-                            setRemovalDateObj(undefined);
-                            setRemovalDate("");
                           }
                         }}
                         className="rounded-lg border"
@@ -834,7 +857,7 @@ export function Hero() {
                   <div className="flex justify-between items-center text-sm">
                     <span className="text-white/80">Dumpster</span>
                     <span className="font-bold text-white">
-                      {selectedDumpsterType?.name} — {selectedSize?.label}
+                      {selectedDumpsterType?.name}: {selectedSize?.label}
                     </span>
                   </div>
                   <div className="flex justify-between items-center text-sm">

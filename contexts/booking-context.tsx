@@ -6,6 +6,7 @@ export interface BookingData {
   address: string;
   zipCode: string;
   deliveryDate: string;
+  removalDate?: string;
   rentalPeriod: number;
   state?: string;
   city?: string;
@@ -16,6 +17,7 @@ export interface BookingData {
 
   dumpsterType: string;
   dumpsterSize: number;
+  dumpsterSizeId?: string;
   dumpsterCapacity?: number; // Weight capacity in tons
 
   fullName: string;
