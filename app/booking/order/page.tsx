@@ -63,6 +63,9 @@ export default function BookingStep1() {
   const [selectedSize, setSelectedSize] = useState(booking.dumpsterSize || 20);
   const [currentImageIdx, setCurrentImageIdx] = useState(0);
   const [dbDumpsterTypes, setDbDumpsterTypes] = useState<any[]>([]);
+  // priceMap: key = `${dumpster_size_id}:${dumpster_type_id}`, value = base_price from DB
+  const [priceMap, setPriceMap] = useState<Record<string, number>>({});
+  const [priceLoading, setPriceLoading] = useState(false);
 
   useEffect(() => {
     // Pre-fill shipping address from booking context (set on hero page)
@@ -87,6 +90,7 @@ export default function BookingStep1() {
     });
   }, [booking.zipCode, booking.city, booking.state, booking.shippingStreet]);
 
+  // ── Step 1: Load dumpster catalog (NO pricing) ─────────────────────────────
   useEffect(() => {
     const fetchFromDB = async () => {
       try {
@@ -102,41 +106,31 @@ export default function BookingStep1() {
           const sizeVal = sizeValMatch ? parseInt(sizeValMatch[1], 10) : 0;
           if (sizeVal === 0) return;
 
-
           if (!typesMap[typeId]) {
             typesMap[typeId] = {
               id: typeId,
               name: d.dumpster_types.name,
               description: d.dumpster_types.description,
-              image: d.dumpster_types.name.includes("Rubber") ? "/images/rubber-wheel-dumpster.png" : d.dumpster_types.name.includes("Permanent") ? "/images/permanent-dumpster.png" : "/images/roll-off-dumpster.png",
-              sizes: []
+              image: d.dumpster_types.name.includes("Rubber")
+                ? "/images/rubber-wheel-dumpster.png"
+                : d.dumpster_types.name.includes("Permanent")
+                  ? "/images/permanent-dumpster.png"
+                  : "/images/roll-off-dumpster.png",
+              sizes: [],
             };
           }
 
-          let price = 435;
-          if (d.dumpster_types.name.includes("Roll Off") || d.dumpster_types.name.includes("Roll-off")) {
-            if (sizeVal === 10) price = 435;
-            if (sizeVal === 20) price = 455;
-            if (sizeVal === 30) price = 475;
-            if (sizeVal === 40) price = 555;
-          } else if (d.dumpster_types.name.includes("Rubber")) {
-            if (sizeVal === 10) price = 445;
-            if (sizeVal === 20) price = 525;
-            if (sizeVal === 30) price = 655;
-          } else {
-            if (sizeVal === 2) price = 250;
-            if (sizeVal === 4) price = 350;
-            if (sizeVal === 6) price = 450;
-            if (sizeVal === 8) price = 550;
-          }
-
+          // Price is NOT set here — fetched from DB per ZIP in Step 3
           typesMap[typeId].sizes.push({
             dumpster_id: d.id,
             size_id: d.dumpster_sizes?.id,
+            type_id: typeId,
             value: sizeVal,
             label: `${sizeVal} Yard`,
-            dimensions: d.dumpster_sizes ? `${d.dumpster_sizes.length_ft}' × ${d.dumpster_sizes.width_ft}' × ${d.dumpster_sizes.height_ft}'` : "",
-            price: price
+            dimensions: d.dumpster_sizes
+              ? `${d.dumpster_sizes.length_ft}' × ${d.dumpster_sizes.width_ft}' × ${d.dumpster_sizes.height_ft}'`
+              : "",
+            price: null, // populated after ZIP pricing fetch
           });
         });
 
@@ -152,12 +146,56 @@ export default function BookingStep1() {
     fetchFromDB();
   }, []);
 
+  // ── Step 2: Fetch price from DB when ZIP + selection changes ────────────────
+  useEffect(() => {
+    const zip = booking.zipCode || formData.shippingZip;
+    if (!zip || !currentTypeObj) return;
+
+    const fetchPrices = async () => {
+      setPriceLoading(true);
+      try {
+        const newPriceMap: Record<string, number> = {};
+
+        // Fetch price for every size in the current dumpster type
+        await Promise.all(
+          currentTypeObj.sizes.map(async (s: any) => {
+            const params = new URLSearchParams({ zip });
+            if (s.size_id) params.set("dumpster_size_id", s.size_id);
+            if (s.type_id) params.set("dumpster_type_id", s.type_id);
+
+            try {
+              const res = await fetch(`/api/pricing?${params.toString()}`);
+              if (res.ok) {
+                const data = await res.json();
+                const key = `${s.size_id}:${s.type_id}`;
+                newPriceMap[key] = data.base_price;
+              }
+            } catch {
+              // individual size fetch failed — leave null, UI shows "—"
+            }
+          })
+        );
+
+        setPriceMap((prev) => ({ ...prev, ...newPriceMap }));
+      } catch (err) {
+        console.error("Price fetch error:", err);
+      } finally {
+        setPriceLoading(false);
+      }
+    };
+
+    fetchPrices();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [booking.zipCode, formData.shippingZip, selectedDumpsterType, dbDumpsterTypes.length]);
+
   const currentTypeObj = dbDumpsterTypes.find(t => t.id === selectedDumpsterType) || dbDumpsterTypes[0];
   const isRubber = currentTypeObj?.name?.includes("Rubber") || false;
-  const currentFreeDays = isRubber ? 14 : 7;
+  const currentFreeDays = isRubber ? 7 : 14;
   const sizes = currentTypeObj?.sizes || [];
   const selectedSizeObj = sizes.find((s: any) => s.value === selectedSize) || sizes[0];
-  const basePrice = selectedSizeObj?.price || 435;
+  // ── Step 3: Read price from priceMap (DB-driven) ─────────────────────────
+  const selectedPriceKey = selectedSizeObj ? `${selectedSizeObj.size_id}:${selectedSizeObj.type_id}` : null;
+  const basePrice = (selectedPriceKey && priceMap[selectedPriceKey]) ?? selectedSizeObj?.price ?? null;
 
   const product = {
     idealFor: [
@@ -190,13 +228,13 @@ export default function BookingStep1() {
   };
 
   const surcharges = calculateSurcharges();
-  const currentItemPrice = basePrice + surcharges;
+  const currentItemPrice = (basePrice ?? 0) + surcharges;
 
   const calculateItemPrices = () => {
     if (!bookings || bookings.length === 0) return [];
 
     return bookings.map((b: any, index: number) => {
-      let bBasePrice = 435;
+      let bBasePrice = 0;
       const bDumpsterType = index === selectedIndex ? selectedDumpsterType : b.dumpsterType;
       const bSize = parseInt((index === selectedIndex ? selectedSize : b.dumpsterSize) || 20);
       const bMaterialType = b.materialType;
@@ -206,7 +244,11 @@ export default function BookingStep1() {
         const typeObj = dbDumpsterTypes.find((t: any) => t.id === bDumpsterType) || dbDumpsterTypes[0];
         if (typeObj && typeObj.sizes) {
           const sizeObj = typeObj.sizes.find((s: any) => s.value === bSize) || typeObj.sizes[0];
-          if (sizeObj) bBasePrice = sizeObj.price;
+          if (sizeObj) {
+            // Read from priceMap (DB) first, fall back to sizeObj.price if not yet loaded
+            const key = `${sizeObj.size_id}:${sizeObj.type_id}`;
+            bBasePrice = priceMap[key] ?? sizeObj.price ?? 0;
+          }
         }
       }
 
@@ -217,7 +259,7 @@ export default function BookingStep1() {
       }
 
       const isBRubber = dbDumpsterTypes.find((t: any) => t.id === bDumpsterType)?.name?.includes("Rubber") || false;
-      const bFreeDays = isBRubber ? 14 : 7;
+      const bFreeDays = isBRubber ? 7 : 14;
       let bExtraDays = 0;
       if (bRentalPeriod && bRentalPeriod > bFreeDays) {
         bExtraDays = (bRentalPeriod - bFreeDays) * 25;
@@ -240,7 +282,7 @@ export default function BookingStep1() {
     if (!bookings || bookings.length === 0) return breakdown;
 
     bookings.forEach((b: any, index: number) => {
-      let bBasePrice = 435;
+      let bBasePrice = 0;
       const bDumpsterType = index === selectedIndex ? selectedDumpsterType : b.dumpsterType;
       const bSize = parseInt((index === selectedIndex ? selectedSize : b.dumpsterSize) || 20);
       const bMaterialType = b.materialType;
@@ -250,7 +292,11 @@ export default function BookingStep1() {
         const typeObj = dbDumpsterTypes.find((t: any) => t.id === bDumpsterType) || dbDumpsterTypes[0];
         if (typeObj && typeObj.sizes) {
           const sizeObj = typeObj.sizes.find((s: any) => s.value === bSize) || typeObj.sizes[0];
-          if (sizeObj) bBasePrice = sizeObj.price;
+          if (sizeObj) {
+            // Read from priceMap (DB) first, fall back to sizeObj.price if not yet loaded
+            const key = `${sizeObj.size_id}:${sizeObj.type_id}`;
+            bBasePrice = priceMap[key] ?? sizeObj.price ?? 0;
+          }
         }
       }
 
@@ -261,7 +307,7 @@ export default function BookingStep1() {
       }
 
       const isBRubber = dbDumpsterTypes.find((t: any) => t.id === bDumpsterType)?.name?.includes("Rubber") || false;
-      const bFreeDays = isBRubber ? 14 : 7;
+      const bFreeDays = isBRubber ? 7 : 14;
       let bExtraDays = 0;
       if (bRentalPeriod && bRentalPeriod > bFreeDays) {
         bExtraDays = (bRentalPeriod - bFreeDays) * 25;
@@ -534,7 +580,7 @@ export default function BookingStep1() {
 
   const [zipCity, setZipCity] = useState(booking.zipCode || "");
   const [deliveryDate, setDeliveryDate] = useState(booking.deliveryDate || "");
-  const [weeklyPickup, setWeeklyPickup] = useState(1);
+  const [weeklyPickup, setWeeklyPickup] = useState("Twice a week x2");
   const [usageType, setUsageType] = useState("");
   const [couponCode, setCouponCode] = useState("");
   const [couponApplied, setCouponApplied] = useState(false);
@@ -623,6 +669,7 @@ export default function BookingStep1() {
           country: formData.billingCountry,
         },
         placementInstructions: formData.placementInstructions,
+        serviceFrequency: selectedDumpsterType === "8fb25f2b-d593-42b6-8066-a62f59e2ca12" ? weeklyPickup : null,
       };
 
       updateBooking(0, contactData);
@@ -699,6 +746,7 @@ export default function BookingStep1() {
           country: formData.billingCountry,
         },
         placementInstructions: formData.placementInstructions,
+        serviceFrequency: selectedDumpsterType === "8fb25f2b-d593-42b6-8066-a62f59e2ca12" ? weeklyPickup : null,
         paymentMethod: 'paypal',
         paymentIntentId: details.id,
         paymentStatus: 'completed',
@@ -755,6 +803,7 @@ export default function BookingStep1() {
           country: formData.billingCountry,
         },
         placementInstructions: formData.placementInstructions,
+        serviceFrequency: selectedDumpsterType === "8fb25f2b-d593-42b6-8066-a62f59e2ca12" ? weeklyPickup : null,
       });
 
       const response = await fetch('/api/checkout_sessions', {
@@ -1069,6 +1118,8 @@ export default function BookingStep1() {
               selectedSize={selectedSize}
               sizes={sizes}
               onSizeChange={handleSizeChange}
+              weeklyPickup={weeklyPickup}
+              onWeeklyPickupChange={setWeeklyPickup}
             />
 
             <div className=" mt-10 gap-8">
@@ -1614,7 +1665,7 @@ export default function BookingStep1() {
                           size: String(selectedSize || ''),
                           days: String(booking.rentalPeriod || 7),
                         });
-                        const url = `${window.location.origin}/booking/step-1?${params.toString()}`;
+                        const url = `${window.location.origin}/booking/order?${params.toString()}`;
                         navigator.clipboard.writeText(url).then(() => {
                           setQuoteCopied(true);
                           setTimeout(() => setQuoteCopied(false), 2500);

@@ -18,7 +18,7 @@
 | -------------------------- | -------- | ------------------------------------------------------------------------------------ | ---------- |
 | `@anthropic-ai/sdk`        | **USED** | `app/api/chat/route.ts` & `app/api/recommendation/route.js`                          | 100%       |
 | `@google-pay/button-react` | **USED** | `components/payments/gpay.tsx`                                                       | 100%       |
-| `@paypal/paypal-js`        | **USED** | `app/booking/step-1/paypal.tsx`                                                      | 100%       |
+| `@paypal/paypal-js`        | **USED** | `app/booking/order/paypal.tsx`                                                      | 100%       |
 | `embla-carousel-react`     | **USED** | `components/ui/carousel.tsx`                                                         | 100%       |
 | `framer-motion`            | **USED** | `components/home/how-it-works.tsx`, `components/about/why-blue.tsx`, etc. (6+ files) | 100%       |
 | `recharts`                 | **USED** | `components/ui/chart.tsx`, `components/about/growth-journey.tsx`                     | 100%       |
@@ -143,7 +143,7 @@ public/Dumpster/
 | `POST /api/chat`                 | `app/api/chat/route.ts`                | **ACTIVE**       | Frontend chatbot components             | 100%       |
 | `POST /api/recommendation`       | `app/api/recommendation/route.js`      | **ACTIVE**       | `components/ai-recommendation-form.tsx` | 100%       |
 | `POST /api/zip-lookup/`          | `app/api/zip-lookup/route.js`          | **QUESTIONABLE** | Not explicitly found in code searches   | 70%        |
-| `POST /api/payments/google-pay/` | `app/api/payments/google-pay/route.js` | **ACTIVE**       | `app/booking/step-1/page.tsx` line 594  | 100%       |
+| `POST /api/payments/google-pay/` | `app/api/payments/google-pay/route.js` | **ACTIVE**       | `app/booking/order/page.tsx` line 594  | 100%       |
 | `POST /api/payments/`            | `app/api/payments/route.js`            | **ACTIVE**       | Payment system                          | 95%        |
 
 ### Details on Questionable Routes

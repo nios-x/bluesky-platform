@@ -290,7 +290,7 @@ Not Allowed:
 ## 📋 Deliverables
 
 ### Files Created/Modified
-- ✅ `/app/booking/step-1/page.tsx` - 370 lines
+- ✅ `/app/booking/order/page.tsx` - 370 lines
 - ✅ `/app/booking/step-2/page.tsx` - 380 lines
 - ✅ `/app/booking/confirmation/page.tsx` - 280 lines
 - ✅ `/app/cities/page.tsx` - 220 lines
