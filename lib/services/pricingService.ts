@@ -69,8 +69,8 @@ export async function calculateServerSideTotal(bookingsData: any[], contactInfo:
   let finalPrice = cartTotal;
 
   // Contact info discount (if they ticked 'create account', we emulate this if they passed it)
-  if (contactInfo && contactInfo.accountDiscount) {
-    finalPrice -= contactInfo.accountDiscount; // Validate this is max 20
+  if (contactInfo && (contactInfo.accountDiscount || contactInfo.accountCreation)) {
+    finalPrice -= ACCOUNT_DISCOUNT;
   }
 
   return Math.max(finalPrice, 0);

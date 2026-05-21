@@ -6,6 +6,7 @@ export interface BookingData {
   address: string;
   zipCode: string;
   deliveryDate: string;
+  removalDate?: string;
   rentalPeriod: number;
   state?: string;
   city?: string;

@@ -347,8 +347,9 @@ export function Hero() {
         defaultRemoval.setDate(defaultRemoval.getDate() + 2);
       }
 
-      setRemovalDateObj(defaultRemoval);
-      setRemovalDate(formatLocalDate(defaultRemoval));
+      // Set computed default removal date in component state
+      // setRemovalDateObj(defaultRemoval);
+      // setRemovalDate(formatLocalDate(defaultRemoval));
     }
   }, [deliveryDate, removalDateObj, isRubber]);
 
@@ -421,6 +422,7 @@ export function Hero() {
       dumpsterSize: dumpsterSize!,
       dumpsterSizeId: selectedSize?.size_id,
       deliveryDate,
+      removalDate,
       rentalPeriod: totalDays,
       projectType,
       projectDescription: describeProject,
@@ -598,7 +600,6 @@ export function Hero() {
                           />
                         </div>
                         <h3 className="font-bold text-[#142A52] text-sm">{type.name}</h3>
-                        <p className="text-xs text-[#142A52]/70">{type.description || type.name}</p>
                       </button>
                     ));
                   })()}
@@ -741,9 +742,6 @@ export function Hero() {
                             setDeliveryDateObj(selectedDate);
                             setDeliveryDate(formatLocalDate(selectedDate));
                             setShowDeliveryCalendar(false);
-                            // Reset removal date when delivery date changes
-                            setRemovalDateObj(undefined);
-                            setRemovalDate("");
                           }
                         }}
                         className="rounded-lg border"
@@ -834,7 +832,7 @@ export function Hero() {
                   <div className="flex justify-between items-center text-sm">
                     <span className="text-white/80">Dumpster</span>
                     <span className="font-bold text-white">
-                      {selectedDumpsterType?.name} — {selectedSize?.label}
+                      {selectedDumpsterType?.name}: {selectedSize?.label}
                     </span>
                   </div>
                   <div className="flex justify-between items-center text-sm">
