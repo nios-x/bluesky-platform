@@ -580,7 +580,7 @@ export default function BookingStep1() {
 
   const [zipCity, setZipCity] = useState(booking.zipCode || "");
   const [deliveryDate, setDeliveryDate] = useState(booking.deliveryDate || "");
-  const [weeklyPickup, setWeeklyPickup] = useState(1);
+  const [weeklyPickup, setWeeklyPickup] = useState("Twice a week x2");
   const [usageType, setUsageType] = useState("");
   const [couponCode, setCouponCode] = useState("");
   const [couponApplied, setCouponApplied] = useState(false);
@@ -669,6 +669,7 @@ export default function BookingStep1() {
           country: formData.billingCountry,
         },
         placementInstructions: formData.placementInstructions,
+        serviceFrequency: selectedDumpsterType === "8fb25f2b-d593-42b6-8066-a62f59e2ca12" ? weeklyPickup : null,
       };
 
       updateBooking(0, contactData);
@@ -745,6 +746,7 @@ export default function BookingStep1() {
           country: formData.billingCountry,
         },
         placementInstructions: formData.placementInstructions,
+        serviceFrequency: selectedDumpsterType === "8fb25f2b-d593-42b6-8066-a62f59e2ca12" ? weeklyPickup : null,
         paymentMethod: 'paypal',
         paymentIntentId: details.id,
         paymentStatus: 'completed',
@@ -801,6 +803,7 @@ export default function BookingStep1() {
           country: formData.billingCountry,
         },
         placementInstructions: formData.placementInstructions,
+        serviceFrequency: selectedDumpsterType === "8fb25f2b-d593-42b6-8066-a62f59e2ca12" ? weeklyPickup : null,
       });
 
       const response = await fetch('/api/checkout_sessions', {
@@ -1115,6 +1118,8 @@ export default function BookingStep1() {
               selectedSize={selectedSize}
               sizes={sizes}
               onSizeChange={handleSizeChange}
+              weeklyPickup={weeklyPickup}
+              onWeeklyPickupChange={setWeeklyPickup}
             />
 
             <div className=" mt-10 gap-8">
@@ -1660,7 +1665,7 @@ export default function BookingStep1() {
                           size: String(selectedSize || ''),
                           days: String(booking.rentalPeriod || 7),
                         });
-                        const url = `${window.location.origin}/booking/step-1?${params.toString()}`;
+                        const url = `${window.location.origin}/booking/order?${params.toString()}`;
                         navigator.clipboard.writeText(url).then(() => {
                           setQuoteCopied(true);
                           setTimeout(() => setQuoteCopied(false), 2500);

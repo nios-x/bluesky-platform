@@ -116,7 +116,7 @@ export function HeroNew() {
 
   const handleBooking = () => {
     setBookingError("");
-    
+
     if (!zipCode.trim()) {
       setBookingError("Please enter a zip code");
       return;
@@ -153,7 +153,7 @@ export function HeroNew() {
       totalPrice,
     });
 
-    router.push("/booking/step-1");
+    router.push("/booking/order");
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -222,11 +222,10 @@ export function HeroNew() {
                     setDumpsterType("roll-off");
                     setDumpsterSize(option.size);
                   }}
-                  className={`rounded-2xl p-5 transition-all transform text-left ${
-                    dumpsterType === "roll-off" && dumpsterSize === option.size
+                  className={`rounded-2xl p-5 transition-all transform text-left ${dumpsterType === "roll-off" && dumpsterSize === option.size
                       ? "bg-gradient-to-br from-[#B8860B] to-[#DAA520] text-[#0A1628] shadow-2xl ring-4 ring-[#FFD700]"
                       : "bg-white/95 text-slate-900 hover:shadow-xl hover:bg-white"
-                  }`}
+                    }`}
                 >
                   <div className="flex justify-between items-start mb-3">
                     <div>

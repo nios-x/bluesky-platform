@@ -31,7 +31,7 @@ This document outlines the complete interactive booking system for Blue Sky Disp
   - Real-time error validation
 
 ### 4. **Booking System - Step 1**
-**Location:** `/app/booking/step-1/page.tsx`
+**Location:** `/app/booking/order/page.tsx`
 
 Features:
 - Dumpster type selection with descriptions:
@@ -231,7 +231,7 @@ Critical Rule:
 ```
 app/
 ├── booking/
-│   ├── step-1/page.tsx
+│   ├── order/page.tsx
 │   ├── step-2/page.tsx
 │   └── confirmation/page.tsx
 ├── cities/page.tsx

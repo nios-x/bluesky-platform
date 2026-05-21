@@ -15,7 +15,7 @@ export async function POST(req: Request) {
 
     const body = await req.json()
     const { bookingsData, contactInfo } = body
-    
+
     // Server-side amount validation
     const serverAmount = await calculateServerSideTotal(bookingsData, contactInfo)
     const amountInCents = Math.round(serverAmount * 100)
@@ -55,7 +55,7 @@ export async function POST(req: Request) {
       ],
       mode: 'payment',
       success_url: `${origin}/booking/confirmation?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${origin}/booking/step-1`, // Redirect back to booking step 1 if canceled
+      cancel_url: `${origin}/booking/order`, // Redirect back to booking step 1 if canceled
       client_reference_id: webhookId ? webhookId.toString() : undefined, // Map webhook payload
       payment_intent_data: {
         description: 'Dumpster Rental Booking - Services',

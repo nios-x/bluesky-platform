@@ -61,7 +61,7 @@ export function Hero() {
           const sizeVal = sizeValMatch ? parseInt(sizeValMatch[1], 10) : 0;
           if (sizeVal === 0) return;
 
-          // Price is NOT set here — fetched from DB in step-1 by ZIP
+          // Price is NOT set here — fetched from DB in order by ZIP
           typesMap[typeId].sizes.push({
             dumpster_id: d.id,
             size_id: d.dumpster_sizes?.id,
@@ -136,7 +136,7 @@ export function Hero() {
     };
   }, []);
 
-  // Stored parsed address parts from selected location (to pass to step-1)
+  // Stored parsed address parts from selected location (to pass to order)
   const [selectedCity, setSelectedCity] = useState("");
   const [selectedState, setSelectedState] = useState("");
   const [selectedStreet, setSelectedStreet] = useState("");
@@ -430,7 +430,7 @@ export function Hero() {
     });
 
     // Navigate to booking page
-    router.push("/booking/step-1");
+    router.push("/booking/order");
   };
 
   const handleHelpMeChoose = () => {
