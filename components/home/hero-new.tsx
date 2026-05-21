@@ -172,7 +172,7 @@ export function HeroNew() {
           className="w-full h-full object-cover object-[center_75%]"
           loading="eager"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-[#08054C]/70 via-[#0a0660]/55 to-[#0d0780]/80" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#0A1628]/70 via-[#1B3A6B]/55 to-[#0A1628]/80" />
       </div>
 
       {/* Content */}
@@ -224,7 +224,7 @@ export function HeroNew() {
                   }}
                   className={`rounded-2xl p-5 transition-all transform text-left ${
                     dumpsterType === "roll-off" && dumpsterSize === option.size
-                      ? "bg-gradient-to-br from-orange-400 to-orange-600 text-white shadow-2xl ring-4 ring-yellow-300"
+                      ? "bg-gradient-to-br from-[#B8860B] to-[#DAA520] text-[#0A1628] shadow-2xl ring-4 ring-[#FFD700]"
                       : "bg-white/95 text-slate-900 hover:shadow-xl hover:bg-white"
                   }`}
                 >
@@ -287,7 +287,7 @@ export function HeroNew() {
                         }}
                         onKeyPress={handleKeyPress}
                         placeholder="Zip code"
-                        className="w-full pl-9 pr-3 py-2 rounded-xl border-2 border-slate-300 focus:border-[#08054C] focus:ring-2 focus:ring-[#08054C]/20 outline-none text-slate-900 font-medium transition-all text-sm h-[44px]"
+                        className="w-full pl-9 pr-3 py-2 rounded-xl border-2 border-slate-300 focus:border-[#0A1628] focus:ring-2 focus:ring-[#0A1628]/20 outline-none text-slate-900 font-medium transition-all text-sm h-[44px]"
                       />
                     </div>
                   </div>
@@ -295,7 +295,7 @@ export function HeroNew() {
                   <div className="space-y-1">
                     <label className="text-xs font-bold text-slate-700 ml-1">Project Type</label>
                     <Select value={projectType} onValueChange={setProjectType}>
-                      <SelectTrigger className="w-full border-2 border-slate-300 rounded-xl h-[44px] focus:ring-[#08054C]/20 focus:border-[#08054C]">
+                      <SelectTrigger className="w-full border-2 border-slate-300 rounded-xl h-[44px] focus:ring-[#0A1628]/20 focus:border-[#0A1628]">
                         <SelectValue placeholder="Select project" />
                       </SelectTrigger>
                       <SelectContent>
@@ -312,7 +312,7 @@ export function HeroNew() {
                   <div className="space-y-1">
                     <label className="text-xs font-bold text-slate-700 ml-1">Dumpster Type</label>
                     <Select value={dumpsterType} onValueChange={(val) => { setDumpsterType(val); setDumpsterSize(null); }}>
-                      <SelectTrigger className="w-full border-2 border-slate-300 rounded-xl h-[44px] focus:ring-[#08054C]/20 focus:border-[#08054C] text-sm truncate">
+                      <SelectTrigger className="w-full border-2 border-slate-300 rounded-xl h-[44px] focus:ring-[#0A1628]/20 focus:border-[#0A1628] text-sm truncate">
                         <SelectValue placeholder="Select type" />
                       </SelectTrigger>
                       <SelectContent>
@@ -326,7 +326,7 @@ export function HeroNew() {
                   <div className="space-y-1">
                     <label className="text-xs font-bold text-slate-700 ml-1">Size</label>
                     <Select value={dumpsterSize?.toString() || ""} onValueChange={(val) => setDumpsterSize(parseInt(val))}>
-                      <SelectTrigger className="w-full border-2 border-slate-300 rounded-xl h-[44px] focus:ring-[#08054C]/20 focus:border-[#08054C]">
+                      <SelectTrigger className="w-full border-2 border-slate-300 rounded-xl h-[44px] focus:ring-[#0A1628]/20 focus:border-[#0A1628]">
                         <SelectValue placeholder="Select size" />
                       </SelectTrigger>
                       <SelectContent>
@@ -344,7 +344,7 @@ export function HeroNew() {
                     <label className="text-xs font-bold text-slate-700 ml-1">Delivery Date</label>
                     <Popover open={showDeliveryCalendar} onOpenChange={setShowDeliveryCalendar}>
                       <PopoverTrigger asChild>
-                        <Button variant="outline" className="w-full justify-start text-left font-normal border-2 border-slate-300 rounded-xl h-[44px] px-3 focus:ring-[#08054C]/20 focus:border-[#08054C] text-xs">
+                        <Button variant="outline" className="w-full justify-start text-left font-normal border-2 border-slate-300 rounded-xl h-[44px] px-3 focus:ring-[#0A1628]/20 focus:border-[#0A1628] text-xs">
                           {deliveryDate ? new Date(deliveryDate).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "Select date"}
                         </Button>
                       </PopoverTrigger>
@@ -377,7 +377,7 @@ export function HeroNew() {
                     <label className="text-xs font-bold text-slate-700 ml-1">Removal Date</label>
                     <Popover open={showRemovalCalendar} onOpenChange={setShowRemovalCalendar}>
                       <PopoverTrigger asChild>
-                        <Button variant="outline" className="w-full justify-start text-left font-normal border-2 border-slate-300 rounded-xl h-[44px] px-3 focus:ring-[#08054C]/20 focus:border-[#08054C] text-xs">
+                        <Button variant="outline" className="w-full justify-start text-left font-normal border-2 border-slate-300 rounded-xl h-[44px] px-3 focus:ring-[#0A1628]/20 focus:border-[#0A1628] text-xs">
                           {removalDate ? new Date(removalDate).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "Select date"}
                         </Button>
                       </PopoverTrigger>
@@ -435,7 +435,7 @@ export function HeroNew() {
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={handleBooking}
-                className="w-full bg-gradient-to-r from-orange-400 via-orange-500 to-orange-600 hover:from-orange-500 hover:via-orange-600 hover:to-orange-700 text-white font-bold py-3 rounded-xl transition-all shadow-lg flex items-center justify-center gap-2 text-lg"
+                className="w-full bg-gradient-to-r from-[#B8860B] via-[#FFD700] to-[#DAA520] hover:from-[#D4A835] hover:via-[#FFF000] hover:to-[#E5B835] text-[#0A1628] font-bold py-3 rounded-xl transition-all shadow-lg flex items-center justify-center gap-2 text-lg"
               >
                 <Zap className="w-5 h-5" />
                 Confirm Booking
@@ -452,3 +452,4 @@ export function HeroNew() {
     </section>
   );
 }
+

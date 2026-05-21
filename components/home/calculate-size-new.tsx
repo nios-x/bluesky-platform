@@ -185,10 +185,10 @@ export default function CalculateSizeNew() {
   const isFormComplete = formData.dumpsterType && formData.material && formData.quantity && formData.timeline;
 
   return (
-    <section id="calculator-section" className="py-24 md:py-32 px-4 bg-gradient-to-b from-[#142A52]/5 via-white to-[#C89B2B]/5 relative overflow-hidden">
+    <section id="calculator-section" className="py-24 md:py-32 px-4 bg-gradient-to-b from-[#0A1628]/5 via-white to-[#DAA520]/5 relative overflow-hidden">
       {/* Background Decorations */}
-      <div className="absolute top-40 right-0 w-96 h-96 bg-[#C89B2B]/10 rounded-full blur-3xl -z-10" />
-      <div className="absolute bottom-0 left-0 w-96 h-96 bg-[#142A52]/10 rounded-full blur-3xl -z-10" />
+      <div className="absolute top-40 right-0 w-96 h-96 bg-[#DAA520]/10 rounded-full blur-3xl -z-10" />
+      <div className="absolute bottom-0 left-0 w-96 h-96 bg-[#0A1628]/10 rounded-full blur-3xl -z-10" />
 
       <div className="max-w-6xl mx-auto">
         {/* Header */}
@@ -199,19 +199,19 @@ export default function CalculateSizeNew() {
           className="text-center mb-20"
         >
           <motion.div 
-            className="inline-flex items-center gap-3 bg-gradient-to-r from-[#C89B2B]/30 to-[#142A52]/30 px-6 py-3 rounded-full mb-8 border border-[#C89B2B]/40 backdrop-blur-sm"
+            className="inline-flex items-center gap-3 bg-gradient-to-r from-[#DAA520]/30 to-[#0A1628]/30 px-6 py-3 rounded-full mb-8 border border-[#DAA520]/40 backdrop-blur-sm"
             whileHover={{ scale: 1.05 }}
             transition={{ type: "spring", stiffness: 300 }}
           >
-            <Lightbulb className="w-6 h-6 text-[#C89B2B]" />
+            <Lightbulb className="w-6 h-6 text-[#DAA520]" />
             <span className="text-sm font-bold text-[#142A52] uppercase tracking-wider">Get Your Perfect Match</span>
           </motion.div>
           
-          <h2 className="text-5xl md:text-7xl font-bold text-[#142A52] mb-6">
-            Smart <span className="text-[#C89B2B] relative inline-block">
+          <h2 className="text-5xl md:text-7xl font-bold text-[#0A1628] mb-6">
+            Smart <span className="text-[#DAA520] relative inline-block">
               Dumpster
               <motion.div
-                className="absolute bottom-0 left-0 h-1 bg-gradient-to-r from-[#C89B2B] to-transparent rounded-full"
+                className="absolute bottom-0 left-0 h-1 bg-gradient-to-r from-[#DAA520] to-transparent rounded-full"
                 initial={{ width: 0 }}
                 whileInView={{ width: "100%" }}
                 viewport={{ once: true }}
@@ -239,7 +239,7 @@ export default function CalculateSizeNew() {
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
             >
-              <div className="bg-gradient-to-br from-[#142A52] to-[#0a1838] rounded-2xl shadow-xl p-8 text-white space-y-8 border border-[#C89B2B]/20">
+              <div className="bg-gradient-to-br from-[#0A1628] to-[#1B3A6B] rounded-2xl shadow-xl p-8 text-white space-y-8 border border-[#DAA520]/20">
                 {/* Progress Circle */}
                 <motion.div
                   className="flex flex-col items-center justify-center py-6"
@@ -263,13 +263,13 @@ export default function CalculateSizeNew() {
                       />
                       <defs>
                         <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                          <stop offset="0%" stopColor="#C89B2B" />
+                          <stop offset="0%" stopColor="#DAA520" />
                           <stop offset="100%" stopColor="#FFD700" />
                         </linearGradient>
                       </defs>
                     </svg>
                     <motion.div className="text-center z-10">
-                      <motion.div className="text-5xl font-bold text-[#C89B2B]" key={progressPercentage}>
+                      <motion.div className="text-5xl font-bold text-[#DAA520]" key={progressPercentage}">
                         {progressPercentage}<span className="text-2xl">%</span>
                       </motion.div>
                       <div className="text-xs text-white/70 mt-1 uppercase font-bold tracking-widest">Complete</div>
@@ -286,7 +286,7 @@ export default function CalculateSizeNew() {
                       className={`w-full text-left p-4 rounded-xl transition-all font-bold text-sm uppercase tracking-wider ${
                         idx <= currentStep
                           ? idx === currentStep
-                            ? "bg-[#C89B2B] text-white shadow-lg scale-105"
+                            ? "bg-[#DAA520] text-[#0A1628] shadow-lg scale-105"
                             : "bg-white/20 text-white hover:bg-white/30"
                           : "bg-white/10 text-white/50 cursor-not-allowed"
                       }`}
@@ -318,7 +318,7 @@ export default function CalculateSizeNew() {
 
                 {/* Remaining Steps */}
                 <motion.div className="text-center py-4 border-t border-white/20">
-                  <div className="text-3xl font-bold text-[#C89B2B]">{formSteps.length - currentStep}</div>
+                  <div className="text-3xl font-bold text-[#DAA520]">{formSteps.length - currentStep}</div>
                   <div className="text-xs text-white/70 uppercase tracking-widest">Step{formSteps.length - currentStep !== 1 ? 's' : ''} Left</div>
                 </motion.div>
               </div>
@@ -331,16 +331,16 @@ export default function CalculateSizeNew() {
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
             >
-              <div className="bg-white rounded-3xl shadow-2xl border-2 border-[#C89B2B]/20 overflow-hidden backdrop-blur-sm">
+              <div className="bg-white rounded-3xl shadow-2xl border-2 border-[#DAA520]/20 overflow-hidden backdrop-blur-sm">
                 {/* Form Header Bar */}
                 <div className="bg-gradient-to-r from-[#142A52] to-[#1a3a6f] px-8 py-6 flex items-center justify-between">
                   <div>
-                    <h3 className="text-sm uppercase font-bold text-[#C89B2B] tracking-wider">Step {currentStep + 1} of {formSteps.length}</h3>
+                    <h3 className="text-sm uppercase font-bold text-[#DAA520] tracking-wider">Step {currentStep + 1} of {formSteps.length}</h3>
                     <p className="text-white text-lg font-bold mt-1">{currentFormStep.question}</p>
                   </div>
                   <motion.div className="hidden md:block">
                     <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 2 }}>
-                      <Zap className="w-6 h-6 text-[#C89B2B]" />
+                      <Zap className="w-6 h-6 text-[#DAA520]" />
                     </motion.div>
                   </motion.div>
                 </div>
@@ -373,7 +373,7 @@ export default function CalculateSizeNew() {
                           <select
                             value={formData.dumpsterType}
                             onChange={(e) => handleDumpsterTypeSelect(e.target.value)}
-                            className="w-full px-5 py-5 border-2 border-gray-300 rounded-xl focus:border-[#C89B2B] focus:ring-2 focus:ring-[#C89B2B]/30 outline-none bg-white text-gray-900 font-bold text-base md:text-lg appearance-none cursor-pointer transition-all hover:border-gray-400 shadow-sm"
+                            className="w-full px-5 py-5 border-2 border-gray-300 rounded-xl focus:border-[#DAA520] focus:ring-2 focus:ring-[#DAA520]/30 outline-none bg-white text-gray-900 font-bold text-base md:text-lg appearance-none cursor-pointer transition-all hover:border-gray-400 shadow-sm"
                           >
                             <option value="">🔽 Choose a dumpster type...</option>
                             {dumpsterTypes.map((type) => (
@@ -382,7 +382,7 @@ export default function CalculateSizeNew() {
                               </option>
                             ))}
                           </select>
-                          <ChevronRight className="absolute right-4 top-1/2 transform -translate-y-1/2 pointer-events-none text-[#C89B2B] w-6 h-6" />
+                          <ChevronRight className="absolute right-4 top-1/2 transform -translate-y-1/2 pointer-events-none text-[#DAA520] w-6 h-6" />
                         </div>
 
                         {formData.dumpsterType && (
@@ -428,7 +428,7 @@ export default function CalculateSizeNew() {
                           <select
                             value={formData.material}
                             onChange={(e) => handleMaterialSelect(e.target.value)}
-                            className="w-full px-5 py-5 border-2 border-gray-300 rounded-xl focus:border-[#C89B2B] focus:ring-2 focus:ring-[#C89B2B]/30 outline-none bg-white text-gray-900 font-bold text-base md:text-lg appearance-none cursor-pointer transition-all hover:border-gray-400 shadow-sm"
+                            className="w-full px-5 py-5 border-2 border-gray-300 rounded-xl focus:border-[#DAA520] focus:ring-2 focus:ring-[#DAA520]/30 outline-none bg-white text-gray-900 font-bold text-base md:text-lg appearance-none cursor-pointer transition-all hover:border-gray-400 shadow-sm"
                           >
                             <option value="">🔽 Choose material type...</option>
                             {materials.map((material) => (
@@ -437,7 +437,7 @@ export default function CalculateSizeNew() {
                               </option>
                             ))}
                           </select>
-                          <ChevronRight className="absolute right-4 top-1/2 transform -translate-y-1/2 pointer-events-none text-[#C89B2B] w-6 h-6" />
+                          <ChevronRight className="absolute right-4 top-1/2 transform -translate-y-1/2 pointer-events-none text-[#DAA520] w-6 h-6" />
                         </div>
 
                         {formData.material && (
@@ -530,16 +530,16 @@ export default function CalculateSizeNew() {
                                   </p>
                                 </div>
 
-                                <div className="bg-gradient-to-r from-amber-400 to-orange-500 text-white rounded-2xl p-6">
-                                  <p className="text-sm text-orange-100 mb-2">Estimated Total for {calc.materialName}</p>
+                                <div className="bg-gradient-to-r from-[#B8860B] to-[#DAA520] text-[#0A1628] rounded-2xl p-6">
+                                  <p className="text-sm text-[#0A1628]/80 mb-2">Estimated Total for {calc.materialName}</p>
                                   <div className="flex items-end justify-between">
                                     <div>
-                                      <p className="text-xs text-orange-100">Base rental</p>
+                                      <p className="text-xs text-[#0A1628]/80">Base rental</p>
                                       <p className="text-lg font-bold">${calc.basePrice}</p>
                                     </div>
                                     {calc.overage > 0 && (
                                       <div className="text-right">
-                                        <p className="text-xs text-orange-100">Overage fee</p>
+                                        <p className="text-xs text-[#0A1628]/80">Overage fee</p>
                                         <p className="text-lg font-bold">+${Math.round(calc.overagePrice)}</p>
                                       </div>
                                     )}

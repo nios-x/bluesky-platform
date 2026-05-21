@@ -13,7 +13,7 @@ export default function TermsConditionsPage() {
 
       <div className="flex-1 py-12 md:py-16 px-4">
         <div className="max-w-3xl mx-auto">
-          <h1 className="text-3xl md:text-4xl font-bold text-[#142A52] mb-2">
+          <h1 className="text-3xl md:text-4xl font-bold text-[#0A1628] mb-2">
             Terms &amp; Conditions
           </h1>
           <p className="text-sm text-gray-500 mb-10">
@@ -23,7 +23,7 @@ export default function TermsConditionsPage() {
           <div className="prose prose-slate max-w-none space-y-8 text-[15px] leading-relaxed text-gray-700">
             {/* 1 */}
             <section>
-              <h2 className="text-xl font-bold text-[#142A52] mb-3">
+              <h2 className="text-xl font-bold text-[#0A1628] mb-3">
                 1. Service Agreement
               </h2>
               <p>
@@ -36,7 +36,7 @@ export default function TermsConditionsPage() {
 
             {/* 2 */}
             <section>
-              <h2 className="text-xl font-bold text-[#142A52] mb-3">
+              <h2 className="text-xl font-bold text-[#0A1628] mb-3">
                 2. Rental Period
               </h2>
               <p>
@@ -50,7 +50,7 @@ export default function TermsConditionsPage() {
 
             {/* 3 */}
             <section>
-              <h2 className="text-xl font-bold text-[#142A52] mb-3">
+              <h2 className="text-xl font-bold text-[#0A1628] mb-3">
                 3. Pricing &amp; Payment
               </h2>
               <p>
@@ -64,7 +64,7 @@ export default function TermsConditionsPage() {
 
             {/* 4 */}
             <section>
-              <h2 className="text-xl font-bold text-[#142A52] mb-3">
+              <h2 className="text-xl font-bold text-[#0A1628] mb-3">
                 4. Prohibited Materials
               </h2>
               <p>
@@ -88,7 +88,7 @@ export default function TermsConditionsPage() {
 
             {/* 5 */}
             <section>
-              <h2 className="text-xl font-bold text-[#142A52] mb-3">
+              <h2 className="text-xl font-bold text-[#0A1628] mb-3">
                 5. Weight Limits &amp; Overage
               </h2>
               <p>
@@ -102,7 +102,7 @@ export default function TermsConditionsPage() {
 
             {/* 6 */}
             <section>
-              <h2 className="text-xl font-bold text-[#142A52] mb-3">
+              <h2 className="text-xl font-bold text-[#0A1628] mb-3">
                 6. Placement &amp; Access
               </h2>
               <p>
@@ -116,7 +116,7 @@ export default function TermsConditionsPage() {
 
             {/* 7 */}
             <section>
-              <h2 className="text-xl font-bold text-[#142A52] mb-3">
+              <h2 className="text-xl font-bold text-[#0A1628] mb-3">
                 7. Cancellation &amp; Refunds
               </h2>
               <p>
@@ -129,7 +129,7 @@ export default function TermsConditionsPage() {
 
             {/* 8 */}
             <section>
-              <h2 className="text-xl font-bold text-[#142A52] mb-3">
+              <h2 className="text-xl font-bold text-[#0A1628] mb-3">
                 8. Liability
               </h2>
               <p>
@@ -142,21 +142,21 @@ export default function TermsConditionsPage() {
 
             {/* 9 */}
             <section>
-              <h2 className="text-xl font-bold text-[#142A52] mb-3">
+              <h2 className="text-xl font-bold text-[#0A1628] mb-3">
                 9. Contact
               </h2>
               <p>
                 If you have questions about these terms, please contact us at{" "}
                 <a
                   href="mailto:BlueSkyDisposal@gmail.com"
-                  className="text-[#C89B2B] font-semibold hover:underline"
+                  className="text-[#DAA520] font-semibold hover:underline"
                 >
                   BlueSkyDisposal@gmail.com
                 </a>{" "}
                 or call{" "}
                 <a
                   href="tel:5864123762"
-                  className="text-[#C89B2B] font-semibold hover:underline"
+                  className="text-[#DAA520] font-semibold hover:underline"
                 >
                   (586) 412-3762
                 </a>

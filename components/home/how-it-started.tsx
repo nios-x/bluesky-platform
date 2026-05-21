@@ -38,7 +38,7 @@ const colorClasses: Record<string, string> = {
   blue: "from-blue-500 to-blue-600",
   cyan: "from-cyan-500 to-cyan-600",
   green: "from-green-500 to-green-600",
-  orange: "from-orange-500 to-orange-600",
+  orange: "from-[#B8860B] to-[#DAA520]",
 };
 
 export default function HowItStarted() {

@@ -25,7 +25,7 @@ const steps = [
     description:
       "Call or book online to discuss your project needs and get a free quote",
     icon: ClipboardList,
-    image: "/images/step1.jpg",
+    image: "/images/step1-v3.jpeg",
   },
   {
     number: 2,
@@ -33,7 +33,7 @@ const steps = [
     description:
       "Select the perfect size for your residential or commercial project",
     icon: Package,
-    image: "/images/step2.jpg",
+    image: "/images/step2-v2.jpg",
   },
   {
     number: 3,
@@ -41,7 +41,7 @@ const steps = [
     description:
       "Pick a date and time that works best for your project timeline",
     icon: Calendar,
-    image: "/images/step3.jpg",
+    image: "/images/step3-v2.jpg",
   },
   {
     number: 4,
@@ -49,7 +49,8 @@ const steps = [
     description:
       "Our professional team delivers the dumpster to your specified address",
     icon: Truck,
-    image: "/images/step4.jpg",
+    image: "/images/step4-v2.jpg",
+    imagePosition: "center 30%",
   },
   {
     number: 5,
@@ -57,7 +58,7 @@ const steps = [
     description:
       "Take your time filling the dumpster according to your project schedule",
     icon: Clock,
-    image: "/images/step5.jpg",
+    image: "/images/step5-v2.jpg",
   },
   {
     number: 6,
@@ -65,7 +66,7 @@ const steps = [
     description:
       "Call us when you're ready and we'll haul away your waste responsibly",
     icon: CheckCircle,
-    image: "/images/step6.jpg",
+    image: "/images/step6-v2.jpg",
   },
 ];
 
@@ -192,6 +193,7 @@ export default function HowItWorks() {
                         width={300}
                         height={200}
                         className="w-full h-full object-cover"
+                        style={step.imagePosition ? { objectPosition: step.imagePosition } : undefined}
                       />
                     </div>
                   </div>

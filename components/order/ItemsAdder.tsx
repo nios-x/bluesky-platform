@@ -70,22 +70,22 @@ export default function OrderDetailsCard({
 
     return (
         <div className="w-full">
-            <h2 className="text-xl font-bold text-[#142A52] mb-6 flex items-center gap-2">
+            <h2 className="text-xl font-bold text-[#0A1628] mb-6 flex items-center gap-2">
                 Selected Items
             </h2>
             {/* Price Breakdown */}
             {bookings && bookings.length > 1 && (
-                <div className="border-2 border-dashed border-[#142A52]/30 rounded-lg p-5 bg-[#f9fafb] mb-4">
-                    <h3 className="font-bold text-[#142A52] mb-3">
+                <div className="border-2 border-dashed border-[#0A1628]/30 rounded-lg p-5 bg-[#f9fafb] mb-4">
+                    <h3 className="font-bold text-[#0A1628] mb-3">
                         Price Breakdown
                     </h3>
-                    <div className="text-sm text-[#142A52]/70">
+                    <div className="text-sm text-[#0A1628]/70">
                         <div className="space-y-4">
                             {bookings.map((b: BookingData, idx: number) => (
                                 <div
                                     key={idx}
                                     onClick={() => onSelect && onSelect(idx)}
-                                    className={`flex flex-col p-3 rounded cursor-pointer transition-colors border-[#142A52]/10 border ${selectedIndex === idx ? 'bg-[#142A52]/5 border-l-4 border-l-[#C89B2B]' : 'hover:bg-gray-50'}`}
+                                    className={`flex flex-col p-3 rounded cursor-pointer transition-colors border-[#0A1628]/10 border ${selectedIndex === idx ? 'bg-[#0A1628]/5 border-l-4 border-l-[#DAA520]' : 'hover:bg-gray-50'}`}
                                 >
                                     <div className="flex justify-between items-start">
                                         <div>
@@ -93,10 +93,10 @@ export default function OrderDetailsCard({
                                                 {b.dumpsterSize ? `${b.dumpsterSize} Yard ` : ''}
                                                 {dumpsterTypes.find(t => t.id === b.dumpsterType)?.name || b.dumpsterType || 'Dumpster'}
                                             </p>
-                                            {b.rentalPeriod ? <p className="text-xs text-[#142A52]/70">{b.rentalPeriod} Days</p> : null}
+                                            {b.rentalPeriod ? <p className="text-xs text-[#0A1628]/70">{b.rentalPeriod} Days</p> : null}
                                         </div>
                                         <div className="flex flex-col items-end gap-2">
-                                            <p className="font-bold text-[#142A52]">${itemPrices && itemPrices[idx] !== undefined ? itemPrices[idx].toFixed(2) : (b.totalPrice ? b.totalPrice.toFixed(2) : "0.00")}</p>
+                                            <p className="font-bold text-[#0A1628]">${itemPrices && itemPrices[idx] !== undefined ? itemPrices[idx].toFixed(2) : (b.totalPrice ? b.totalPrice.toFixed(2) : "0.00")}</p>
                                             {bookings.length > 1 && (
                                                 <button
                                                     onClick={(e) => {
@@ -119,9 +119,9 @@ export default function OrderDetailsCard({
 
                                     {/* Inline Edit Controls for Selected Item */}
                                     {selectedIndex === idx && (
-                                        <div className="grid grid-cols-2 gap-3 mt-3 pt-3 border-t border-[#142A52]/10" onClick={(e) => e.stopPropagation()}>
+                                        <div className="grid grid-cols-2 gap-3 mt-3 pt-3 border-t border-[#0A1628]/10" onClick={(e) => e.stopPropagation()}>
                                             <div>
-                                                <label className="block text-xs font-bold text-[#142A52] mb-1.5">Change Type</label>
+                                                <label className="block text-xs font-bold text-[#0A1628] mb-1.5">Change Type</label>
                                                 <Select
                                                     value={b.dumpsterType}
                                                     onValueChange={(val) => {
@@ -141,7 +141,7 @@ export default function OrderDetailsCard({
                                                 </Select>
                                             </div>
                                             <div>
-                                                <label className="block text-xs font-bold text-[#142A52] mb-1.5">Change Size</label>
+                                                <label className="block text-xs font-bold text-[#0A1628] mb-1.5">Change Size</label>
                                                 <Select
                                                     value={b.dumpsterSize ? b.dumpsterSize.toString() : ""}
                                                     onValueChange={(val) => {
@@ -164,8 +164,8 @@ export default function OrderDetailsCard({
                                     )}
                                 </div>
                             ))}
-                            <div className="flex justify-between items-center pt-2 border-t border-[#142A52]/30 mt-2">
-                                <span className="font-bold text-[#142A52]">Total</span>
+                            <div className="flex justify-between items-center pt-2 border-t border-[#0A1628]/30 mt-2">
+                                <span className="font-bold text-[#0A1628]">Total</span>
                                 <span className="font-bold text-[#C89B2B]">
                                     ${(cartTotal ?? bookings.reduce((sum: number, b: BookingData) => sum + (b.totalPrice || 0), 0)).toFixed(2)}
                                 </span>
@@ -182,15 +182,15 @@ export default function OrderDetailsCard({
                         <div
                             key={idx}
                             onClick={() => onSelect && onSelect(idx)}
-                            className="flex flex-col p-4 rounded-lg bg-zinc-50 border border-[#142A52]/20"
+                            className="flex flex-col p-4 rounded-lg bg-zinc-50 border border-[#0A1628]/20"
                         >
                             <div className="flex justify-between items-start">
                                 <div>
-                                    <p className="font-bold text-lg text-[#142A52]">
+                                    <p className="font-bold text-lg text-[#0A1628]">
                                         {b.dumpsterSize ? `${b.dumpsterSize} Yard ` : ''}
                                         {dumpsterTypes.find(t => t.id === b.dumpsterType)?.name || b.dumpsterType || 'Dumpster'}
                                     </p>
-                                    {b.rentalPeriod ? <p className="text-sm text-[#142A52]/70">{b.rentalPeriod} Days Rental</p> : null}
+                                    {b.rentalPeriod ? <p className="text-sm text-[#0A1628]/70">{b.rentalPeriod} Days Rental</p> : null}
                                 </div>
                             </div>
 

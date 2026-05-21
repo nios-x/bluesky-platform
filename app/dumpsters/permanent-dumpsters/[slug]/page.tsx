@@ -105,7 +105,7 @@ export default function PermanentProductPage({ params }: { params: { slug: strin
                 Sale
               </div>
               <ImageWithFallback
-                src="/images/permanent-dumpster.png"
+                src="Dumpster/Permanent Dumpsters/8 yard front load 1@1.5x.jpg"
                 alt={product.title}
                 className="object-cover w-full h-full"
               />

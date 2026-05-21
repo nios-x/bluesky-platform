@@ -159,12 +159,12 @@ export function WeightPriceEstimator() {
           initial={{ opacity: 0, y: 10 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="bg-gradient-to-r from-orange-400 via-orange-500 to-amber-500 rounded-2xl p-6 mb-8 text-white shadow-lg"
+          className="bg-gradient-to-r from-[#B8860B] via-[#DAA520] to-[#FFD700] rounded-2xl p-6 mb-8 text-[#0A1628] shadow-lg"
         >
           <div className="flex items-end justify-between">
             <div>
-              <p className="text-sm font-semibold text-orange-100 mb-1">Estimated Total:</p>
-              <p className="text-xs text-orange-100">Based on {material.replace("-", " ")}</p>
+              <p className="text-sm font-semibold text-[#0A1628]/80 mb-1">Estimated Total:</p>
+              <p className="text-xs text-[#0A1628]/80">Based on {material.replace("-", " ")}</p>
             </div>
             <motion.div
               key={totalPrice}
@@ -174,7 +174,7 @@ export function WeightPriceEstimator() {
               className="text-right"
             >
               <span className="text-5xl font-black">${totalPrice}</span>
-              <p className="text-xs text-orange-100 mt-1">*Varies by location</p>
+              <p className="text-xs text-[#0A1628]/80 mt-1">*Varies by location</p>
             </motion.div>
           </div>
         </motion.div>

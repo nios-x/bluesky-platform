@@ -1,41 +1,43 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Award, Clock, MapPin, Users, Heart, Zap, Shield, Trophy, Sparkles } from "lucide-react";
+import { Award, Clock, MapPin, Users, Heart, Zap, Shield, Trophy, Sparkles, UserRoundCheck, Rocket, ReceiptText, Clock3, Handshake } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
+// Features icons are now managed via image paths in the features array
+
 const features = [
   {
-    emoji: "👩‍💼",
+    icon: "/icons/woman-owned.png",
     title: "Woman-Owned",
     description: "Proudly woman-owned and operated, supporting diversity in business.",
     bgLight: "from-white to-blue-50",
     border: "border-blue-300"
   },
   {
-    emoji: "⚡",
+    icon: "/icons/fast-reliable.png",
     title: "Fast & Reliable",
     description: "Quick response and dependable service, every time.",
     bgLight: "from-white to-[#ffebc1]",
     border: "border-[#FFD700]"
   },
   {
-    emoji: "💲",
+    icon: "/icons/transparent-pricing.png",
     title: "Transparent Pricing",
     description: "No hidden fees—clear, upfront pricing for all rentals.",
     bgLight: "from-white to-[#fff8e1]",
     border: "border-[#FFD700]"
   },
   {
-    emoji: "⏰",
+    icon: "/icons/on-time-service.png",
     title: "On-Time Service",
     description: "We value your time and guarantee punctual delivery and pickup.",
     bgLight: "from-white to-blue-100",
     border: "border-blue-300"
   },
   {
-    emoji: "📍",
+    icon: "/icons/local-trusted.png",
     title: "Local & Trusted",
     description: "Serving Southeast Michigan with a reputation you can trust.",
     bgLight: "from-white to-[#ffebc1]",
@@ -106,8 +108,8 @@ export default function WhyBlueSky() {
               whileHover={{ y: -8 }}
               className={`group bg-gradient-to-br ${feature.bgLight} rounded-2xl p-8 border-2 ${feature.border} hover:shadow-xl transition-all flex flex-col items-center`}
             >
-              <div className="w-16 h-16 flex items-center justify-center text-4xl mb-6 bg-white/70 rounded-full shadow">
-                {feature.emoji}
+              <div className="w-16 h-16 flex items-center justify-center mb-6 bg-white rounded-full shadow-xl border border-blue-100 group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 relative">
+                <img src={feature.icon} alt={feature.title} className="w-12 h-12 object-contain relative z-10" />
               </div>
               <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-2 text-center">
                 {feature.title}

@@ -164,7 +164,7 @@ export default function PayPalButton({ amount, onSuccess, onError }: PayPalButto
 
   return (
     <div className="w-full relative">
-      {!isLoaded && <div className="text-center py-4 font-bold text-[#142A52] absolute inset-0 z-10 bg-white/80 flex items-center justify-center">Loading PayPal...</div>}
+      {!isLoaded && <div className="text-center py-4 font-bold text-[#0A1628] absolute inset-0 z-10 bg-white/80 flex items-center justify-center">Loading PayPal...</div>}
       <div className="w-full min-h-[150px] z-0 relative">
         <div ref={containerRef}></div>
       </div>

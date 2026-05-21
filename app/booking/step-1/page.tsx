@@ -935,10 +935,10 @@ export default function BookingStep1() {
                 {/* Header */}
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                   <div className="max-w-3xl">
-                    <p className="text-[15px] uppercase tracking-[0.2em] text-[#C89B2B] mb-2">
+                    <p className="text-[15px] uppercase tracking-[0.2em] text-[#DAA520] mb-2">
                       {dumpsterInfo.title}
                     </p>
-                    <h1 className="text-[24px] font-bold text-[#142A52] mb-2">
+                    <h1 className="text-[24px] font-bold text-[#0A1628] mb-2">
                       {dumpsterInfo.title}
                     </h1>
                     <p className="text-[14px] text-slate-600 leading-relaxed">
@@ -976,14 +976,14 @@ export default function BookingStep1() {
                         <button
                           key={idx}
                           onClick={() => setCurrentImageIdx(idx)}
-                          className={`w-2 h-2 rounded-full transition-colors ${idx === currentImageIdx ? 'bg-[#142A52]' : 'bg-gray-300'}`}
+                          className={`w-2 h-2 rounded-full transition-colors ${idx === currentImageIdx ? 'bg-[#0A1628]' : 'bg-gray-300'}`}
                         />
                       ))}
                     </div>
 
-                    <div className="absolute bottom-4 right-4 bg-white/90 backdrop-blur-md px-3 py-2 rounded-lg  border border-[#142A52]/10 z-10 text-right">
-                      <p className="text-[10px] uppercase tracking-wider text-[#142A52]/60 font-bold mb-0.5">Dimensions</p>
-                      <p className="text-[13px] font-bold text-[#142A52]">
+                    <div className="absolute bottom-4 right-4 bg-white/90 backdrop-blur-md px-3 py-2 rounded-lg  border border-[#0A1628]/10 z-10 text-right">
+                      <p className="text-[10px] uppercase tracking-wider text-[#0A1628]/60 font-bold mb-0.5">Dimensions</p>
+                      <p className="text-[13px] font-bold text-[#0A1628]">
                         {selectedSizeObj?.dimensions || "—"}
                       </p>
                     </div>
@@ -1000,7 +1000,7 @@ export default function BookingStep1() {
                           key={i}
                           onClick={() => setCurrentImageIdx(i)}
                           className={`flex items-center justify-between outline outline-slate-200 bg-white shrink-0 p-2 md:p-3 cursor-pointer hover:bg-gray-50 transition-colors ${i === 0 ? "rounded-tr-sm" : i === sliderImages.length - 1 ? "rounded-br-sm" : ""
-                            } ${currentImageIdx === i ? "ring-2 ring-inset ring-[#C89B2B]" : ""} min-w-[80px] md:min-w-0`}
+                            } ${currentImageIdx === i ? "ring-2 ring-inset ring-[#DAA520]" : ""} min-w-[80px] md:min-w-0`}
                         >
                           {/* Image */}
                           <div className="relative w-[50px] md:w-[60%] h-[40px] md:h-[50px]">
@@ -1014,7 +1014,7 @@ export default function BookingStep1() {
                           </div>
 
                           <div className="hidden md:block w-[40%] text-right">
-                            <p className="text-[9px] text-[#142A52]/60">View</p>
+                            <p className="text-[9px] text-[#0A1628]/60">View</p>
                             <p className="text-[10px] font-bold">
                               {String(i + 1).padStart(2, '0')}
                             </p>
@@ -1090,27 +1090,27 @@ export default function BookingStep1() {
                   )}
 
                   {/* ── Shipping Details ── */}
-                  <h2 className="text-xl font-bold text-[#142A52] mb-5 pb-2 border-b border-[#142A52]/10">Shipping Details</h2>
+                  <h2 className="text-xl font-bold text-[#0A1628] mb-5 pb-2 border-b border-[#0A1628]/10">Shipping Details</h2>
 
                   {/* First / Last name */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                     <div>
-                      <label className="block text-[11px] font-bold text-[#142A52] mb-1">First name *</label>
+                      <label className="block text-[11px] font-bold text-[#0A1628] mb-1">First name *</label>
                       <input
                         type="text"
                         value={formData.firstName}
                         onChange={(e) => handleInputChange("firstName", e.target.value)}
-                        className="w-full px-3 py-2.5 text-sm border-2 border-[#142A52]/20 rounded-lg focus:border-[#C89B2B] focus:ring-2 focus:ring-[#C89B2B]/20 outline-none transition-all"
+                        className="w-full px-3 py-2.5 text-sm border-2 border-[#0A1628]/20 rounded-lg focus:border-[#DAA520] focus:ring-2 focus:ring-[#DAA520]/20 outline-none transition-all"
                         placeholder="John"
                       />
                     </div>
                     <div>
-                      <label className="block text-[11px] font-bold text-[#142A52] mb-1">Last name *</label>
+                      <label className="block text-[11px] font-bold text-[#0A1628] mb-1">Last name *</label>
                       <input
                         type="text"
                         value={formData.lastName}
                         onChange={(e) => handleInputChange("lastName", e.target.value)}
-                        className="w-full px-3 py-2.5 text-sm border-2 border-[#142A52]/20 rounded-lg focus:border-[#C89B2B] focus:ring-2 focus:ring-[#C89B2B]/20 outline-none transition-all"
+                        className="w-full px-3 py-2.5 text-sm border-2 border-[#0A1628]/20 rounded-lg focus:border-[#DAA520] focus:ring-2 focus:ring-[#DAA520]/20 outline-none transition-all"
                         placeholder="Doe"
                       />
                     </div>
@@ -1118,39 +1118,39 @@ export default function BookingStep1() {
 
                   {/* Company */}
                   <div className="mb-4">
-                    <label className="block text-[11px] font-bold text-[#142A52] mb-1">Company name <span className="font-normal text-gray-400">(optional)</span></label>
+                    <label className="block text-[11px] font-bold text-[#0A1628] mb-1">Company name <span className="font-normal text-gray-400">(optional)</span></label>
                     <input
                       type="text"
                       value={formData.company}
                       onChange={(e) => handleInputChange("company", e.target.value)}
-                      className="w-full px-3 py-2.5 text-sm border-2 border-[#142A52]/20 rounded-lg focus:border-[#C89B2B] focus:ring-2 focus:ring-[#C89B2B]/20 outline-none transition-all"
+                      className="w-full px-3 py-2.5 text-sm border-2 border-[#0A1628]/20 rounded-lg focus:border-[#DAA520] focus:ring-2 focus:ring-[#DAA520]/20 outline-none transition-all"
                       placeholder="Your company name"
                     />
                   </div>
 
                   {/* Country */}
                   <div className="mb-4">
-                    <label className="block text-[11px] font-bold text-[#142A52] mb-1">Country / Region *</label>
-                    <div className="w-full px-3 py-2.5 text-sm border-2 border-[#142A52]/20 rounded-lg bg-gray-50 text-gray-500 select-none">
+                    <label className="block text-[11px] font-bold text-[#0A1628] mb-1">Country / Region *</label>
+                    <div className="w-full px-3 py-2.5 text-sm border-2 border-[#0A1628]/20 rounded-lg bg-gray-50 text-gray-500 select-none">
                       United States (US)
                     </div>
                   </div>
 
                   {/* Street address */}
                   <div className="mb-4">
-                    <label className="block text-[11px] font-bold text-[#142A52] mb-1">Street address *</label>
+                    <label className="block text-[11px] font-bold text-[#0A1628] mb-1">Street address *</label>
                     <input
                       type="text"
                       value={formData.shippingStreet}
                       onChange={(e) => handleInputChange("shippingStreet", e.target.value)}
-                      className="w-full px-3 py-2.5 text-sm border-2 border-[#142A52]/20 rounded-lg focus:border-[#C89B2B] focus:ring-2 focus:ring-[#C89B2B]/20 outline-none transition-all mb-2"
+                      className="w-full px-3 py-2.5 text-sm border-2 border-[#0A1628]/20 rounded-lg focus:border-[#DAA520] focus:ring-2 focus:ring-[#DAA520]/20 outline-none transition-all mb-2"
                       placeholder="House number and street name"
                     />
                     <input
                       type="text"
                       value={formData.shippingApartment}
                       onChange={(e) => handleInputChange("shippingApartment", e.target.value)}
-                      className="w-full px-3 py-2.5 text-sm border-2 border-[#142A52]/20 rounded-lg focus:border-[#C89B2B] focus:ring-2 focus:ring-[#C89B2B]/20 outline-none transition-all"
+                      className="w-full px-3 py-2.5 text-sm border-2 border-[#0A1628]/20 rounded-lg focus:border-[#DAA520] focus:ring-2 focus:ring-[#DAA520]/20 outline-none transition-all"
                       placeholder="Apartment, suite, unit, etc. (optional)"
                     />
                   </div>
@@ -1158,32 +1158,32 @@ export default function BookingStep1() {
                   {/* City / State / ZIP */}
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
                     <div>
-                      <label className="block text-[11px] font-bold text-[#142A52] mb-1">Town / City *</label>
+                      <label className="block text-[11px] font-bold text-[#0A1628] mb-1">Town / City *</label>
                       <input
                         type="text"
                         value={formData.shippingCity}
                         onChange={(e) => handleInputChange("shippingCity", e.target.value)}
-                        className="w-full px-3 py-2.5 text-sm border-2 border-[#142A52]/20 rounded-lg focus:border-[#C89B2B] focus:ring-2 focus:ring-[#C89B2B]/20 outline-none transition-all"
+                        className="w-full px-3 py-2.5 text-sm border-2 border-[#0A1628]/20 rounded-lg focus:border-[#DAA520] focus:ring-2 focus:ring-[#DAA520]/20 outline-none transition-all"
                         placeholder="ALMONT"
                       />
                     </div>
                     <div>
-                      <label className="block text-[11px] font-bold text-[#142A52] mb-1">State *</label>
+                      <label className="block text-[11px] font-bold text-[#0A1628] mb-1">State *</label>
                       <input
                         type="text"
                         value={formData.shippingState}
                         onChange={(e) => handleInputChange("shippingState", e.target.value)}
-                        className="w-full px-3 py-2.5 text-sm border-2 border-[#142A52]/20 rounded-lg focus:border-[#C89B2B] focus:ring-2 focus:ring-[#C89B2B]/20 outline-none transition-all"
+                        className="w-full px-3 py-2.5 text-sm border-2 border-[#0A1628]/20 rounded-lg focus:border-[#DAA520] focus:ring-2 focus:ring-[#DAA520]/20 outline-none transition-all"
                         placeholder="Michigan"
                       />
                     </div>
                     <div>
-                      <label className="block text-[11px] font-bold text-[#142A52] mb-1">Postcode / ZIP *</label>
+                      <label className="block text-[11px] font-bold text-[#0A1628] mb-1">Postcode / ZIP *</label>
                       <input
                         type="text"
                         value={formData.shippingZip}
                         onChange={(e) => handleInputChange("shippingZip", e.target.value)}
-                        className="w-full px-3 py-2.5 text-sm border-2 border-[#142A52]/20 rounded-lg focus:border-[#C89B2B] focus:ring-2 focus:ring-[#C89B2B]/20 outline-none transition-all"
+                        className="w-full px-3 py-2.5 text-sm border-2 border-[#0A1628]/20 rounded-lg focus:border-[#DAA520] focus:ring-2 focus:ring-[#DAA520]/20 outline-none transition-all"
                         placeholder="48003"
                       />
                     </div>
@@ -1192,22 +1192,22 @@ export default function BookingStep1() {
                   {/* Phone / Email */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                     <div>
-                      <label className="block text-[11px] font-bold text-[#142A52] mb-1">Phone / WhatsApp *</label>
+                      <label className="block text-[11px] font-bold text-[#0A1628] mb-1">Phone / WhatsApp *</label>
                       <input
                         type="tel"
                         value={formData.phone}
                         onChange={(e) => handleInputChange("phone", e.target.value)}
-                        className="w-full px-3 py-2.5 text-sm border-2 border-[#142A52]/20 rounded-lg focus:border-[#C89B2B] focus:ring-2 focus:ring-[#C89B2B]/20 outline-none transition-all"
+                        className="w-full px-3 py-2.5 text-sm border-2 border-[#0A1628]/20 rounded-lg focus:border-[#DAA520] focus:ring-2 focus:ring-[#DAA520]/20 outline-none transition-all"
                         placeholder="(586) 412-3762"
                       />
                     </div>
                     <div>
-                      <label className="block text-[11px] font-bold text-[#142A52] mb-1">Email address *</label>
+                      <label className="block text-[11px] font-bold text-[#0A1628] mb-1">Email address *</label>
                       <input
                         type="email"
                         value={formData.email}
                         onChange={(e) => handleInputChange("email", e.target.value)}
-                        className="w-full px-3 py-2.5 text-sm border-2 border-[#142A52]/20 rounded-lg focus:border-[#C89B2B] focus:ring-2 focus:ring-[#C89B2B]/20 outline-none transition-all"
+                        className="w-full px-3 py-2.5 text-sm border-2 border-[#0A1628]/20 rounded-lg focus:border-[#DAA520] focus:ring-2 focus:ring-[#DAA520]/20 outline-none transition-all"
                         placeholder="john@example.com"
                       />
                     </div>
@@ -1215,25 +1215,25 @@ export default function BookingStep1() {
 
                   {/* Placement Instructions */}
                   <div className="mb-6">
-                    <label className="block text-[11px] font-bold text-[#142A52] mb-1">Placement Instructions *</label>
+                    <label className="block text-[11px] font-bold text-[#0A1628] mb-1">Placement Instructions *</label>
                     <textarea
                       value={formData.placementInstructions}
                       onChange={(e) => handleInputChange("placementInstructions", e.target.value)}
-                      className="w-full px-3 py-2.5 text-sm border-2 border-[#142A52]/20 rounded-lg focus:border-[#C89B2B] focus:ring-2 focus:ring-[#C89B2B]/20 outline-none transition-all"
+                      className="w-full px-3 py-2.5 text-sm border-2 border-[#0A1628]/20 rounded-lg focus:border-[#DAA520] focus:ring-2 focus:ring-[#DAA520]/20 outline-none transition-all"
                       placeholder="Notes about your order, e.g. special notes for delivery."
                       rows={3}
                     />
                   </div>
 
                   {/* ── Billing Address ── */}
-                  <h2 className="text-xl font-bold text-[#142A52] mb-4 pb-2 border-b border-[#142A52]/10">Billing Address</h2>
+                  <h2 className="text-xl font-bold text-[#0A1628] mb-4 pb-2 border-b border-[#0A1628]/10">Billing Address</h2>
 
                   <label className="flex items-center gap-3 cursor-pointer mb-5">
                     <input
                       type="checkbox"
                       checked={formData.billingSameAsShipping}
                       onChange={(e) => handleInputChange("billingSameAsShipping", e.target.checked)}
-                      className="w-4 h-4 accent-[#142A52] rounded"
+                      className="w-4 h-4 accent-[#0A1628] rounded"
                     />
                     <span className="text-sm text-gray-700">My billing address is the same as my shipping address</span>
                   </label>
@@ -1241,34 +1241,34 @@ export default function BookingStep1() {
                   {!formData.billingSameAsShipping && (
                     <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
                       <div className="mb-4">
-                        <label className="block text-[11px] font-bold text-[#142A52] mb-1">Street address *</label>
+                        <label className="block text-[11px] font-bold text-[#0A1628] mb-1">Street address *</label>
                         <input
                           type="text"
                           value={formData.billingStreet}
                           onChange={(e) => handleInputChange("billingStreet", e.target.value)}
-                          className="w-full px-3 py-2.5 text-sm border-2 border-[#142A52]/20 rounded-lg focus:border-[#C89B2B] focus:ring-2 focus:ring-[#C89B2B]/20 outline-none transition-all mb-2"
+                          className="w-full px-3 py-2.5 text-sm border-2 border-[#0A1628]/20 rounded-lg focus:border-[#DAA520] focus:ring-2 focus:ring-[#DAA520]/20 outline-none transition-all mb-2"
                           placeholder="House number and street name"
                         />
                         <input
                           type="text"
                           value={formData.billingApartment}
                           onChange={(e) => handleInputChange("billingApartment", e.target.value)}
-                          className="w-full px-3 py-2.5 text-sm border-2 border-[#142A52]/20 rounded-lg focus:border-[#C89B2B] focus:ring-2 focus:ring-[#C89B2B]/20 outline-none transition-all"
+                          className="w-full px-3 py-2.5 text-sm border-2 border-[#0A1628]/20 rounded-lg focus:border-[#DAA520] focus:ring-2 focus:ring-[#DAA520]/20 outline-none transition-all"
                           placeholder="Apartment, suite, unit, etc. (optional)"
                         />
                       </div>
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div>
-                          <label className="block text-[11px] font-bold text-[#142A52] mb-1">Town / City *</label>
-                          <input type="text" value={formData.billingCity} onChange={(e) => handleInputChange("billingCity", e.target.value)} className="w-full px-3 py-2.5 text-sm border-2 border-[#142A52]/20 rounded-lg focus:border-[#C89B2B] outline-none" placeholder="ALMONT" />
+                          <label className="block text-[11px] font-bold text-[#0A1628] mb-1">Town / City *</label>
+                          <input type="text" value={formData.billingCity} onChange={(e) => handleInputChange("billingCity", e.target.value)} className="w-full px-3 py-2.5 text-sm border-2 border-[#0A1628]/20 rounded-lg focus:border-[#DAA520] outline-none" placeholder="ALMONT" />
                         </div>
                         <div>
-                          <label className="block text-[11px] font-bold text-[#142A52] mb-1">State *</label>
-                          <input type="text" value={formData.billingState} onChange={(e) => handleInputChange("billingState", e.target.value)} className="w-full px-3 py-2.5 text-sm border-2 border-[#142A52]/20 rounded-lg focus:border-[#C89B2B] outline-none" placeholder="Michigan" />
+                          <label className="block text-[11px] font-bold text-[#0A1628] mb-1">State *</label>
+                          <input type="text" value={formData.billingState} onChange={(e) => handleInputChange("billingState", e.target.value)} className="w-full px-3 py-2.5 text-sm border-2 border-[#0A1628]/20 rounded-lg focus:border-[#DAA520] outline-none" placeholder="Michigan" />
                         </div>
                         <div>
-                          <label className="block text-[11px] font-bold text-[#142A52] mb-1">Postcode / ZIP *</label>
-                          <input type="text" value={formData.billingZip} onChange={(e) => handleInputChange("billingZip", e.target.value)} className="w-full px-3 py-2.5 text-sm border-2 border-[#142A52]/20 rounded-lg focus:border-[#C89B2B] outline-none" placeholder="48003" />
+                          <label className="block text-[11px] font-bold text-[#0A1628] mb-1">Postcode / ZIP *</label>
+                          <input type="text" value={formData.billingZip} onChange={(e) => handleInputChange("billingZip", e.target.value)} className="w-full px-3 py-2.5 text-sm border-2 border-[#0A1628]/20 rounded-lg focus:border-[#DAA520] outline-none" placeholder="48003" />
                         </div>
                       </div>
                     </motion.div>
@@ -1281,27 +1281,27 @@ export default function BookingStep1() {
                         type="checkbox"
                         checked={formData.subscribeNewsletter}
                         onChange={(e) => handleInputChange("subscribeNewsletter", e.target.checked)}
-                        className="w-4 h-4 accent-[#142A52] rounded"
+                        className="w-4 h-4 accent-[#0A1628] rounded"
                       />
                       <span className="text-sm text-gray-700">Subscribe to our newsletter</span>
                     </label>
                   </div>
 
                   {/* Terms & Conditions */}
-                  <div className={`mt-4 p-4 rounded-xl border-2 transition-colors ${termsAccepted ? 'border-green-400 bg-green-50/50' : 'border-[#142A52]/20 bg-white'}`}>
+                  <div className={`mt-4 p-4 rounded-xl border-2 transition-colors ${termsAccepted ? 'border-green-400 bg-green-50/50' : 'border-[#0A1628]/20 bg-white'}`}>
                     <label className="flex items-start gap-3 cursor-pointer">
                       <input
                         type="checkbox"
                         checked={termsAccepted}
                         onChange={(e) => { setTermsAccepted(e.target.checked); setError(""); }}
-                        className="w-5 h-5 accent-[#142A52] rounded mt-0.5 flex-shrink-0"
+                        className="w-5 h-5 accent-[#0A1628] rounded mt-0.5 flex-shrink-0"
                       />
                       <span className="text-sm text-gray-700">
                         I agree to the{" "}
                         <Link
                           href="/terms-conditions"
                           target="_blank"
-                          className="text-[#C89B2B] font-bold underline underline-offset-2 hover:text-[#142A52] transition-colors"
+                          className="text-[#DAA520] font-bold underline underline-offset-2 hover:text-[#0A1628] transition-colors"
                         >
                           Terms &amp; Conditions
                         </Link>{" "}
@@ -1321,19 +1321,19 @@ export default function BookingStep1() {
                 </div>
 
                 {/* Account Creation Option */}
-                <div className={`rounded-2xl p-6 mb-8 border-2 transition-all ${accountCreation ? 'border-[#C89B2B] bg-gradient-to-br from-[#C89B2B]/10 to-[#C89B2B]/5 shadow-md' : 'border-[#142A52]/15 bg-[#f9fafb]'}`}>
+                <div className={`rounded-2xl p-6 mb-8 border-2 transition-all ${accountCreation ? 'border-[#DAA520] bg-gradient-to-br from-[#DAA520]/10 to-[#DAA520]/5 shadow-md' : 'border-[#0A1628]/15 bg-[#f9fafb]'}`}>
                   <label className="flex items-center gap-3 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={accountCreation}
                       onChange={(e) => { setAccountCreation(e.target.checked); if (!e.target.checked) setAccountPassword(""); }}
-                      className="w-5 h-5 accent-[#C89B2B]"
+                      className="w-5 h-5 accent-[#DAA520]"
                     />
                     <div>
-                      <span className="font-bold text-[#142A52] text-[15px]">
+                      <span className="font-bold text-[#0A1628] text-[15px]">
                         Save your order details &mdash; create an account
                       </span>
-                      <span className="ml-2 inline-block bg-[#C89B2B] text-white text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
+                      <span className="ml-2 inline-block bg-[#DAA520] text-white text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
                         Save ${ACCOUNT_DISCOUNT}
                       </span>
                     </div>
@@ -1355,20 +1355,20 @@ export default function BookingStep1() {
                             { icon: <CreditCard className="w-4 h-4" />, text: "Payment on file" },
                             { icon: <CalendarClock className="w-4 h-4" />, text: "Rental extensions" },
                           ].map((b, i) => (
-                            <div key={i} className="flex items-center gap-2 text-[12px] text-[#142A52]/80">
-                              <span className="text-[#C89B2B]">{b.icon}</span>
+                            <div key={i} className="flex items-center gap-2 text-[12px] text-[#0A1628]/80">
+                              <span className="text-[#DAA520]">{b.icon}</span>
                               {b.text}
                             </div>
                           ))}
                         </div>
                         <div className="mt-5 ml-8">
-                          <label className="block text-[11px] font-bold text-[#142A52] mb-1">Create a password *</label>
+                          <label className="block text-[11px] font-bold text-[#0A1628] mb-1">Create a password *</label>
                           <div className="relative">
                             <input
                               type={showPassword ? "text" : "password"}
                               value={accountPassword}
                               onChange={(e) => setAccountPassword(e.target.value)}
-                              className="w-full px-3 py-2.5 text-sm border-2 border-[#142A52]/20 rounded-lg focus:border-[#C89B2B] focus:ring-2 focus:ring-[#C89B2B]/20 outline-none transition-all pr-10"
+                              className="w-full px-3 py-2.5 text-sm border-2 border-[#0A1628]/20 rounded-lg focus:border-[#DAA520] focus:ring-2 focus:ring-[#DAA520]/20 outline-none transition-all pr-10"
                               placeholder="Min 6 characters"
                             />
                             <button
@@ -1382,9 +1382,9 @@ export default function BookingStep1() {
                           {accountPassword.length > 0 && (
                             <div className="mt-2 flex items-center gap-2">
                               <div className="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                                <div className={`h-full rounded-full transition-all ${accountPassword.length >= 10 ? 'w-full bg-green-500' : accountPassword.length >= 6 ? 'w-2/3 bg-[#C89B2B]' : 'w-1/3 bg-red-400'}`} />
+                                <div className={`h-full rounded-full transition-all ${accountPassword.length >= 10 ? 'w-full bg-green-500' : accountPassword.length >= 6 ? 'w-2/3 bg-[#DAA520]' : 'w-1/3 bg-red-400'}`} />
                               </div>
-                              <span className={`text-[10px] font-bold ${accountPassword.length >= 10 ? 'text-green-600' : accountPassword.length >= 6 ? 'text-[#C89B2B]' : 'text-red-500'}`}>
+                              <span className={`text-[10px] font-bold ${accountPassword.length >= 10 ? 'text-green-600' : accountPassword.length >= 6 ? 'text-[#DAA520]' : 'text-red-500'}`}>
                                 {accountPassword.length >= 10 ? 'Strong' : accountPassword.length >= 6 ? 'Good' : 'Weak'}
                               </span>
                             </div>
@@ -1426,11 +1426,11 @@ export default function BookingStep1() {
 
               {/* Pricing Summary Card */}
               <motion.div
-                className="bg-gradient-to-br from-[#142A52] via-[#1a3a6f] to-[#0f1f3a] text-white rounded-2xl shadow-xl p-8 border border-[#C89B2B]/30 lg:hidden"
+                className="bg-gradient-to-br from-[#0A1628] via-[#1a3a6f] to-[#0f1f3a] text-white rounded-2xl shadow-xl p-8 border border-[#DAA520]/30 lg:hidden"
               >
                 <div className="flex items-center justify-between mb-6">
                   <h3 className="text-2xl font-bold">Order Summary</h3>
-                  <Zap className="w-6 h-6 text-[#C89B2B]" />
+                  <Zap className="w-6 h-6 text-[#DAA520]" />
                 </div>
 
                 <div className="space-y-3 mb-6">
@@ -1439,7 +1439,7 @@ export default function BookingStep1() {
                     <span className="font-bold text-white">${cartBreakdown.basePrice.toFixed(2)}</span>
                   </div>
                   {cartBreakdown.surcharges > 0 && (
-                    <div className="flex justify-between items-center text-[#C89B2B]">
+                    <div className="flex justify-between items-center text-[#DAA520]">
                       <span>Heavy Material Surcharges</span>
                       <span className="font-bold">${cartBreakdown.surcharges.toFixed(2)}</span>
                     </div>
@@ -1449,7 +1449,7 @@ export default function BookingStep1() {
                     <span className="font-bold text-white">${cartBreakdown.shipping.toFixed(2)}</span>
                   </div>
                   {cartBreakdown.extraDays > 0 && (
-                    <div className="flex justify-between items-center text-[#C89B2B]">
+                    <div className="flex justify-between items-center text-[#DAA520]">
                       <span>Extra Rental Charges</span>
                       <span className="font-bold">${cartBreakdown.extraDays.toFixed(2)}</span>
                     </div>
@@ -1469,7 +1469,7 @@ export default function BookingStep1() {
                   className="flex justify-between items-center pt-4 border-t border-white/20"
                 >
                   <span className="text-xl pl-2 font-bold">Total Amount</span>
-                  <span className="text-3xl font-bold text-[#C89B2B]">${cartTotal.toFixed(2)}</span>
+                  <span className="text-3xl font-bold text-[#DAA520]">${cartTotal.toFixed(2)}</span>
                 </motion.div>
                 <p className="text-xs text-white/60 mt-4">
                   💡 Includes all selected dumpsters, shipping, and extra rental periods.
@@ -1479,7 +1479,7 @@ export default function BookingStep1() {
               {formData.firstName && formData.lastName && formData.email && formData.phone && formData.shippingStreet && formData.shippingCity ? (
                 <div id="payment-section" className="mb-8">
                   <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-2xl font-bold text-[#142A52]">Payment Method</h2>
+                    <h2 className="text-2xl font-bold text-[#0A1628]">Payment Method</h2>
                     <div className="flex items-center gap-1.5 text-[11px] text-gray-500">
                       <Lock className="w-3.5 h-3.5" />
                       <span>Secured by Stripe</span>
@@ -1495,9 +1495,9 @@ export default function BookingStep1() {
                   )}
 
                   {/* Credit / Debit Card via Stripe */}
-                  <div className={`rounded-xl border-2 p-4 mb-4 transition-all ${!termsAccepted ? 'opacity-50 pointer-events-none' : 'border-[#142A52]/15 hover:border-[#635BFF]/40'}`}>
+                  <div className={`rounded-xl border-2 p-4 mb-4 transition-all ${!termsAccepted ? 'opacity-50 pointer-events-none' : 'border-[#0A1628]/15 hover:border-[#635BFF]/40'}`}>
                     <div className="flex items-center justify-between mb-3">
-                      <span className="text-sm font-bold text-[#142A52]">Credit / Debit Card</span>
+                      <span className="text-sm font-bold text-[#0A1628]">Credit / Debit Card</span>
                       <div className="flex items-center gap-1.5">
                         {/* Visa */}
                         <span className="inline-flex items-center justify-center w-10 h-6 bg-white border border-gray-200 rounded text-[9px] font-bold text-[#1A1F71]">VISA</span>
@@ -1527,7 +1527,7 @@ export default function BookingStep1() {
                   {/* Digital Wallets Row */}
                   <div className={`grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4 transition-all ${!termsAccepted ? 'opacity-50 pointer-events-none' : ''}`}>
                     {/* Google Pay */}
-                    <div className="rounded-xl border-2 border-[#142A52]/15 p-4 hover:border-[#4285F4]/40 transition-all">
+                    <div className="rounded-xl border-2 border-[#0A1628]/15 p-4 hover:border-[#4285F4]/40 transition-all">
                       <span className="text-[11px] font-bold text-gray-500 mb-2 block">Google Pay</span>
                       <motion.div
                         className="w-full flex [&>div]:w-full [&_.google-pay-button-container]:w-full [&_button]:!w-full"
@@ -1561,7 +1561,7 @@ export default function BookingStep1() {
                     </div>
 
                     {/* Apple Pay */}
-                    <div className="rounded-xl border-2 border-[#142A52]/15 p-4 hover:border-black/30 transition-all">
+                    <div className="rounded-xl border-2 border-[#0A1628]/15 p-4 hover:border-black/30 transition-all">
                       <span className="text-[11px] font-bold text-gray-500 mb-2 block">Apple Pay</span>
                       <motion.button
                         onClick={() => handleSubmit('apple-pay')}
@@ -1579,7 +1579,7 @@ export default function BookingStep1() {
                   </div>
 
                   {/* PayPal */}
-                  <div className={`rounded-xl border-2 border-[#142A52]/15 p-4 mb-6 hover:border-[#003087]/30 transition-all ${!termsAccepted ? 'opacity-50 pointer-events-none' : ''}`}>
+                  <div className={`rounded-xl border-2 border-[#0A1628]/15 p-4 mb-6 hover:border-[#003087]/30 transition-all ${!termsAccepted ? 'opacity-50 pointer-events-none' : ''}`}>
                     <span className="text-[11px] font-bold text-gray-500 mb-2 block">PayPal</span>
                     {termsAccepted && cartTotal > 0 && (
                       <motion.div
@@ -1620,7 +1620,7 @@ export default function BookingStep1() {
                           setTimeout(() => setQuoteCopied(false), 2500);
                         });
                       }}
-                      className="flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-[#142A52] border-2 border-[#142A52]/20 rounded-xl hover:border-[#C89B2B] hover:text-[#C89B2B] transition-all"
+                      className="flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-[#0A1628] border-2 border-[#0A1628]/20 rounded-xl hover:border-[#DAA520] hover:text-[#DAA520] transition-all"
                     >
                       {quoteCopied ? <Check className="w-4 h-4 text-green-500" /> : <Share2 className="w-4 h-4" />}
                       {quoteCopied ? 'Quote link copied!' : 'Share / Save My Quote'}
@@ -1629,9 +1629,9 @@ export default function BookingStep1() {
 
                 </div>
               ) : (
-                <div className="mb-8 p-6 bg-[#f9fafb] border-2 border-dashed border-[#142A52]/20 rounded-xl text-center">
-                  <h3 className="text-lg font-bold text-[#142A52] mb-2">Complete Billing Information</h3>
-                  <p className="text-sm text-[#142A52]/70">Please provide your Full Name, Email, and Phone number above to unlock payment options.</p>
+                <div className="mb-8 p-6 bg-[#f9fafb] border-2 border-dashed border-[#0A1628]/20 rounded-xl text-center">
+                  <h3 className="text-lg font-bold text-[#0A1628] mb-2">Complete Billing Information</h3>
+                  <p className="text-sm text-[#0A1628]/70">Please provide your Full Name, Email, and Phone number above to unlock payment options.</p>
                 </div>
               )}
               {/* Action Buttons */}

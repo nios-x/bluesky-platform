@@ -8,7 +8,7 @@ export function Footer() {
   return (
     <>
       <AIChatbot />
-      <footer className="bg-gradient-to-r from-[#142A52] via-[#1a3a6e] to-[#142A52] text-white mt-16 sm:mt-20">
+      <footer className="bg-gradient-to-r from-[#0A1628] via-[#1B3A6B] to-[#0A1628] text-white mt-16 sm:mt-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-6 sm:gap-8 md:gap-10 mb-8 sm:mb-12">
           {/* Brand */}
@@ -24,11 +24,11 @@ export function Footer() {
               Professional dumpster rental services in Michigan. Woman-owned company with 15+ years of experience serving residential and commercial customers.
             </p>
             <div className="space-y-2 text-xs sm:text-sm">
-              <div className="flex items-center gap-2 text-white/80 hover:text-[#C89B2B] transition">
+              <div className="flex items-center gap-2 text-white/80 hover:text-[#DAA520] transition">
                 <Phone size={16} />
                 <a href="tel:586-412-3762" className="font-bold">586-412-3762</a>
               </div>
-              <div className="flex items-center gap-2 text-white/80 hover:text-[#C89B2B] transition">
+              <div className="flex items-center gap-2 text-white/80 hover:text-[#DAA520] transition">
                 <Mail size={16} />
                 <a href="mailto:BlueSkyDisposal@gmail.com" className="font-bold">BlueSkyDisposal@gmail.com</a>
               </div>
@@ -44,22 +44,22 @@ export function Footer() {
             <h3 className="font-bold mb-4 sm:mb-5 text-white text-xs sm:text-sm uppercase tracking-wider">Services</h3>
             <ul className="space-y-2 sm:space-y-3 text-xs sm:text-sm">
               <li>
-                <Link href="/#dumpster-services" className="text-white/70 hover:text-[#C89B2B] transition duration-200 font-medium">
+                <Link href="/#dumpster-services" className="text-white/70 hover:text-[#DAA520] transition duration-200 font-medium">
                   Dumpster Rental
                 </Link>
               </li>
               <li>
-                <Link href="/cities" className="text-white/70 hover:text-[#C89B2B] transition duration-200 font-medium">
+                <Link href="/cities" className="text-white/70 hover:text-[#DAA520] transition duration-200 font-medium">
                   Cities We Service
                 </Link>
               </li>
               <li>
-                <Link href="/size-guide" className="text-white/70 hover:text-[#C89B2B] transition duration-200 font-medium">
+                <Link href="/size-guide" className="text-white/70 hover:text-[#DAA520] transition duration-200 font-medium">
                   Size Guide
                 </Link>
               </li>
               <li>
-                <Link href="/#faq-section" className="text-white/70 hover:text-[#C89B2B] transition duration-200 font-medium">
+                <Link href="/#faq-section" className="text-white/70 hover:text-[#DAA520] transition duration-200 font-medium">
                   FAQs
                 </Link>
               </li>
@@ -71,22 +71,22 @@ export function Footer() {
             <h3 className="font-bold mb-4 sm:mb-5 text-white text-xs sm:text-sm uppercase tracking-wider">Company</h3>
             <ul className="space-y-2 sm:space-y-3 text-xs sm:text-sm">
               <li>
-                <Link href="/about" className="text-white/70 hover:text-[#C89B2B] transition duration-200 font-medium">
+                <Link href="/about" className="text-white/70 hover:text-[#DAA520] transition duration-200 font-medium">
                   About Us
                 </Link>
               </li>
               <li>
-                <Link href="/contact" className="text-white/70 hover:text-[#C89B2B] transition duration-200 font-medium">
+                <Link href="/contact" className="text-white/70 hover:text-[#DAA520] transition duration-200 font-medium">
                   Contact Us
                 </Link>
               </li>
               <li>
-                <a href="#" className="text-white/70 hover:text-[#C89B2B] transition duration-200 font-medium">
+                <a href="#" className="text-white/70 hover:text-[#DAA520] transition duration-200 font-medium">
                   Terms of Service
                 </a>
               </li>
               <li>
-                <a href="#" className="text-white/70 hover:text-[#C89B2B] transition duration-200 font-medium">
+                <a href="#" className="text-white/70 hover:text-[#DAA520] transition duration-200 font-medium">
                   Privacy Policy
                 </a>
               </li>

@@ -16,10 +16,9 @@ export default function Home() {
       <Hero />
       
       {/* 2. Choose Your Dumpster Type */}
-      <section id="dumpster-services">
-        <DumpsterSize />
-      </section>
       
+        <DumpsterSize />
+        
       {/* 3. Find Your Perfect Dumpster - Smart Assessment */}
       
       

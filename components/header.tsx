@@ -66,7 +66,7 @@ export function Header() {
     <>
       <header
         className={cn(
-          "sticky top-0 z-50 w-full bg-gradient-to-r from-[#08054C] via-[#0a0660] to-[#0d0780] border-b border-[#1a4d9e]",
+          "sticky top-0 z-50 w-full bg-gradient-to-r from-[#0A1628] via-[#1B3A6B] to-[#0A1628] border-b border-[#1B3A6B]",
           isScrolled && "shadow-lg"
         )}
       >
@@ -74,11 +74,11 @@ export function Header() {
           <div className="flex items-center justify-between h-16">
             <Link href="/" className="flex items-center">
               <Image
-                src="/images/bluesky_New_logo.jpg"
+                src="/images/lg.png"
                   alt="Blue Sky Disposal"
                   width={200}
-                  height={50}
-                  className="h-14 w-auto object-contain"
+                  height={100}
+                  className="h-20 w-auto object-contain"
                   priority
                 />
             </Link>

@@ -310,9 +310,9 @@ export function SmartRecommendationModal({
         className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col border border-gray-200"
       >
         {/* Header */}
-        <div className="border-b border-gray-100 px-6 py-4 flex items-center justify-between bg-gradient-to-r from-[#142A52] to-[#1a3a6f]">
+        <div className="border-b border-gray-100 px-6 py-4 flex items-center justify-between bg-gradient-to-r from-[#0A1628] to-[#1B3A6B]">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-[#C89B2B] text-white flex items-center justify-center text-lg font-bold">
+                <div className="h-10 w-10 rounded-xl bg-[#DAA520] text-[#0A1628] flex items-center justify-center text-lg font-bold">
               🏢
             </div>
             <div>
@@ -346,7 +346,7 @@ export function SmartRecommendationModal({
             >
               <div className="mb-6">
                 <div className="text-5xl mb-4">💰</div>
-                <h3 className="text-2xl font-bold text-[#142A52] mb-2">
+                <h3 className="text-2xl font-bold text-[#0A1628] mb-2">
                   Unlock Your Dumpster Expert
                 </h3>
                 <p className="text-gray-600 text-lg">
@@ -356,7 +356,7 @@ export function SmartRecommendationModal({
 
               <div className="w-full max-w-sm space-y-4 mb-6">
                 <div>
-                  <label className="block text-sm font-semibold text-[#142A52] mb-2">
+                  <label className="block text-sm font-semibold text-[#0A1628] mb-2">
                     Email Address
                   </label>
                   <Input
@@ -367,20 +367,20 @@ export function SmartRecommendationModal({
                     onKeyDown={(e) => {
                       if (e.key === "Enter") handleEmailSubmit();
                     }}
-                    className="border-2 border-[#142A52]/30 focus:border-[#C89B2B]"
+                    className="border-2 border-[#0A1628]/30 focus:border-[#DAA520]"
                   />
                 </div>
 
                 <Button
                   onClick={() => handleEmailSubmit()}
-                  className="w-full bg-gradient-to-r from-[#142A52] to-[#C89B2B] hover:from-[#1a3a6e] hover:to-[#d4a835] text-white font-bold py-6 text-lg"
+                  className="w-full bg-gradient-to-r from-[#0A1628] to-[#DAA520] hover:from-[#1B3A6B] hover:to-[#E5B835] text-white font-bold py-6 text-lg"
                 >
                   Continue →
                 </Button>
 
                 <button
                   onClick={() => handleEmailSubmit(true)}
-                  className="w-full text-[#142A52] hover:text-[#C89B2B] font-semibold py-2 transition"
+                  className="w-full text-[#0A1628] hover:text-[#DAA520] font-semibold py-2 transition"
                 >
                   Skip
                 </button>
@@ -412,7 +412,7 @@ export function SmartRecommendationModal({
                   >
                     {msg.role === "user" ? (
                       // User Message
-                      <div className="max-w-xs bg-[#142A52] text-white rounded-2xl rounded-br-none px-4 py-2 text-sm shadow-sm">
+                      <div className="max-w-xs bg-[#0A1628] text-white rounded-2xl rounded-br-none px-4 py-2 text-sm shadow-sm">
                         <p>{msg.content}</p>
                       </div>
                     ) : msg.type === "recommendation" ? (
@@ -424,7 +424,7 @@ export function SmartRecommendationModal({
                               <p className="text-sm text-gray-600 font-semibold">
                                 Recommended Dumpster
                               </p>
-                              <h3 className="text-2xl font-bold text-[#142A52] mt-1">
+                              <h3 className="text-2xl font-bold text-[#0A1628] mt-1">
                                 🟢 {msg.recommendation?.size} Yard{" "}
                                 {msg.recommendation?.type}
                               </h3>
@@ -461,7 +461,7 @@ export function SmartRecommendationModal({
                             onClick={() =>
                               handleBookRecommendation(msg.recommendation)
                             }
-                            className="w-full bg-gradient-to-r from-[#142A52] to-[#C89B2B] hover:from-[#1a3a6e] hover:to-[#d4a835] text-white font-bold py-2"
+                            className="w-full bg-gradient-to-r from-[#0A1628] to-[#DAA520] hover:from-[#1B3A6B] hover:to-[#E5B835] text-white font-bold py-2"
                           >
                             Book This Size →
                           </Button>
@@ -489,7 +489,7 @@ export function SmartRecommendationModal({
                       <button
                         key={type}
                         onClick={() => handleProjectTypeSelect(type)}
-                        className="px-3 py-2 bg-[#142A52]/10 hover:bg-[#142A52]/20 text-[#142A52] text-xs font-semibold rounded-full transition border border-[#142A52]/20"
+                        className="px-3 py-2 bg-[#0A1628]/10 hover:bg-[#0A1628]/20 text-[#0A1628] text-xs font-semibold rounded-full transition border border-[#0A1628]/20"
                       >
                         {type}
                       </button>
@@ -500,7 +500,7 @@ export function SmartRecommendationModal({
                 {isLoading && (
                   <div className="flex justify-start">
                     <div className="bg-white border border-gray-200 px-4 py-2 rounded-2xl">
-                      <div className="flex items-center gap-2 text-[#142A52]">
+                      <div className="flex items-center gap-2 text-[#0A1628]">
                         <Loader2 className="w-4 h-4 animate-spin" />
                         <div className="flex gap-1">
                           <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></span>
@@ -566,7 +566,7 @@ export function SmartRecommendationModal({
                   <button
                     onClick={handleSendMessage}
                     disabled={isLoading || (!inputValue.trim() && !selectedImage)}
-                    className="p-2 bg-[#142A52] text-white rounded-lg hover:opacity-90 transition disabled:opacity-50"
+                    className="p-2 bg-[#0A1628] text-white rounded-lg hover:opacity-90 transition disabled:opacity-50"
                   >
                     <Send className="w-4 h-4" />
                   </button>
