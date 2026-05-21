@@ -1,54 +1,48 @@
 import { getDumpsters } from "@/lib/models/pricing";
-import { HEAVY_MATERIALS, HEAVY_MATERIAL_SURCHARGE, ACCOUNT_DISCOUNT, SHIPPING_PRICE } from "@/lib/constants/booking";
+import { getPriceByZip } from "@/lib/controllers/pricing";
+import { HEAVY_MATERIALS, HEAVY_MATERIAL_SURCHARGE, ACCOUNT_DISCOUNT } from "@/lib/constants/booking";
 
 export async function calculateServerSideTotal(bookingsData: any[], contactInfo: any): Promise<number> {
   if (!bookingsData || !bookingsData.length) {
     return 0;
   }
 
-  // Fetch db dumpsters to get authoritative prices
-  // Note: Since pricing is partially hardcoded on frontend, we emulate the same exact logic
-  // but strictly from the server.
+  // Fetch db dumpsters to get authoritative types for free days computation
   const dbDumpsters = await getDumpsters();
   
   let cartTotal = 0;
 
   for (const bData of bookingsData) {
-    // Determine base price
-    let basePrice = 435;
-    
-    // Find dumpster type
-    const dData = dbDumpsters.find((d: any) => {
-      const typeObj = Array.isArray(d.dumpster_types) ? d.dumpster_types[0] : d.dumpster_types;
-      return typeObj?.id === bData.dumpsterType;
-    });
-    let sizeVal = parseInt(bData.dumpsterSize || 20);
-
-    if (dData) {
-      const typeObj = Array.isArray(dData.dumpster_types) ? dData.dumpster_types[0] : dData.dumpster_types;
-      const name = typeObj?.name || "";
-      if (name.includes("Roll Off") || name.includes("Roll-off")) {
-        if (sizeVal === 10) basePrice = 435;
-        if (sizeVal === 20) basePrice = 455;
-        if (sizeVal === 30) basePrice = 475;
-        if (sizeVal === 40) basePrice = 555;
-      } else if (name.includes("Rubber")) {
-         if (sizeVal === 10) basePrice = 445;
-         if (sizeVal === 20) basePrice = 525;
-         if (sizeVal === 30) basePrice = 655;
-      } else {
-         if (sizeVal === 2) basePrice = 250;
-         if (sizeVal === 4) basePrice = 350;
-         if (sizeVal === 6) basePrice = 450;
-         if (sizeVal === 8) basePrice = 550;
-      }
+    if (!bData.zipCode) {
+      throw new Error("we are coming soon to you area");
     }
+
+    let pricingRule;
+    try {
+      pricingRule = await getPriceByZip({
+        zip: bData.zipCode,
+        dumpster_size_id: bData.dumpsterSizeId,
+        dumpster_type_id: bData.dumpsterType
+      });
+    } catch (err: any) {
+      // Throw the exact error message the user requested when DB lookup fails
+      throw new Error("we are coming soon to you area");
+    }
+
+    const basePrice = pricingRule.base_price;
+    const shippingPrice = pricingRule.shipping_price || 0;
 
     let surcharges = 0;
     const isHeavyMaterial = bData.materialType && HEAVY_MATERIALS.includes(bData.materialType);
     if (isHeavyMaterial && bData.dumpsterType === "47d87a5e-84c8-431e-b055-c996142352eb") {
       surcharges += HEAVY_MATERIAL_SURCHARGE;
     }
+
+    // Find dumpster type to calculate free days
+    const dData = dbDumpsters.find((d: any) => {
+      const typeObj = Array.isArray(d.dumpster_types) ? d.dumpster_types[0] : d.dumpster_types;
+      return typeObj?.id === bData.dumpsterType;
+    });
 
     let extraDaysCost = 0;
     let freeDays = 7;
@@ -63,7 +57,7 @@ export async function calculateServerSideTotal(bookingsData: any[], contactInfo:
       extraDaysCost = (bData.rentalPeriod - freeDays) * 25;
     }
 
-    cartTotal += basePrice + surcharges + extraDaysCost + SHIPPING_PRICE;
+    cartTotal += basePrice + surcharges + extraDaysCost + shippingPrice;
   }
 
   let finalPrice = cartTotal;

@@ -11,7 +11,7 @@ import { PROJECT_TYPES, MATERIAL_TYPES } from "@/lib/constants/booking";
 
 import { SmartRecommendationModal } from "@/components/ai/SmartRecommendationModal";
 import { useSmartRecommendationModal } from "@/hooks/use-smart-recommendation-modal";
-import { Zap } from "lucide-react";
+import { Zap, X } from "lucide-react";
 
 
 const formatLocalDate = (date: Date) => {
@@ -477,20 +477,45 @@ export function Hero() {
             {/* Zip Code */}
             <div className="mb-6 relative">
               <label className="block text-sm font-bold text-[#142A52] mb-2">1. Enter Delivery Address</label>
-              <input
-                type="text"
-                value={locationQuery}
-                onChange={handleLocationChange}
-                onKeyDown={handleKeyDown}
-                onFocus={() => {
-                  if (locationQuery.length > 0 && combinedResults.length > 0) {
-                    setIsDropdownOpen(true);
-                  }
-                }}
-                onBlur={() => setTimeout(() => setIsDropdownOpen(false), 200)}
-                placeholder="Type city or zip code"
-                className="w-full px-4 py-3 border-2 border-[#142A52]/30 rounded-lg focus:border-[#C89B2B] focus:ring-2 focus:ring-[#C89B2B]/20 outline-none transition h-auto text-base"
-              />
+              <div className="relative">
+                <input
+                  type="text"
+                  value={locationQuery}
+                  onChange={handleLocationChange}
+                  onKeyDown={handleKeyDown}
+                  onFocus={() => {
+                    if (locationQuery.length > 0 && combinedResults.length > 0) {
+                      setIsDropdownOpen(true);
+                    }
+                  }}
+                  onBlur={() => setTimeout(() => setIsDropdownOpen(false), 200)}
+                  placeholder="Type city or zip code"
+                  className="w-full px-4 py-3 pr-10 border-2 border-[#142A52]/30 rounded-lg focus:border-[#C89B2B] focus:ring-2 focus:ring-[#C89B2B]/20 outline-none transition h-auto text-base"
+                />
+                {locationQuery && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setLocationQuery("");
+                      setZipCode("");
+                      setSelectedCity("");
+                      setSelectedState("");
+                      setSelectedStreet("");
+                      setSelectedAddress("");
+                      setCombinedResults([]);
+                      setIsDropdownOpen(false);
+                      setIsSearching(false);
+                      if (debounceTimer.current) {
+                        clearTimeout(debounceTimer.current);
+                      }
+                    }}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none"
+                    aria-label="Clear location search"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                )}
+              </div>
               {isDropdownOpen && (combinedResults.length > 0 || isSearching) && (() => {
                 const localResults = combinedResults.filter((r): r is LocalLocationResult => r.type === "local");
                 const googleResults = combinedResults.filter((r): r is GoogleLocationResult => r.type === "google");
