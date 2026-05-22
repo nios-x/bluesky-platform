@@ -56,7 +56,7 @@ export function Header() {
       window.removeEventListener("hashchange", onHashChange);
     };
   }, []);
-    const isActive = (path: string) => {
+  const isActive = (path: string) => {
     if (path === "/") return pathname === "/" && (!activeHash || activeHash === "#");
     if (path.startsWith("/#")) return pathname === "/" && activeHash === path.replace("/", "");
     return pathname === path;
@@ -75,12 +75,12 @@ export function Header() {
             <Link href="/" className="flex items-center">
               <Image
                 src="/images/lg.png"
-                  alt="Blue Sky Disposal"
-                  width={200}
-                  height={100}
-                  className="h-20 w-auto object-contain"
-                  priority
-                />
+                alt="Blue Sky Disposal"
+                width={200}
+                height={100}
+                className="h-20 w-auto object-contain"
+                priority
+              />
             </Link>
 
             <nav className="hidden md:flex items-center space-x-8">
@@ -140,13 +140,6 @@ export function Header() {
                         <button className="w-full flex items-center gap-3 px-4 py-2 hover:bg-slate-50 text-slate-700 text-sm">
                           <Package size={16} />
                           My Orders
-                        </button>
-                      </Link>
-                      <Link href="/account?tab=notifications" onClick={() => setShowUserMenu(false)}>
-                        <button className="w-full flex items-center gap-3 px-4 py-2 hover:bg-slate-50 text-slate-700 text-sm">
-                          <Bell size={16} />
-                          Notifications
-                          <span className="ml-auto bg-red-600 text-white text-xs px-2 py-0.5 rounded-full">12</span>
                         </button>
                       </Link>
                       <div className="border-t border-slate-200 my-2"></div>

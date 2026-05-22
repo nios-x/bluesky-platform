@@ -10,8 +10,8 @@ import { Trash2, Zap } from "lucide-react";
 import { ACCOUNT_DISCOUNT } from "@/lib/constants/booking";
 
 type Props = {
-    dumpsterTypes: { id: string; name: string; sizes?: number[] }[];
-    sizes?: number[];
+    dumpsterTypes: { id: string; name: string; sizes?: { value: number; id: string }[] }[];
+    sizes?: { value: number; id: string }[];
     onAddMore?: (data: { type: string; size: number; deliveryDate: string; removalDate: string; rentalPeriod: number }) => void;
     selectedIndex?: number;
     onSelect?: (index: number) => void;
@@ -129,7 +129,7 @@ export default function OrderDetailsCard({
                                                 <Select
                                                     value={b.dumpsterType}
                                                     onValueChange={(val) => {
-                                                        updateBooking(idx, { dumpsterType: val, dumpsterSize: 0 });
+                                                        updateBooking(idx, { dumpsterType: val, dumpsterSize: 0, dumpsterSizeId: "" });
                                                     }}
                                                 >
                                                     <SelectTrigger className="h-8 text-xs bg-white border border-[#142A52]/30 text-[#142A52] font-medium focus:ring-0 focus:border-[#C89B2B]">
@@ -149,16 +149,19 @@ export default function OrderDetailsCard({
                                                 <Select
                                                     value={b.dumpsterSize ? b.dumpsterSize.toString() : ""}
                                                     onValueChange={(val) => {
-                                                        updateBooking(idx, { dumpsterSize: parseInt(val) });
+                                                        const sizeVal = parseInt(val);
+                                                        const tSizes = dumpsterTypes.find(t => t.id === b.dumpsterType)?.sizes || sizes || [];
+                                                        const sObj = tSizes.find(s => s.value === sizeVal);
+                                                        updateBooking(idx, { dumpsterSize: sizeVal, dumpsterSizeId: sObj?.id });
                                                     }}
                                                 >
                                                     <SelectTrigger className="h-8 text-xs bg-white border border-[#142A52]/30 text-[#142A52] font-medium focus:ring-0 focus:border-[#C89B2B]">
                                                         <SelectValue placeholder="Size" />
                                                     </SelectTrigger>
                                                     <SelectContent>
-                                                        {(dumpsterTypes.find(t => t.id === b.dumpsterType)?.sizes || sizes || []).map((s) => (
-                                                            <SelectItem key={s} value={s.toString()} className="text-sm">
-                                                                {s} Yard
+                                                        {Array.from(new Map((dumpsterTypes.find(t => t.id === b.dumpsterType)?.sizes || sizes || []).map((s: any) => [s.value, s])).values()).map((s: any) => (
+                                                            <SelectItem key={s.value} value={s.value.toString()} className="text-sm">
+                                                                {s.value} Yard
                                                             </SelectItem>
                                                         ))}
                                                     </SelectContent>
@@ -188,7 +191,20 @@ export default function OrderDetailsCard({
                                                                     
                                                                     const newRemovalDate = defaultRemoval.toISOString().split("T")[0];
                                                                     
-                                                                    updateBooking(idx, { deliveryDate: newDeliveryDate, removalDate: newRemovalDate });
+                                                                    const diffTime = Math.abs(defaultRemoval.getTime() - selectedDate.getTime());
+                                                                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                                                                    
+                                                                    const typeObj = dumpsterTypes.find(t => t.id === b.dumpsterType);
+                                                                    const typeFreeDays = (typeObj?.name?.includes("Rubber")) ? 14 : 7;
+                                                                    const extraCharge = diffDays > typeFreeDays ? (diffDays - typeFreeDays) * 25 : 0;
+                                                                    const newTotal = (b.basePrice || 0) + (b.surcharges || 0) + extraCharge;
+                                                                    
+                                                                    updateBooking(idx, { 
+                                                                        deliveryDate: newDeliveryDate, 
+                                                                        removalDate: newRemovalDate,
+                                                                        rentalPeriod: diffDays,
+                                                                        totalPrice: newTotal
+                                                                    });
                                                                     setShowEditDeliveryCalendar(false);
                                                                     setEditDeliveryDateIdx(null);
                                                                 }
@@ -218,7 +234,20 @@ export default function OrderDetailsCard({
                                                             selected={b.removalDate ? new Date(b.removalDate) : undefined}
                                                             onSelect={(selectedDate) => {
                                                                 if (selectedDate) {
-                                                                    updateBooking(idx, { removalDate: selectedDate.toISOString().split("T")[0] });
+                                                                    const newRemovalDate = selectedDate.toISOString().split("T")[0];
+                                                                    const diffTime = Math.abs(selectedDate.getTime() - new Date(b.deliveryDate || new Date()).getTime());
+                                                                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                                                                    
+                                                                    const typeObj = dumpsterTypes.find(t => t.id === b.dumpsterType);
+                                                                    const typeFreeDays = (typeObj?.name?.includes("Rubber")) ? 14 : 7;
+                                                                    const extraCharge = diffDays > typeFreeDays ? (diffDays - typeFreeDays) * 25 : 0;
+                                                                    const newTotal = (b.basePrice || 0) + (b.surcharges || 0) + extraCharge;
+
+                                                                    updateBooking(idx, { 
+                                                                        removalDate: newRemovalDate,
+                                                                        rentalPeriod: diffDays,
+                                                                        totalPrice: newTotal
+                                                                    });
                                                                     setShowEditRemovalCalendar(false);
                                                                     setEditRemovalDateIdx(null);
                                                                 }
@@ -274,7 +303,7 @@ export default function OrderDetailsCard({
                                     <Select
                                         value={b.dumpsterType}
                                         onValueChange={(val) => {
-                                            updateBooking(idx, { dumpsterType: val, dumpsterSize: 0 });
+                                            updateBooking(idx, { dumpsterType: val, dumpsterSize: 0, dumpsterSizeId: "" });
                                         }}
                                     >
                                         <SelectTrigger className="h-8 text-xs bg-white border-2 border-[#142A52]/30 text-[#142A52] font-medium focus:ring-[#C89B2B]/20 focus:border-[#C89B2B]">
@@ -294,16 +323,19 @@ export default function OrderDetailsCard({
                                     <Select
                                         value={b.dumpsterSize ? b.dumpsterSize.toString() : ""}
                                         onValueChange={(val) => {
-                                            updateBooking(idx, { dumpsterSize: parseInt(val) });
+                                            const sizeVal = parseInt(val);
+                                            const tSizes = dumpsterTypes.find(t => t.id === b.dumpsterType)?.sizes || sizes || [];
+                                            const sObj = tSizes.find(s => s.value === sizeVal);
+                                            updateBooking(idx, { dumpsterSize: sizeVal, dumpsterSizeId: sObj?.id });
                                         }}
                                     >
                                         <SelectTrigger className="h-8 text-xs bg-white border-2 border-[#142A52]/30 text-[#142A52] font-medium focus:ring-[#C89B2B]/20 focus:border-[#C89B2B]">
                                             <SelectValue placeholder="Size" />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            {(dumpsterTypes.find(t => t.id === b.dumpsterType)?.sizes || sizes || []).map((s) => (
-                                                <SelectItem key={s} value={s.toString()} className="text-sm">
-                                                    {s} Yard
+                                            {Array.from(new Map((dumpsterTypes.find(t => t.id === b.dumpsterType)?.sizes || sizes || []).map((s: any) => [s.value, s])).values()).map((s: any) => (
+                                                <SelectItem key={s.value} value={s.value.toString()} className="text-sm">
+                                                    {s.value} Yard
                                                 </SelectItem>
                                             ))}
                                         </SelectContent>
@@ -333,7 +365,20 @@ export default function OrderDetailsCard({
                                                         
                                                         const newRemovalDate = defaultRemoval.toISOString().split("T")[0];
                                                         
-                                                        updateBooking(idx, { deliveryDate: newDeliveryDate, removalDate: newRemovalDate });
+                                                        const diffTime = Math.abs(defaultRemoval.getTime() - selectedDate.getTime());
+                                                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                                                        
+                                                        const typeObj = dumpsterTypes.find(t => t.id === b.dumpsterType);
+                                                        const typeFreeDays = (typeObj?.name?.includes("Rubber")) ? 14 : 7;
+                                                        const extraCharge = diffDays > typeFreeDays ? (diffDays - typeFreeDays) * 25 : 0;
+                                                        const newTotal = (b.basePrice || 0) + (b.surcharges || 0) + extraCharge;
+                                                        
+                                                        updateBooking(idx, { 
+                                                            deliveryDate: newDeliveryDate, 
+                                                            removalDate: newRemovalDate,
+                                                            rentalPeriod: diffDays,
+                                                            totalPrice: newTotal
+                                                        });
                                                         setShowEditDeliveryCalendar(false);
                                                         setEditDeliveryDateIdx(null);
                                                     }
@@ -363,7 +408,20 @@ export default function OrderDetailsCard({
                                                 selected={b.removalDate ? new Date(b.removalDate) : undefined}
                                                 onSelect={(selectedDate) => {
                                                     if (selectedDate) {
-                                                        updateBooking(idx, { removalDate: selectedDate.toISOString().split("T")[0] });
+                                                        const newRemovalDate = selectedDate.toISOString().split("T")[0];
+                                                        const diffTime = Math.abs(selectedDate.getTime() - new Date(b.deliveryDate || new Date()).getTime());
+                                                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                                                        
+                                                        const typeObj = dumpsterTypes.find(t => t.id === b.dumpsterType);
+                                                        const typeFreeDays = (typeObj?.name?.includes("Rubber")) ? 14 : 7;
+                                                        const extraCharge = diffDays > typeFreeDays ? (diffDays - typeFreeDays) * 25 : 0;
+                                                        const newTotal = (b.basePrice || 0) + (b.surcharges || 0) + extraCharge;
+
+                                                        updateBooking(idx, { 
+                                                            removalDate: newRemovalDate,
+                                                            rentalPeriod: diffDays,
+                                                            totalPrice: newTotal
+                                                        });
                                                         setShowEditRemovalCalendar(false);
                                                         setEditRemovalDateIdx(null);
                                                     }
@@ -425,9 +483,9 @@ export default function OrderDetailsCard({
                                 <SelectValue placeholder={type ? "Select size" : "Select type first"} />
                             </SelectTrigger>
                             <SelectContent>
-                                {(dumpsterTypes.find(t => t.id === type)?.sizes || sizes || []).map((s) => (
-                                    <SelectItem key={s} value={s.toString()}>
-                                        {s} Yard
+                                {Array.from(new Map((dumpsterTypes.find(t => t.id === type)?.sizes || sizes || []).map((s: any) => [s.value, s])).values()).map((s: any) => (
+                                    <SelectItem key={s.value} value={s.value.toString()}>
+                                        {s.value} Yard
                                     </SelectItem>
                                 ))}
                             </SelectContent>

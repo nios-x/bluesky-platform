@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { useBooking } from "@/contexts/booking-context";
+import { useAuth } from "@/contexts/auth-context";
 import { ACCOUNT_DISCOUNT } from "@/lib/constants/booking";
 import { ChevronLeft, CheckCircle2, Mail, Phone, Share2, Copy, Check, ShieldCheck, Eye, EyeOff, CreditCard, History, MapPin, CalendarClock } from "lucide-react";
 import Image from "next/image";
@@ -60,6 +61,7 @@ const getFromSessionStorage = (key: string, defaultValue: any = null) => {
 export default function BookingStep1() {
   const router = useRouter();
   const { bookings, updateBooking, addBooking, removeBooking } = useBooking();
+  const { user, isLoggedIn } = useAuth();
   const [selectedIndex, setSelectedIndex] = useState(0);
   const booking = bookings[selectedIndex] || {};
   const [formData, setFormData] = useState({
@@ -131,6 +133,12 @@ export default function BookingStep1() {
     const savedAccountPassword = getFromSessionStorage(SESSION_STORAGE_KEYS.ACCOUNT_PASSWORD, "");
     setAccountPassword(savedAccountPassword);
   }, []);
+
+  useEffect(() => {
+    if (isLoggedIn && user?.email) {
+      setFormData(prev => prev.email === user.email ? prev : { ...prev, email: user.email });
+    }
+  }, [isLoggedIn, user?.email]);
 
   useEffect(() => {
     // Pre-fill shipping address from booking context (set on hero page)
@@ -459,10 +467,6 @@ export default function BookingStep1() {
     saveToSessionStorage(SESSION_STORAGE_KEYS.ACCOUNT_CREATION, accountCreation);
   }, [accountCreation]);
 
-  useEffect(() => {
-    saveToSessionStorage(SESSION_STORAGE_KEYS.ACCOUNT_PASSWORD, accountPassword);
-  }, [accountPassword]);
-
   const validateForm = useCallback(() => {
     if (!formData.firstName.trim() || !formData.lastName.trim()) {
       setError("First and Last name are required");
@@ -700,7 +704,7 @@ export default function BookingStep1() {
 
   const [zipCity, setZipCity] = useState(booking.zipCode || "");
   const [deliveryDate, setDeliveryDate] = useState(booking.deliveryDate || "");
-  const [weeklyPickup, setWeeklyPickup] = useState("Twice a week x2");
+  const [weeklyPickup, setWeeklyPickup] = useState("Once a week x1");
   const [usageType, setUsageType] = useState("");
   const [couponCode, setCouponCode] = useState("");
   const [couponApplied, setCouponApplied] = useState(false);
@@ -1200,8 +1204,8 @@ export default function BookingStep1() {
             {/* Mobile-only ItemsAdder (below images) */}
             <div className="lg:hidden mb-10 bg-zinc-100 text-black rounded-2xl p-4">
               <ItemsAdder
-                dumpsterTypes={dbDumpsterTypes.map(t => ({ id: t.id, name: t.name, sizes: t.sizes.map((s: any) => s.value) }))}
-                sizes={Array.from(new Set(dbDumpsterTypes.flatMap(t => t.sizes.map((s: any) => s.value))))}
+                dumpsterTypes={dbDumpsterTypes.map(t => ({ id: t.id, name: t.name, sizes: t.sizes.map((s: any) => ({ value: s.value, id: s.id })) }))}
+                sizes={Array.from(new Map(dbDumpsterTypes.flatMap(t => t.sizes).map((s: any) => [s.value, { value: s.value, id: s.id }])).values())}
                 selectedIndex={selectedIndex}
                 onSelect={(idx) => setSelectedIndex(idx)}
                 cartTotal={cartTotal}
@@ -1220,6 +1224,7 @@ export default function BookingStep1() {
                     ...booking,
                     dumpsterType: newItem.type,
                     dumpsterSize: newItem.size,
+                    dumpsterSizeId: addedSizeObj?.id,
                     deliveryDate: newItem.deliveryDate,
                     rentalPeriod: newItem.rentalPeriod,
                     basePrice: itemBasePrice,
@@ -1500,8 +1505,9 @@ export default function BookingStep1() {
                 </div>
 
                 {/* Account Creation Option */}
-                <div className={`rounded-2xl p-6 mb-8 border-2 transition-all ${accountCreation ? 'border-[#DAA520] bg-gradient-to-br from-[#DAA520]/10 to-[#DAA520]/5 shadow-md' : 'border-[#0A1628]/15 bg-[#f9fafb]'}`}>
-                  <label className="flex items-center gap-3 cursor-pointer">
+                {!isLoggedIn && (
+                  <div className={`rounded-2xl p-6 mb-8 border-2 transition-all ${accountCreation ? 'border-[#DAA520] bg-gradient-to-br from-[#DAA520]/10 to-[#DAA520]/5 shadow-md' : 'border-[#0A1628]/15 bg-[#f9fafb]'}`}>
+                    <label className="flex items-center gap-3 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={accountCreation}
@@ -1572,9 +1578,8 @@ export default function BookingStep1() {
                       </motion.div>
                     )}
                   </AnimatePresence>
-                </div>
-
-
+                  </div>
+                )}
 
               </div>
 
@@ -1887,8 +1892,8 @@ export default function BookingStep1() {
 
             <div className="mt-5 bg-zinc-100 text-black rounded-2xl p-4 md:p-6 ">
               <ItemsAdder
-                dumpsterTypes={dbDumpsterTypes.map(t => ({ id: t.id, name: t.name, sizes: t.sizes.map((s: any) => s.value) }))}
-                sizes={Array.from(new Set(dbDumpsterTypes.flatMap(t => t.sizes.map((s: any) => s.value))))}
+                dumpsterTypes={dbDumpsterTypes.map(t => ({ id: t.id, name: t.name, sizes: t.sizes.map((s: any) => ({ value: s.value, id: s.id })) }))}
+                sizes={Array.from(new Map(dbDumpsterTypes.flatMap(t => t.sizes).map((s: any) => [s.value, { value: s.value, id: s.id }])).values())}
                 selectedIndex={selectedIndex}
                 onSelect={(idx) => setSelectedIndex(idx)}
                 cartTotal={cartTotal}
@@ -1907,6 +1912,7 @@ export default function BookingStep1() {
                     ...booking,
                     dumpsterType: newItem.type,
                     dumpsterSize: newItem.size,
+                    dumpsterSizeId: addedSizeObj?.id,
                     deliveryDate: newItem.deliveryDate,
                     rentalPeriod: newItem.rentalPeriod,
                     basePrice: itemBasePrice,
