@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
-import { processOrderAndSaveToDB } from "@/lib/services/orderService";
+import { createPendingOrder, confirmOrderPayment } from "@/lib/services/orderService";
 import { supabaseAdmin } from "@/lib/supabase/admin";
+import { calculateServerSideTotal } from "@/lib/services/pricingService";
 
 export const dynamic = "force-dynamic";
 
@@ -12,7 +13,14 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { paymentData, amount, currency, bookingsData, contactInfo } = body;
+    const { paymentData, amount: clientAmount, currency, bookingsData, contactInfo } = body;
+
+    // RULE: Server-Side Amount Validation
+    const serverAmount = await calculateServerSideTotal(bookingsData, contactInfo);
+    
+    if (!serverAmount || serverAmount <= 0) {
+      throw new Error('Invalid or empty order amount calculated on server');
+    }
 
     let webhookId = null;
     // Save the raw form data in the database
@@ -76,6 +84,22 @@ export async function POST(request) {
     let paymentIntentId = `dev_gpay_${Date.now()}`;
     let status = "succeeded";
 
+    let orderId = undefined;
+    try {
+      const order = await createPendingOrder(bookingsData, contactInfo, {
+        amount: serverAmount,
+        method: "google-pay",
+      });
+      if (order && order.id) {
+        orderId = order.id;
+        if (webhookId) {
+          await supabaseAdmin.from("payment_webhooks").update({ order_id: order.id }).eq("id", webhookId);
+        }
+      }
+    } catch (dbError) {
+      console.error("Failed to create pending order:", dbError);
+    }
+
     // For development/example gateway, simulate success
     if (token === "example" || !token || token.includes("example")) {
       console.log("Development mode: Simulating Google Pay payment success");
@@ -106,7 +130,7 @@ export async function POST(request) {
         // When using a Stripe token (tok_*), we need to create a payment intent differently
         // Option 1: Use the Charges API (legacy but simpler for tokens)
         const charge = await stripe.charges.create({
-          amount: Math.round(amount * 100), // Convert to cents
+          amount: Math.round(serverAmount * 100), // Convert to cents
           currency: currency.toLowerCase(),
           customer: customer.id,
           description: `Google Pay payment for Dumpster Rental Services`,
@@ -124,22 +148,18 @@ export async function POST(request) {
       }
     }
 
-    if (status === "succeeded" && bookingsData && contactInfo) {
+    if (status === "succeeded" && bookingsData && contactInfo && orderId) {
       try {
-        const order = await processOrderAndSaveToDB(bookingsData, contactInfo, {
-          amount: amount,
+        await confirmOrderPayment(orderId, {
+          amount: serverAmount,
           method: "google-pay",
           paymentIntentId: paymentIntentId,
         });
 
-        // Update the webhook with the order_id and set processed to true
-        if (webhookId && order && order.id) {
+        if (webhookId) {
           await supabaseAdmin
             .from("payment_webhooks")
-            .update({
-              order_id: order.id,
-              processed: true,
-            })
+            .update({ processed: true })
             .eq("id", webhookId);
         }
       } catch (dbError) {

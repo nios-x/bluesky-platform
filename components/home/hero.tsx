@@ -90,6 +90,7 @@ export function Hero() {
   const [deliveryDate, setDeliveryDate] = useState("");
   const [removalDate, setRemovalDate] = useState("");
   const [searchError, setSearchError] = useState("");
+  const [zipError, setZipError] = useState("");
   const [showDeliveryCalendar, setShowDeliveryCalendar] = useState(false);
   const [showRemovalCalendar, setShowRemovalCalendar] = useState(false);
   const router = useRouter();
@@ -135,6 +136,26 @@ export function Hero() {
       }
     };
   }, []);
+
+  useEffect(() => {
+    if (zipCode) {
+      const checkZip = async () => {
+        try {
+          const res = await fetch(`/api/pricing/zip/${zipCode}`);
+          if (!res.ok) {
+            setZipError("we are coming soon to you area");
+          } else {
+            setZipError("");
+          }
+        } catch (err) {
+          setZipError("we are coming soon to you area");
+        }
+      };
+      checkZip();
+    } else {
+      setZipError("");
+    }
+  }, [zipCode]);
 
   // Stored parsed address parts from selected location (to pass to order)
   const [selectedCity, setSelectedCity] = useState("");
@@ -367,7 +388,7 @@ export function Hero() {
   };
 
   // ===== PROGRESSIVE REVEAL COMPLETION STATES =====
-  const isStep1Done = !!zipCode;
+  const isStep1Done = !!zipCode && !zipError;
   const isStep2Done = !!dumpsterType;
   const isStep3Done = !!dumpsterSize;
   const isStep4Done = !!projectType;
@@ -390,6 +411,11 @@ export function Hero() {
 
   const handleStartBooking = () => {
     setSearchError("");
+
+    if (zipError) {
+      setSearchError(zipError);
+      return;
+    }
 
     if (!zipCode.trim()) {
       setSearchError("Please enter a zip code");
@@ -516,6 +542,11 @@ export function Hero() {
                   </button>
                 )}
               </div>
+              {zipError && (
+                <div className="mt-2 text-sm text-red-500 font-bold">
+                  {zipError}
+                </div>
+              )}
               {isDropdownOpen && (combinedResults.length > 0 || isSearching) && (() => {
                 const localResults = combinedResults.filter((r): r is LocalLocationResult => r.type === "local");
                 const googleResults = combinedResults.filter((r): r is GoogleLocationResult => r.type === "google");

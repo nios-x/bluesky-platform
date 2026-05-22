@@ -1,20 +1,21 @@
 "use client";
 
 import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useRouter } from "next/navigation";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { 
-  User, 
-  Mail, 
-  Phone, 
-  Lock, 
-  Eye, 
-  EyeOff, 
-  Building2, 
-  Truck, 
+import { useAuth } from "@/contexts/auth-context";
+import { supabaseAnon } from "@/lib/supabase/client";
+import {
+  User,
+  Mail,
+  Phone,
+  Lock,
+  Eye,
+  EyeOff,
+  Building2,
   HardHat,
   Bell,
   Gift,
@@ -24,12 +25,19 @@ import {
 import Link from "next/link";
 
 type UserType = "customer" | "partner" | "contractor";
-type AuthMode = "login" | "signup";
+type AuthMode = "login" | "signup" | "otp";
 
 export default function AuthPage() {
+  const router = useRouter();
+  const { refreshProfile } = useAuth();
+  
   const [authMode, setAuthMode] = useState<AuthMode>("login");
   const [userType, setUserType] = useState<UserType>("customer");
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [otpCode, setOtpCode] = useState("");
+
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -69,6 +77,67 @@ export default function AuthPage() {
     { icon: CheckCircle2, text: "Easy booking & cancellation" }
   ];
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+
+    try {
+      if (authMode === "signup") {
+        const res = await fetch('/api/auth/send-otp', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: formData.email })
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Failed to send verification code");
+
+        setAuthMode("otp");
+      } else if (authMode === "otp") {
+        const res = await fetch('/api/auth/verify-otp', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: formData.email,
+            otp: otpCode,
+            password: formData.password,
+            name: formData.name,
+            phone: formData.phone,
+            userType
+          })
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Verification failed");
+
+        const { error: authError } = await supabaseAnon.auth.signInWithPassword({
+          email: formData.email,
+          password: formData.password,
+        });
+
+        if (authError) throw authError;
+
+        await refreshProfile();
+        router.push("/account");
+      } else {
+        const { error: authError } = await supabaseAnon.auth.signInWithPassword({
+          email: formData.email,
+          password: formData.password,
+        });
+
+        if (authError) throw authError;
+
+        await refreshProfile();
+        router.push("/account");
+      }
+    } catch (err: any) {
+      setError(err.message || "An error occurred during authentication.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-slate-50">
       <Header />
@@ -76,20 +145,17 @@ export default function AuthPage() {
       <main className="flex-1 py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-6xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-            
+
             {/* Left Side - Benefits & Info */}
-            <motion.div
-              initial={{ opacity: 0, x: -30 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6 }}
-              className="bg-gradient-to-br from-blue-600 to-cyan-500 rounded-2xl p-8 lg:p-12 text-white lg:sticky lg:top-24"
-            >
+            <div className="bg-gradient-to-br from-blue-600 to-cyan-500 rounded-2xl p-8 lg:p-12 text-white lg:sticky lg:top-24">
               <h2 className="text-3xl font-bold mb-4">
-                {authMode === "login" ? "Welcome Back!" : "Join Blue Sky Disposal"}
+                {authMode === "login" ? "Welcome Back!" : authMode === "otp" ? "Verify Email" : "Join Blue Sky Disposal"}
               </h2>
               <p className="text-blue-50 mb-8 text-lg">
-                {authMode === "login" 
+                {authMode === "login"
                   ? "Sign in to access your account and manage your orders"
+                  : authMode === "otp"
+                  ? "We sent a 6-digit code to your email"
                   : "Create an account and get access to exclusive benefits"
                 }
               </p>
@@ -97,20 +163,14 @@ export default function AuthPage() {
               {/* Benefits */}
               <div className="space-y-6 mb-8">
                 {benefits.map((benefit, index) => (
-                  <motion.div
-                    key={index}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.1 + 0.3 }}
-                    className="flex items-start gap-4"
-                  >
+                  <div key={index} className="flex items-start gap-4">
                     <div className="bg-white/20 backdrop-blur-sm rounded-lg p-3">
                       <benefit.icon size={24} />
                     </div>
                     <div className="flex-1">
                       <p className="text-white font-medium">{benefit.text}</p>
                     </div>
-                  </motion.div>
+                  </div>
                 ))}
               </div>
 
@@ -129,100 +189,107 @@ export default function AuthPage() {
                   <div className="text-sm text-blue-100">Years Experience</div>
                 </div>
               </div>
-            </motion.div>
+            </div>
 
             {/* Right Side - Auth Form */}
-            <motion.div
-              initial={{ opacity: 0, x: 30 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6 }}
-              className="bg-white rounded-2xl shadow-xl p-8"
-            >
+            <div className="bg-white rounded-2xl shadow-xl p-8">
+              
+              {error && (
+                <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-600 text-sm rounded-xl">
+                  {error}
+                </div>
+              )}
+
               {/* Toggle Login/Signup */}
               <div className="flex gap-2 mb-8 bg-slate-100 p-1 rounded-lg">
                 <button
+                  type="button"
                   onClick={() => setAuthMode("login")}
-                  className={`flex-1 py-3 px-4 rounded-lg font-semibold transition-all ${
-                    authMode === "login"
-                      ? "bg-white text-blue-600 shadow-sm"
-                      : "text-slate-600 hover:text-slate-900"
-                  }`}
+                  className={`flex-1 py-3 px-4 rounded-lg font-semibold transition-all ${authMode === "login"
+                    ? "bg-white text-blue-600 shadow-sm"
+                    : "text-slate-600 hover:text-slate-900"
+                    }`}
                 >
                   Login
                 </button>
                 <button
+                  type="button"
                   onClick={() => setAuthMode("signup")}
-                  className={`flex-1 py-3 px-4 rounded-lg font-semibold transition-all ${
-                    authMode === "signup"
-                      ? "bg-white text-blue-600 shadow-sm"
-                      : "text-slate-600 hover:text-slate-900"
-                  }`}
+                  className={`flex-1 py-3 px-4 rounded-lg font-semibold transition-all ${authMode === "signup"
+                    ? "bg-white text-blue-600 shadow-sm"
+                    : "text-slate-600 hover:text-slate-900"
+                    }`}
                 >
                   Sign Up
                 </button>
               </div>
 
-              <AnimatePresence mode="wait">
-                {authMode === "signup" && (
-                  <motion.div
-                    key="user-type-selection"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -20 }}
-                    className="mb-8"
-                  >
-                    <h3 className="text-lg font-semibold text-slate-900 mb-4">
-                      Choose Account Type
-                    </h3>
-                    <div className="grid grid-cols-1 gap-3">
-                      {userTypes.map((type) => (
-                        <button
-                          key={type.type}
-                          onClick={() => setUserType(type.type)}
-                          className={`p-4 rounded-xl border-2 transition-all text-left ${
-                            userType === type.type
-                              ? "border-blue-600 bg-blue-50"
-                              : "border-slate-200 hover:border-blue-300"
+              {authMode === "signup" && (
+                <div className="mb-8">
+                  <h3 className="text-lg font-semibold text-slate-900 mb-4">
+                    Choose Account Type
+                  </h3>
+                  <div className="grid grid-cols-1 gap-3">
+                    {userTypes.map((type) => (
+                      <button
+                        type="button"
+                        key={type.type}
+                        onClick={() => setUserType(type.type)}
+                        className={`p-4 rounded-xl border-2 transition-all text-left ${userType === type.type
+                          ? "border-blue-600 bg-blue-50"
+                          : "border-slate-200 hover:border-blue-300"
                           }`}
-                        >
-                          <div className="flex items-start gap-3">
-                            <div className={`p-2 rounded-lg ${
-                              userType === type.type ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-600"
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className={`p-2 rounded-lg ${userType === type.type ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-600"
                             }`}>
-                              <type.icon size={20} />
-                            </div>
-                            <div className="flex-1">
-                              <div className="font-semibold text-slate-900">{type.title}</div>
-                              <div className="text-sm text-slate-600 mt-1">{type.description}</div>
-                              {userType === type.type && (
-                                <div className="flex flex-wrap gap-2 mt-2">
-                                  {type.benefits.map((benefit, idx) => (
-                                    <span
-                                      key={idx}
-                                      className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full"
-                                    >
-                                      {benefit}
-                                    </span>
-                                  ))}
-                                </div>
-                              )}
-                            </div>
+                            <type.icon size={20} />
                           </div>
-                        </button>
-                      ))}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+                          <div className="flex-1">
+                            <div className="font-semibold text-slate-900">{type.title}</div>
+                            <div className="text-sm text-slate-600 mt-1">{type.description}</div>
+                            {userType === type.type && (
+                              <div className="flex flex-wrap gap-2 mt-2">
+                                {type.benefits.map((benefit, idx) => (
+                                  <span
+                                    key={idx}
+                                    className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full"
+                                  >
+                                    {benefit}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Form */}
-              <form className="space-y-4">
+              <form onSubmit={handleSubmit} className="space-y-4">
+                
+                {authMode === "otp" && (
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                      6-Digit Verification Code
+                    </label>
+                    <Input
+                      type="text"
+                      placeholder="Enter verification code"
+                      className="text-center text-xl tracking-[0.25em] font-mono h-12"
+                      maxLength={6}
+                      value={otpCode}
+                      onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
+                      required
+                    />
+                  </div>
+                )}
+
                 {authMode === "signup" && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                    exit={{ opacity: 0, height: 0 }}
-                  >
+                  <div>
                     <label className="block text-sm font-medium text-slate-700 mb-2">
                       Full Name
                     </label>
@@ -231,19 +298,17 @@ export default function AuthPage() {
                       <Input
                         type="text"
                         placeholder="Enter your full name"
-                        className="pl-10"
+                        className="pl-10 h-11"
                         value={formData.name}
-                        onChange={(e) => setFormData({...formData, name: e.target.value})}
+                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        required
                       />
                     </div>
-                  </motion.div>
+                  </div>
                 )}
 
                 {authMode === "signup" && userType !== "customer" && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                  >
+                  <div>
                     <label className="block text-sm font-medium text-slate-700 mb-2">
                       Business/Company Name
                     </label>
@@ -252,76 +317,80 @@ export default function AuthPage() {
                       <Input
                         type="text"
                         placeholder="Enter business name"
-                        className="pl-10"
+                        className="pl-10 h-11"
                         value={formData.businessName}
-                        onChange={(e) => setFormData({...formData, businessName: e.target.value})}
+                        onChange={(e) => setFormData({ ...formData, businessName: e.target.value })}
                       />
                     </div>
-                  </motion.div>
+                  </div>
                 )}
 
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Email Address
-                  </label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
-                    <Input
-                      type="email"
-                      placeholder="Enter your email"
-                      className="pl-10"
-                      value={formData.email}
-                      onChange={(e) => setFormData({...formData, email: e.target.value})}
-                    />
-                  </div>
-                </div>
-
-                {authMode === "signup" && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                  >
-                    <label className="block text-sm font-medium text-slate-700 mb-2">
-                      Phone Number
-                    </label>
-                    <div className="relative">
-                      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
-                      <Input
-                        type="tel"
-                        placeholder="Enter phone number"
-                        className="pl-10"
-                        value={formData.phone}
-                        onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                      />
+                {authMode !== "otp" && (
+                  <>
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-2">
+                        Email Address
+                      </label>
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
+                        <Input
+                          type="email"
+                          placeholder="Enter your email"
+                          className="pl-10 h-11"
+                          value={formData.email}
+                          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                          required
+                        />
+                      </div>
                     </div>
-                  </motion.div>
-                )}
 
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Password
-                  </label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
-                    <Input
-                      type={showPassword ? "text" : "password"}
-                      placeholder="Enter password"
-                      className="pl-10 pr-10"
-                      value={formData.password}
-                      onChange={(e) => setFormData({...formData, password: e.target.value})}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                    >
-                      {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                    </button>
-                  </div>
-                </div>
+                    {authMode === "signup" && (
+                      <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-2">
+                          Phone Number
+                        </label>
+                        <div className="relative">
+                          <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
+                          <Input
+                            type="tel"
+                            placeholder="Enter phone number"
+                            className="pl-10 h-11"
+                            value={formData.phone}
+                            onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                            required
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-2">
+                        Password
+                      </label>
+                      <div className="relative">
+                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
+                        <Input
+                          type={showPassword ? "text" : "password"}
+                          placeholder="Enter password"
+                          className="pl-10 pr-10 h-11"
+                          value={formData.password}
+                          onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                          required
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                        >
+                          {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                        </button>
+                      </div>
+                    </div>
+                  </>
+                )}
 
                 {authMode === "login" && (
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between mt-2">
                     <label className="flex items-center gap-2">
                       <input type="checkbox" className="rounded border-slate-300" />
                       <span className="text-sm text-slate-600">Remember me</span>
@@ -333,64 +402,32 @@ export default function AuthPage() {
                 )}
 
                 {authMode === "signup" && (
-                  <label className="flex items-start gap-2">
+                  <label className="flex items-start gap-2 mt-4">
                     <input type="checkbox" className="mt-1 rounded border-slate-300" required />
                     <span className="text-sm text-slate-600">
                       I agree to the{" "}
                       <Link href="/terms" className="text-blue-600 hover:underline">Terms of Service</Link>
                       {" "}and{" "}
-                      <Link href="/privacy" className="text-blue-600 hover:underline">Privacy Policy</Link>
+                      <Link href="/privacy-policy" className="text-blue-600 hover:underline">Privacy Policy</Link>
                     </span>
                   </label>
                 )}
 
                 <Button
                   type="submit"
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white py-6 text-lg font-semibold"
+                  disabled={loading}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white py-6 text-lg font-semibold mt-6"
                 >
-                  {authMode === "login" ? "Sign In" : "Create Account"}
+                  {loading ? (
+                    <span className="flex items-center gap-2">
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      Processing...
+                    </span>
+                  ) : authMode === "login" ? "Sign In" : authMode === "otp" ? "Verify Code" : "Create Account"}
                 </Button>
-
-                <div className="relative my-6">
-                  <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-slate-300" />
-                  </div>
-                  <div className="relative flex justify-center text-sm">
-                    <span className="px-4 bg-white text-slate-500">Or continue with</span>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <Button variant="outline" className="w-full">
-                    <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
-                      <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                      <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                      <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                      <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                    </svg>
-                    Google
-                  </Button>
-                  <Button variant="outline" className="w-full">
-                    <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-                    </svg>
-                    Facebook
-                  </Button>
-                </div>
               </form>
 
-              {authMode === "login" && (
-                <p className="mt-6 text-center text-sm text-slate-600">
-                  Don't have an account?{" "}
-                  <button
-                    onClick={() => setAuthMode("signup")}
-                    className="text-blue-600 hover:text-blue-700 font-semibold"
-                  >
-                    Sign up now
-                  </button>
-                </p>
-              )}
-            </motion.div>
+            </div>
           </div>
         </div>
       </main>

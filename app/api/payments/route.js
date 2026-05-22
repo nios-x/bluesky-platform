@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { stripe } from '@/lib/stripe';
-import { processOrderAndSaveToDB } from '@/lib/services/orderService';
+import { createPendingOrder, confirmOrderPayment } from '@/lib/services/orderService';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { calculateServerSideTotal } from '@/lib/services/pricingService';
 
@@ -29,6 +29,22 @@ export async function POST(request) {
       console.error('Failed to save form data to payment_webhooks:', e);
     }
 
+    let orderId = undefined;
+    try {
+      const order = await createPendingOrder(bookingsData, contactInfo, {
+        amount: serverAmount,
+        method: paymentMethod,
+      });
+      if (order && order.id) {
+        orderId = order.id;
+        if (webhookId) {
+          await supabaseAdmin.from("payment_webhooks").update({ order_id: order.id }).eq("id", webhookId);
+        }
+      }
+    } catch (dbError) {
+      console.error("Failed to create pending order:", dbError);
+    }
+
     let paymentIntent;
 
     // RULE: Never Handle Raw Card Data
@@ -52,26 +68,23 @@ export async function POST(request) {
 
     // Ideally, for real payment gateways, you would handle this via Webhooks (Rule: Idempotency & Webhooks)
     // Because this is currently simulating Paypal/Apple Pay on the backend without webhooks, we process it here.
-    if (paymentIntent.status === 'succeeded' && bookingsData && contactInfo) {
+    if (paymentIntent.status === 'succeeded' && bookingsData && contactInfo && orderId) {
       console.log(paymentIntent)
       try {
-        // RULE: Idempotency keys should be used if we were calling Stripe APIs here.
-        // We simulate order processing.
-        const order = await processOrderAndSaveToDB(bookingsData, contactInfo, {
+        await confirmOrderPayment(orderId, {
           amount: serverAmount,
           method: paymentMethod,
           paymentIntentId: paymentIntent.id
         });
 
         // Update the webhook with the order_id and set processed to true
-        if (webhookId && order && order.id) {
+        if (webhookId) {
           await supabaseAdmin.from('payment_webhooks').update({
-            order_id: order.id,
             processed: true
           }).eq('id', webhookId);
         }
       } catch (dbError) {
-        console.error('Failed to save order to database:', dbError);
+        console.error('Failed to confirm order payment to database:', dbError);
       }
     }
 
