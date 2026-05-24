@@ -6,61 +6,36 @@ import { Trash2, Plus, Minus, ShoppingBag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
+import { useRouter } from "next/navigation";
+import { useBooking } from "@/contexts/booking-context";
 import { useAuth } from "@/contexts/auth-context";
 
-interface CartItemType {
-  id: string;
-  name: string;
-  price: number;
-  quantity: number;
-  rentalPeriod: string;
-  image: string;
-}
-
 export default function CartPage() {
+  const router = useRouter();
+  const { bookings, removeBooking } = useBooking();
   const { isLoggedIn } = useAuth();
   
-  const [cartItems, setCartItems] = useState<CartItemType[]>([
-    {
-      id: "1",
-      name: "20 Yard Roll-off Dumpster",
-      price: 412.0,
-      quantity: 1,
-      rentalPeriod: "7 Days",
-      image: "/images/roll-off-dumpster.png",
-    },
-    {
-      id: "2",
-      name: "10 Yard Rubber-wheeled Dumpster",
-      price: 295.0,
-      quantity: 1,
-      rentalPeriod: "7 Days",
-      image: "/images/rubber-wheel-dumpster.png",
-    },
-  ]);
+  // Filter out empty bookings (e.g., default template)
+  const validBookings = bookings.filter((b: any) => b.totalPrice > 0 || b.dumpsterSize > 0);
 
-  const handleQuantityChange = (id: string, newQuantity: number) => {
-    if (newQuantity <= 0) {
-      removeItem(id);
-      return;
-    }
-    setCartItems(
-      cartItems.map((item) =>
-        item.id === id ? { ...item, quantity: newQuantity } : item
-      )
-    );
-  };
-
-  const removeItem = (id: string) => {
-    setCartItems(cartItems.filter((item) => item.id !== id));
-  };
-
-  const subtotal = cartItems.reduce(
-    (sum, item) => sum + item.price * item.quantity,
+  const subtotal = validBookings.reduce(
+    (sum: number, item: any) => sum + item.basePrice + item.surcharges,
     0
   );
-  const tax = subtotal * 0.06;
-  const total = subtotal + tax;
+  
+  const discount = validBookings.reduce((sum: number, item: any) => sum + item.accountDiscount, 0);
+  const tax = (subtotal - discount) * 0.06;
+  const total = subtotal - discount + tax;
+
+  const handleCheckout = () => {
+    if (!isLoggedIn) {
+      // Typically, trigger a login modal here or redirect to auth
+      // For now, we rely on the auth modal logic which could be opened via a context function
+      router.push("/auth");
+    } else {
+      router.push("/booking/order");
+    }
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50">
@@ -74,14 +49,14 @@ export default function CartPage() {
             </h1>
             <div className="flex items-center gap-2 text-slate-600">
               <ShoppingBag size={24} />
-              <span className="font-semibold">{cartItems.length} Items</span>
+              <span className="font-semibold">{validBookings.length} Items</span>
             </div>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Cart Items */}
             <div className="lg:col-span-2">
-              {cartItems.length === 0 ? (
+              {validBookings.length === 0 ? (
                 <div className="bg-white rounded-xl border border-slate-200 p-12 text-center">
                   <ShoppingBag size={64} className="mx-auto text-slate-300 mb-4" />
                   <h2 className="text-2xl font-bold text-slate-900 mb-2">Your cart is empty</h2>
@@ -92,18 +67,18 @@ export default function CartPage() {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {cartItems.map((item) => (
+                  {validBookings.map((item: any, index: number) => (
                     <div
-                      key={item.id}
+                      key={index}
                       className="bg-white rounded-xl border border-slate-200 p-6 hover:shadow-lg transition-shadow"
                     >
                       <div className="flex gap-4 sm:gap-6">
                         {/* Product Image */}
-                        <div className="flex-shrink-0 w-24 h-24 sm:w-32 sm:h-32 bg-slate-100 rounded-lg overflow-hidden">
+                        <div className="flex-shrink-0 w-24 h-24 sm:w-32 sm:h-32 bg-slate-100 rounded-lg overflow-hidden flex items-center justify-center p-2">
                           <img
-                            src={item.image}
-                            alt={item.name}
-                            className="w-full h-full object-cover"
+                            src={item.dumpsterSize === 10 ? "/images/rubber-wheel-dumpster.png" : "/images/roll-off-dumpster.png"}
+                            alt={`${item.dumpsterSize} Yard Dumpster`}
+                            className="w-full h-full object-contain mix-blend-multiply"
                             loading="lazy"
                           />
                         </div>
@@ -111,58 +86,37 @@ export default function CartPage() {
                         {/* Product Details */}
                         <div className="flex-1 min-w-0">
                           <h3 className="text-lg sm:text-xl font-bold text-slate-900 mb-1">
-                            {item.name}
+                            {item.dumpsterSize} Yard Dumpster
                           </h3>
                           <p className="text-sm text-slate-600 mb-4">
-                            Rental Period: <span className="font-semibold">{item.rentalPeriod}</span>
+                            Rental Period: <span className="font-semibold">{item.rentalPeriod} Days</span>
+                            <br />
+                            Delivery: <span className="font-semibold">{item.deliveryDate}</span>
                           </p>
 
                           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                             {/* Price */}
                             <div>
                               <p className="text-2xl font-bold text-blue-600">
-                                ${item.price.toFixed(2)}
+                                ${(item.basePrice + item.surcharges).toFixed(2)}
                               </p>
-                              <p className="text-xs text-slate-500">per unit</p>
-                            </div>
-
-                            {/* Quantity Controls */}
-                            <div className="flex items-center gap-3 bg-slate-100 rounded-lg p-1">
-                              <button
-                                onClick={() =>
-                                  handleQuantityChange(item.id, item.quantity - 1)
-                                }
-                                className="p-2 hover:bg-slate-200 rounded transition-colors"
-                                aria-label="Decrease quantity"
-                              >
-                                <Minus size={16} />
-                              </button>
-                              <span className="px-4 py-2 font-bold text-slate-900 min-w-[3rem] text-center">
-                                {item.quantity}
-                              </span>
-                              <button
-                                onClick={() =>
-                                  handleQuantityChange(item.id, item.quantity + 1)
-                                }
-                                className="p-2 hover:bg-slate-200 rounded transition-colors"
-                                aria-label="Increase quantity"
-                              >
-                                <Plus size={16} />
-                              </button>
+                              {item.accountDiscount > 0 && (
+                                <p className="text-sm text-green-600">Discount: -${item.accountDiscount.toFixed(2)}</p>
+                              )}
                             </div>
 
                             {/* Total Price */}
                             <div className="text-right">
                               <p className="text-sm text-slate-600 mb-1">Subtotal</p>
                               <p className="text-xl sm:text-2xl font-bold text-slate-900">
-                                ${(item.price * item.quantity).toFixed(2)}
+                                ${(item.totalPrice).toFixed(2)}
                               </p>
                             </div>
                           </div>
 
                           {/* Remove Button */}
                           <button
-                            onClick={() => removeItem(item.id)}
+                            onClick={() => removeBooking(index)}
                             className="mt-4 flex items-center gap-2 text-red-600 hover:text-red-700 hover:bg-red-50 px-3 py-2 rounded-lg transition-all"
                           >
                             <Trash2 size={18} />
@@ -177,7 +131,7 @@ export default function CartPage() {
             </div>
 
             {/* Order Summary Sidebar */}
-            {cartItems.length > 0 && (
+            {validBookings.length > 0 && (
               <div className="lg:col-span-1">
                 <div className="bg-white rounded-xl border border-slate-200 p-6 sticky top-24 shadow-lg">
                   <h2 className="text-2xl font-bold text-slate-900 mb-6">
@@ -186,9 +140,15 @@ export default function CartPage() {
 
                   <div className="space-y-4 mb-6 pb-6 border-b border-slate-200">
                     <div className="flex justify-between text-slate-600">
-                      <span>Subtotal ({cartItems.length} items)</span>
+                      <span>Subtotal ({validBookings.length} items)</span>
                       <span className="font-semibold">${subtotal.toFixed(2)}</span>
                     </div>
+                    {discount > 0 && (
+                      <div className="flex justify-between text-green-600">
+                        <span>Discount</span>
+                        <span className="font-semibold">-${discount.toFixed(2)}</span>
+                      </div>
+                    )}
                     <div className="flex justify-between text-slate-600">
                       <span>Tax (6%)</span>
                       <span className="font-semibold">${tax.toFixed(2)}</span>
@@ -204,7 +164,7 @@ export default function CartPage() {
                   </div>
 
                   {isLoggedIn ? (
-                    <Button className="w-full mb-3 bg-blue-600 hover:bg-blue-700 text-white h-12 text-lg font-semibold">
+                    <Button onClick={handleCheckout} className="w-full mb-3 bg-blue-600 hover:bg-blue-700 text-white h-12 text-lg font-semibold">
                       Proceed to Checkout
                     </Button>
                   ) : (
@@ -212,7 +172,7 @@ export default function CartPage() {
                       <p className="text-sm text-slate-600 text-center">
                         Please sign in to complete your order
                       </p>
-                      <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white h-12 text-lg font-semibold">
+                      <Button onClick={handleCheckout} className="w-full bg-blue-600 hover:bg-blue-700 text-white h-12 text-lg font-semibold">
                         Sign In to Checkout
                       </Button>
                     </div>

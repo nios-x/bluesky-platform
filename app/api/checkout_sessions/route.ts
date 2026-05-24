@@ -4,7 +4,7 @@ import { headers } from 'next/headers'
 import { stripe } from '../../../lib/stripe'
 import { supabaseAdmin } from '@/lib/supabase/admin'
 import { calculateServerSideTotal } from '@/lib/services/pricingService'
-import { processOrderAndSaveToDB } from '@/lib/services/orderService'
+import { createPendingOrder } from '@/lib/services/orderService'
 
 export const dynamic = 'force-dynamic'
 
@@ -12,9 +12,10 @@ export async function POST(req: Request) {
   try {
     const headersList = await headers()
     const origin = headersList.get('origin')
-
+    console.log("headers", origin)
     const body = await req.json()
     const { bookingsData, contactInfo } = body
+    console.log(body)
 
     // Server-side amount validation
     const serverAmount = await calculateServerSideTotal(bookingsData, contactInfo)
@@ -34,6 +35,25 @@ export async function POST(req: Request) {
       if (data && !error) webhookId = data.id
     } catch (e) {
       console.error('Failed to save form data to payment_webhooks:', e)
+    }
+
+    // Create the order as PENDING_PAYMENT before initiating Stripe Checkout
+    let orderId = undefined;
+    try {
+      const order = await createPendingOrder(bookingsData, contactInfo, {
+        amount: serverAmount,
+        method: 'stripe_checkout'
+      })
+      if (order && order.id) {
+        orderId = order.id;
+        if (webhookId) {
+          await supabaseAdmin.from('payment_webhooks').update({
+            order_id: order.id
+          }).eq('id', webhookId)
+        }
+      }
+    } catch (dbError) {
+      console.error('Failed to create pending order:', dbError)
     }
 
     // Create Checkout Sessions from body params using price_data for dynamic pricing
@@ -61,6 +81,7 @@ export async function POST(req: Request) {
         description: 'Dumpster Rental Booking - Services',
         metadata: {
           webhookId: webhookId ? webhookId.toString() : '',
+          orderId: orderId ? orderId.toString() : '',
         }
       }
     }, {
@@ -68,26 +89,7 @@ export async function POST(req: Request) {
       idempotencyKey: webhookId ? `checkout_session_${webhookId}` : undefined
     })
 
-    // Process the order synchronously so it shows up in the database immediately
-    // Note: In a strict production environment, this should only happen inside a Stripe Webhook.
-    // However, we are saving it here so it mirrors the immediate behavior of Google Pay/PayPal.
-    try {
-      const order = await processOrderAndSaveToDB(bookingsData, contactInfo, {
-        amount: serverAmount,
-        method: 'stripe_checkout',
-        paymentIntentId: session.id
-      })
-
-      if (webhookId && order && order.id) {
-        await supabaseAdmin.from('payment_webhooks').update({
-          order_id: order.id,
-          processed: true
-        }).eq('id', webhookId)
-      }
-    } catch (dbError) {
-      console.error('Failed to save order to database:', dbError)
-    }
-
+    // Stripe checkout url will be returned
     return NextResponse.json({ url: session.url })
   } catch (err: any) {
     return NextResponse.json(

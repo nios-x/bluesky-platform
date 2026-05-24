@@ -10,8 +10,8 @@ import { Trash2, Zap } from "lucide-react";
 import { ACCOUNT_DISCOUNT } from "@/lib/constants/booking";
 
 type Props = {
-    dumpsterTypes: { id: string; name: string; sizes?: number[] }[];
-    sizes?: number[];
+    dumpsterTypes: { id: string; name: string; sizes?: { value: number; id: string }[] }[];
+    sizes?: { value: number; id: string }[];
     onAddMore?: (data: { type: string; size: number; deliveryDate: string; removalDate: string; rentalPeriod: number }) => void;
     selectedIndex?: number;
     onSelect?: (index: number) => void;
@@ -42,6 +42,10 @@ export default function OrderDetailsCard({
     const [isAddingNew, setIsAddingNew] = useState(false);
     const [deliveryDateObj, setDeliveryDateObj] = useState<Date | undefined>(undefined);
     const [removalDateObj, setRemovalDateObj] = useState<Date | undefined>(undefined);
+    const [editDeliveryDateIdx, setEditDeliveryDateIdx] = useState<number | null>(null);
+    const [editRemovalDateIdx, setEditRemovalDateIdx] = useState<number | null>(null);
+    const [showEditDeliveryCalendar, setShowEditDeliveryCalendar] = useState(false);
+    const [showEditRemovalCalendar, setShowEditRemovalCalendar] = useState(false);
 
     const handleAddMore = () => {
         if (type && size && deliveryDate && removalDate && onAddMore) {
@@ -125,7 +129,7 @@ export default function OrderDetailsCard({
                                                 <Select
                                                     value={b.dumpsterType}
                                                     onValueChange={(val) => {
-                                                        updateBooking(idx, { dumpsterType: val, dumpsterSize: 0 });
+                                                        updateBooking(idx, { dumpsterType: val, dumpsterSize: 0, dumpsterSizeId: "" });
                                                     }}
                                                 >
                                                     <SelectTrigger className="h-8 text-xs bg-white border border-[#142A52]/30 text-[#142A52] font-medium focus:ring-0 focus:border-[#C89B2B]">
@@ -145,20 +149,118 @@ export default function OrderDetailsCard({
                                                 <Select
                                                     value={b.dumpsterSize ? b.dumpsterSize.toString() : ""}
                                                     onValueChange={(val) => {
-                                                        updateBooking(idx, { dumpsterSize: parseInt(val) });
+                                                        const sizeVal = parseInt(val);
+                                                        const tSizes = dumpsterTypes.find(t => t.id === b.dumpsterType)?.sizes || sizes || [];
+                                                        const sObj = tSizes.find(s => s.value === sizeVal);
+                                                        updateBooking(idx, { dumpsterSize: sizeVal, dumpsterSizeId: sObj?.id });
                                                     }}
                                                 >
                                                     <SelectTrigger className="h-8 text-xs bg-white border border-[#142A52]/30 text-[#142A52] font-medium focus:ring-0 focus:border-[#C89B2B]">
                                                         <SelectValue placeholder="Size" />
                                                     </SelectTrigger>
                                                     <SelectContent>
-                                                        {(dumpsterTypes.find(t => t.id === b.dumpsterType)?.sizes || sizes || []).map((s) => (
-                                                            <SelectItem key={s} value={s.toString()} className="text-sm">
-                                                                {s} Yard
+                                                        {Array.from(new Map((dumpsterTypes.find(t => t.id === b.dumpsterType)?.sizes || sizes || []).map((s: any) => [s.value, s])).values()).map((s: any) => (
+                                                            <SelectItem key={s.value} value={s.value.toString()} className="text-sm">
+                                                                {s.value} Yard
                                                             </SelectItem>
                                                         ))}
                                                     </SelectContent>
                                                 </Select>
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-bold text-[#0A1628] mb-1.5">Change Delivery Date</label>
+                                                <Popover open={showEditDeliveryCalendar && editDeliveryDateIdx === idx} onOpenChange={(open) => { setShowEditDeliveryCalendar(open); setEditDeliveryDateIdx(open ? idx : null); }}>
+                                                    <PopoverTrigger asChild>
+                                                        <Button variant="outline" className="w-full h-8 text-xs justify-start font-normal border border-[#142A52]/30 px-2 focus:ring-0 focus:border-[#C89B2B] text-black">
+                                                            {b.deliveryDate ? new Date(b.deliveryDate).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "Select date"}
+                                                        </Button>
+                                                    </PopoverTrigger>
+                                                    <PopoverContent className="w-auto p-0" align="start">
+                                                        <Calendar
+                                                            mode="single"
+                                                            selected={b.deliveryDate ? new Date(b.deliveryDate) : undefined}
+                                                            onSelect={(selectedDate) => {
+                                                                if (selectedDate) {
+                                                                    const newDeliveryDate = selectedDate.toISOString().split("T")[0];
+                                                                    
+                                                                    // Auto-set removal date to 7 days later, excluding weekends
+                                                                    const defaultRemoval = new Date(selectedDate);
+                                                                    defaultRemoval.setDate(defaultRemoval.getDate() + 7);
+                                                                    if (defaultRemoval.getDay() === 0) defaultRemoval.setDate(defaultRemoval.getDate() + 1);
+                                                                    else if (defaultRemoval.getDay() === 6) defaultRemoval.setDate(defaultRemoval.getDate() + 2);
+                                                                    
+                                                                    const newRemovalDate = defaultRemoval.toISOString().split("T")[0];
+                                                                    
+                                                                    const diffTime = Math.abs(defaultRemoval.getTime() - selectedDate.getTime());
+                                                                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                                                                    
+                                                                    const typeObj = dumpsterTypes.find(t => t.id === b.dumpsterType);
+                                                                    const typeFreeDays = (typeObj?.name?.includes("Rubber")) ? 14 : 7;
+                                                                    const extraCharge = diffDays > typeFreeDays ? (diffDays - typeFreeDays) * 25 : 0;
+                                                                    const newTotal = (b.basePrice || 0) + (b.surcharges || 0) + extraCharge;
+                                                                    
+                                                                    updateBooking(idx, { 
+                                                                        deliveryDate: newDeliveryDate, 
+                                                                        removalDate: newRemovalDate,
+                                                                        rentalPeriod: diffDays,
+                                                                        totalPrice: newTotal
+                                                                    });
+                                                                    setShowEditDeliveryCalendar(false);
+                                                                    setEditDeliveryDateIdx(null);
+                                                                }
+                                                            }}
+                                                            disabled={(date) => {
+                                                                const today = new Date();
+                                                                today.setHours(0, 0, 0, 0);
+                                                                if (date < today) return true;
+                                                                const dayOfWeek = date.getDay();
+                                                                return dayOfWeek === 0 || dayOfWeek === 6;
+                                                            }}
+                                                        />
+                                                    </PopoverContent>
+                                                </Popover>
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-bold text-[#0A1628] mb-1.5">Change Removal Date</label>
+                                                <Popover open={showEditRemovalCalendar && editRemovalDateIdx === idx} onOpenChange={(open) => { setShowEditRemovalCalendar(open); setEditRemovalDateIdx(open ? idx : null); }}>
+                                                    <PopoverTrigger asChild>
+                                                        <Button variant="outline" className="w-full h-8 text-xs justify-start font-normal border border-[#142A52]/30 px-2 focus:ring-0 focus:border-[#C89B2B] text-black">
+                                                            {b.removalDate ? new Date(b.removalDate).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "Select date"}
+                                                        </Button>
+                                                    </PopoverTrigger>
+                                                    <PopoverContent className="w-auto p-0" align="start">
+                                                        <Calendar
+                                                            mode="single"
+                                                            selected={b.removalDate ? new Date(b.removalDate) : undefined}
+                                                            onSelect={(selectedDate) => {
+                                                                if (selectedDate) {
+                                                                    const newRemovalDate = selectedDate.toISOString().split("T")[0];
+                                                                    const diffTime = Math.abs(selectedDate.getTime() - new Date(b.deliveryDate || new Date()).getTime());
+                                                                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                                                                    
+                                                                    const typeObj = dumpsterTypes.find(t => t.id === b.dumpsterType);
+                                                                    const typeFreeDays = (typeObj?.name?.includes("Rubber")) ? 14 : 7;
+                                                                    const extraCharge = diffDays > typeFreeDays ? (diffDays - typeFreeDays) * 25 : 0;
+                                                                    const newTotal = (b.basePrice || 0) + (b.surcharges || 0) + extraCharge;
+
+                                                                    updateBooking(idx, { 
+                                                                        removalDate: newRemovalDate,
+                                                                        rentalPeriod: diffDays,
+                                                                        totalPrice: newTotal
+                                                                    });
+                                                                    setShowEditRemovalCalendar(false);
+                                                                    setEditRemovalDateIdx(null);
+                                                                }
+                                                            }}
+                                                            disabled={(date) => {
+                                                                const dayOfWeek = date.getDay();
+                                                                if (dayOfWeek === 0 || dayOfWeek === 6) return true;
+                                                                if (b.deliveryDate && date < new Date(b.deliveryDate)) return true;
+                                                                return false;
+                                                            }}
+                                                        />
+                                                    </PopoverContent>
+                                                </Popover>
                                             </div>
                                         </div>
                                     )}
@@ -201,7 +303,7 @@ export default function OrderDetailsCard({
                                     <Select
                                         value={b.dumpsterType}
                                         onValueChange={(val) => {
-                                            updateBooking(idx, { dumpsterType: val, dumpsterSize: 0 });
+                                            updateBooking(idx, { dumpsterType: val, dumpsterSize: 0, dumpsterSizeId: "" });
                                         }}
                                     >
                                         <SelectTrigger className="h-8 text-xs bg-white border-2 border-[#142A52]/30 text-[#142A52] font-medium focus:ring-[#C89B2B]/20 focus:border-[#C89B2B]">
@@ -221,20 +323,118 @@ export default function OrderDetailsCard({
                                     <Select
                                         value={b.dumpsterSize ? b.dumpsterSize.toString() : ""}
                                         onValueChange={(val) => {
-                                            updateBooking(idx, { dumpsterSize: parseInt(val) });
+                                            const sizeVal = parseInt(val);
+                                            const tSizes = dumpsterTypes.find(t => t.id === b.dumpsterType)?.sizes || sizes || [];
+                                            const sObj = tSizes.find(s => s.value === sizeVal);
+                                            updateBooking(idx, { dumpsterSize: sizeVal, dumpsterSizeId: sObj?.id });
                                         }}
                                     >
                                         <SelectTrigger className="h-8 text-xs bg-white border-2 border-[#142A52]/30 text-[#142A52] font-medium focus:ring-[#C89B2B]/20 focus:border-[#C89B2B]">
                                             <SelectValue placeholder="Size" />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            {(dumpsterTypes.find(t => t.id === b.dumpsterType)?.sizes || sizes || []).map((s) => (
-                                                <SelectItem key={s} value={s.toString()} className="text-sm">
-                                                    {s} Yard
+                                            {Array.from(new Map((dumpsterTypes.find(t => t.id === b.dumpsterType)?.sizes || sizes || []).map((s: any) => [s.value, s])).values()).map((s: any) => (
+                                                <SelectItem key={s.value} value={s.value.toString()} className="text-sm">
+                                                    {s.value} Yard
                                                 </SelectItem>
                                             ))}
                                         </SelectContent>
                                     </Select>
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-[#142A52] mb-2">Change Delivery Date</label>
+                                    <Popover open={showEditDeliveryCalendar && editDeliveryDateIdx === idx} onOpenChange={(open) => { setShowEditDeliveryCalendar(open); setEditDeliveryDateIdx(open ? idx : null); }}>
+                                        <PopoverTrigger asChild>
+                                            <Button variant="outline" className="w-full h-8 text-xs justify-start font-normal border-2 border-[#142A52]/30 px-2 focus:ring-[#C89B2B]/20 focus:border-[#C89B2B] text-black">
+                                                {b.deliveryDate ? new Date(b.deliveryDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "Select date"}
+                                            </Button>
+                                        </PopoverTrigger>
+                                        <PopoverContent className="w-auto p-0" align="start">
+                                            <Calendar
+                                                mode="single"
+                                                selected={b.deliveryDate ? new Date(b.deliveryDate) : undefined}
+                                                onSelect={(selectedDate) => {
+                                                    if (selectedDate) {
+                                                        const newDeliveryDate = selectedDate.toISOString().split("T")[0];
+                                                        
+                                                        // Auto-set removal date to 7 days later, excluding weekends
+                                                        const defaultRemoval = new Date(selectedDate);
+                                                        defaultRemoval.setDate(defaultRemoval.getDate() + 7);
+                                                        if (defaultRemoval.getDay() === 0) defaultRemoval.setDate(defaultRemoval.getDate() + 1);
+                                                        else if (defaultRemoval.getDay() === 6) defaultRemoval.setDate(defaultRemoval.getDate() + 2);
+                                                        
+                                                        const newRemovalDate = defaultRemoval.toISOString().split("T")[0];
+                                                        
+                                                        const diffTime = Math.abs(defaultRemoval.getTime() - selectedDate.getTime());
+                                                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                                                        
+                                                        const typeObj = dumpsterTypes.find(t => t.id === b.dumpsterType);
+                                                        const typeFreeDays = (typeObj?.name?.includes("Rubber")) ? 14 : 7;
+                                                        const extraCharge = diffDays > typeFreeDays ? (diffDays - typeFreeDays) * 25 : 0;
+                                                        const newTotal = (b.basePrice || 0) + (b.surcharges || 0) + extraCharge;
+                                                        
+                                                        updateBooking(idx, { 
+                                                            deliveryDate: newDeliveryDate, 
+                                                            removalDate: newRemovalDate,
+                                                            rentalPeriod: diffDays,
+                                                            totalPrice: newTotal
+                                                        });
+                                                        setShowEditDeliveryCalendar(false);
+                                                        setEditDeliveryDateIdx(null);
+                                                    }
+                                                }}
+                                                disabled={(date) => {
+                                                    const today = new Date();
+                                                    today.setHours(0, 0, 0, 0);
+                                                    if (date < today) return true;
+                                                    const dayOfWeek = date.getDay();
+                                                    return dayOfWeek === 0 || dayOfWeek === 6;
+                                                }}
+                                            />
+                                        </PopoverContent>
+                                    </Popover>
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-[#142A52] mb-2">Change Removal Date</label>
+                                    <Popover open={showEditRemovalCalendar && editRemovalDateIdx === idx} onOpenChange={(open) => { setShowEditRemovalCalendar(open); setEditRemovalDateIdx(open ? idx : null); }}>
+                                        <PopoverTrigger asChild>
+                                            <Button variant="outline" className="w-full h-8 text-xs justify-start font-normal border-2 border-[#142A52]/30 px-2 focus:ring-[#C89B2B]/20 focus:border-[#C89B2B] text-black">
+                                                {b.removalDate ? new Date(b.removalDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "Select date"}
+                                            </Button>
+                                        </PopoverTrigger>
+                                        <PopoverContent className="w-auto p-0" align="start">
+                                            <Calendar
+                                                mode="single"
+                                                selected={b.removalDate ? new Date(b.removalDate) : undefined}
+                                                onSelect={(selectedDate) => {
+                                                    if (selectedDate) {
+                                                        const newRemovalDate = selectedDate.toISOString().split("T")[0];
+                                                        const diffTime = Math.abs(selectedDate.getTime() - new Date(b.deliveryDate || new Date()).getTime());
+                                                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                                                        
+                                                        const typeObj = dumpsterTypes.find(t => t.id === b.dumpsterType);
+                                                        const typeFreeDays = (typeObj?.name?.includes("Rubber")) ? 14 : 7;
+                                                        const extraCharge = diffDays > typeFreeDays ? (diffDays - typeFreeDays) * 25 : 0;
+                                                        const newTotal = (b.basePrice || 0) + (b.surcharges || 0) + extraCharge;
+
+                                                        updateBooking(idx, { 
+                                                            removalDate: newRemovalDate,
+                                                            rentalPeriod: diffDays,
+                                                            totalPrice: newTotal
+                                                        });
+                                                        setShowEditRemovalCalendar(false);
+                                                        setEditRemovalDateIdx(null);
+                                                    }
+                                                }}
+                                                disabled={(date) => {
+                                                    const dayOfWeek = date.getDay();
+                                                    if (dayOfWeek === 0 || dayOfWeek === 6) return true;
+                                                    if (b.deliveryDate && date < new Date(b.deliveryDate)) return true;
+                                                    return false;
+                                                }}
+                                            />
+                                        </PopoverContent>
+                                    </Popover>
                                 </div>
                             </div>
                         </div>
@@ -283,9 +483,9 @@ export default function OrderDetailsCard({
                                 <SelectValue placeholder={type ? "Select size" : "Select type first"} />
                             </SelectTrigger>
                             <SelectContent>
-                                {(dumpsterTypes.find(t => t.id === type)?.sizes || sizes || []).map((s) => (
-                                    <SelectItem key={s} value={s.toString()}>
-                                        {s} Yard
+                                {Array.from(new Map((dumpsterTypes.find(t => t.id === type)?.sizes || sizes || []).map((s: any) => [s.value, s])).values()).map((s: any) => (
+                                    <SelectItem key={s.value} value={s.value.toString()}>
+                                        {s.value} Yard
                                     </SelectItem>
                                 ))}
                             </SelectContent>

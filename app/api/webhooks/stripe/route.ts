@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { stripe } from '@/lib/stripe';
 import { supabaseAdmin } from '@/lib/supabase/admin';
-import { processOrderAndSaveToDB } from '@/lib/services/orderService';
+import { confirmOrderPayment } from '@/lib/services/orderService';
 import { calculateServerSideTotal } from '@/lib/services/pricingService';
 
 export async function POST(req: Request) {
@@ -30,60 +30,69 @@ export async function POST(req: Request) {
       const session = event.data.object as any;
       webhookId = session.client_reference_id || session.metadata?.webhookId;
       paymentIntentId = session.payment_intent;
-    } else {
-      const paymentIntent = event.data.object as any;
-      webhookId = paymentIntent.metadata?.webhookId;
-      paymentIntentId = paymentIntent.id;
-    }
+      // We might have passed orderId in metadata
+      let orderId = session.metadata?.orderId;
 
-    if (!webhookId) {
-      console.warn('Webhook received but no webhookId was attached.');
-      return NextResponse.json({ received: true });
-    }
-
-    try {
-      // 1. Check if we already processed it (Idempotency check)
-      const { data: webhookRecord, error: fetchError } = await supabaseAdmin
-        .from('payment_webhooks')
-        .select('*')
-        .eq('id', webhookId)
-        .single();
-
-      if (fetchError || !webhookRecord) {
-        console.error(`Webhook record ${webhookId} not found in DB.`);
-        return NextResponse.json({ error: 'Record not found' }, { status: 404 });
-      }
-
-      if (webhookRecord.processed) {
-        // Already processed successfully previously
+      if (!webhookId) {
+        console.warn('Webhook received but no webhookId was attached.');
         return NextResponse.json({ received: true });
       }
 
-      // 2. We have the payload, process the order
-      const payload = webhookRecord.payload;
-      const { bookingsData, contactInfo } = payload;
-      
-      // Calculate final exact amount to confirm logic (if needed, but Stripe was paid)
-      const serverAmount = await calculateServerSideTotal(bookingsData, contactInfo);
+      try {
+        // 1. Check if we already processed it (Idempotency check)
+        const { data: webhookRecord, error: fetchError } = await supabaseAdmin
+          .from('payment_webhooks')
+          .select('*')
+          .eq('id', webhookId)
+          .single();
 
-      const order = await processOrderAndSaveToDB(bookingsData, contactInfo, {
-        amount: serverAmount,
-        method: webhookRecord.gateway || 'stripe_checkout',
-        paymentIntentId: paymentIntentId
-      });
+        if (fetchError || !webhookRecord) {
+          console.error(`Webhook record ${webhookId} not found in DB.`);
+          return NextResponse.json({ error: 'Record not found' }, { status: 404 });
+        }
 
-      // 3. Mark processed
-      if (order && order.id) {
-        await supabaseAdmin.from('payment_webhooks').update({
-          order_id: order.id,
-          processed: true
-        }).eq('id', webhookId);
+        if (webhookRecord.processed) {
+          // Already processed successfully previously
+          return NextResponse.json({ received: true });
+        }
+
+        // If orderId wasn't in metadata, try to get it from webhook record
+        if (!orderId && webhookRecord.order_id) {
+          orderId = webhookRecord.order_id;
+        }
+
+        if (!orderId) {
+          console.error('No orderId found to confirm payment.');
+          return NextResponse.json({ error: 'No orderId' }, { status: 400 });
+        }
+
+        // 2. We have the payload, confirm the order
+        const payload = webhookRecord.payload;
+        const { bookingsData, contactInfo } = payload;
+        
+        // Calculate final exact amount
+        const serverAmount = await calculateServerSideTotal(bookingsData, contactInfo);
+
+        const order = await confirmOrderPayment(orderId, {
+          amount: serverAmount,
+          method: webhookRecord.gateway || 'stripe_checkout',
+          paymentIntentId: paymentIntentId
+        });
+
+        // 3. Mark processed
+        if (order && order.id) {
+          await supabaseAdmin.from('payment_webhooks').update({
+            processed: true
+          }).eq('id', webhookId);
+        }
+
+      } catch (e: any) {
+        console.error('Failed processing webhook order confirmation:', e);
+        // Stripe will retry if we return 500, which might be desired on DB failure
+        return NextResponse.json({ error: e.message }, { status: 500 });
       }
-
-    } catch (e: any) {
-      console.error('Failed processing webhook order:', e);
-      // Stripe will retry if we return 500, which might be desired on DB failure
-      return NextResponse.json({ error: e.message }, { status: 500 });
+    } else {
+      // Handle payment_intent.succeeded if it's separate, or other events
     }
   }
 

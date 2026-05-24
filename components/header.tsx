@@ -120,6 +120,12 @@ export function Header() {
                 className="h-20 w-auto object-contain"
                 priority
               />
+                alt="Blue Sky Disposal"
+                width={200}
+                height={100}
+                className="h-20 w-auto object-contain"
+                priority
+              />
             </Link>
 
             {/* Desktop Navbar */}

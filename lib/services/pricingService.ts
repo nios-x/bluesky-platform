@@ -1,48 +1,62 @@
 import { getDumpsters } from "@/lib/models/pricing";
-import { HEAVY_MATERIALS, HEAVY_MATERIAL_SURCHARGE, ACCOUNT_DISCOUNT, SHIPPING_PRICE } from "@/lib/constants/booking";
+import { getPriceByZip } from "@/lib/controllers/pricing";
+import { HEAVY_MATERIALS, HEAVY_MATERIAL_SURCHARGE, ACCOUNT_DISCOUNT } from "@/lib/constants/booking";
 
-export async function calculateServerSideTotal(bookingsData: any[], contactInfo: any): Promise<number> {
+export async function calculateServerSideBreakdown(bookingsData: any[], contactInfo: any) {
   if (!bookingsData || !bookingsData.length) {
-    return 0;
+    return { total: 0, items: [] };
   }
 
-  // Fetch db dumpsters to get authoritative prices
-  // Note: Since pricing is partially hardcoded on frontend, we emulate the same exact logic
-  // but strictly from the server.
+  // Fetch db dumpsters to get authoritative types for free days computation
   const dbDumpsters = await getDumpsters();
-  
+
   let cartTotal = 0;
+  const items = [];
 
   for (const bData of bookingsData) {
-    // Determine base price
-    let basePrice = 435;
-    
-    // Find dumpster type
+    if (!bData.zipCode) {
+      throw new Error("we are coming soon to you area");
+    }
+
+    // Find the specific dumpster to get the exact size ID and calculate free days
     const dData = dbDumpsters.find((d: any) => {
       const typeObj = Array.isArray(d.dumpster_types) ? d.dumpster_types[0] : d.dumpster_types;
-      return typeObj?.id === bData.dumpsterType;
-    });
-    let sizeVal = parseInt(bData.dumpsterSize || 20);
+      const sizeObj = Array.isArray(d.dumpster_sizes) ? d.dumpster_sizes[0] : d.dumpster_sizes;
 
+      const matchType = typeObj?.id === bData.dumpsterType;
+      const matchSize = bData.dumpsterSizeId
+        ? sizeObj?.id === bData.dumpsterSizeId
+        : (sizeObj?.label && sizeObj.label.startsWith(String(bData.dumpsterSize || 20)));
+
+      return matchType && matchSize;
+    });
+
+    let actualDumpsterSizeId = bData.dumpsterSizeId;
     if (dData) {
-      const typeObj = Array.isArray(dData.dumpster_types) ? dData.dumpster_types[0] : dData.dumpster_types;
-      const name = typeObj?.name || "";
-      if (name.includes("Roll Off") || name.includes("Roll-off")) {
-        if (sizeVal === 10) basePrice = 435;
-        if (sizeVal === 20) basePrice = 455;
-        if (sizeVal === 30) basePrice = 475;
-        if (sizeVal === 40) basePrice = 555;
-      } else if (name.includes("Rubber")) {
-         if (sizeVal === 10) basePrice = 445;
-         if (sizeVal === 20) basePrice = 525;
-         if (sizeVal === 30) basePrice = 655;
-      } else {
-         if (sizeVal === 2) basePrice = 250;
-         if (sizeVal === 4) basePrice = 350;
-         if (sizeVal === 6) basePrice = 450;
-         if (sizeVal === 8) basePrice = 550;
+      const sizeObj = Array.isArray(dData.dumpster_sizes) ? dData.dumpster_sizes[0] : dData.dumpster_sizes;
+      if (sizeObj && sizeObj.id) {
+        actualDumpsterSizeId = sizeObj.id;
       }
     }
+
+    if (!actualDumpsterSizeId) {
+      throw new Error("Invalid dumpster selection: size not found.");
+    }
+
+    let pricingRule;
+    try {
+      pricingRule = await getPriceByZip({
+        zip: bData.zipCode,
+        dumpster_size_id: actualDumpsterSizeId,
+        dumpster_type_id: bData.dumpsterType
+      });
+    } catch (err: any) {
+      // Throw the exact error message the user requested when DB lookup fails
+      throw new Error("we are coming soon to you area");
+    }
+
+    const basePrice = pricingRule.base_price;
+    const shippingPrice = pricingRule.shipping_price || 0;
 
     let surcharges = 0;
     const isHeavyMaterial = bData.materialType && HEAVY_MATERIALS.includes(bData.materialType);
@@ -63,15 +77,22 @@ export async function calculateServerSideTotal(bookingsData: any[], contactInfo:
       extraDaysCost = (bData.rentalPeriod - freeDays) * 25;
     }
 
-    cartTotal += basePrice + surcharges + extraDaysCost + SHIPPING_PRICE;
+    const itemTotal = basePrice + surcharges + extraDaysCost + shippingPrice;
+    cartTotal += itemTotal;
+    items.push({ itemTotal, basePrice, surcharges, extraDaysCost, shippingPrice });
   }
 
   let finalPrice = cartTotal;
 
   // Contact info discount (if they ticked 'create account', we emulate this if they passed it)
-  if (contactInfo && contactInfo.accountDiscount) {
-    finalPrice -= contactInfo.accountDiscount; // Validate this is max 20
+  if (contactInfo && (contactInfo.accountDiscount || contactInfo.accountCreation)) {
+    finalPrice -= ACCOUNT_DISCOUNT;
   }
 
-  return Math.max(finalPrice, 0);
+  return { total: Math.max(finalPrice, 0), items };
+}
+
+export async function calculateServerSideTotal(bookingsData: any[], contactInfo: any): Promise<number> {
+  const breakdown = await calculateServerSideBreakdown(bookingsData, contactInfo);
+  return breakdown.total;
 }

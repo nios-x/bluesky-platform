@@ -23,7 +23,7 @@ const getPaymentDataRequest = (price: string, currency: string, countryCode: str
         },
       ],
       merchantInfo: {
-        merchantId: 'BCR2DN4TCGQD5EPW',
+        merchantId: '12345678901234567890',
         merchantName: 'BlueSky Dumpster Rentals',
       },
       transactionInfo: {
@@ -58,7 +58,7 @@ const getPaymentDataRequest = (price: string, currency: string, countryCode: str
       },
     ],
     merchantInfo: {
-      merchantId: 'BCR2DN4TCGQD5EPW',
+      merchantId: '12345678901234567890',
       merchantName: 'BlueSky Dumpster Rentals',
     },
     transactionInfo: {

@@ -1,12 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { useAuth } from "@/contexts/auth-context";
 import { Button } from "@/components/ui/button";
+import { supabaseAnon } from "@/lib/supabase/client";
+import { format } from "date-fns";
 import {
   User,
   Package,
@@ -22,7 +24,8 @@ import {
   Award,
   HelpCircle,
   FileText,
-  Shield
+  Shield,
+  Loader2
 } from "lucide-react";
 import Link from "next/link";
 
@@ -30,6 +33,45 @@ export default function AccountPage() {
   const { user, isLoggedIn, logout } = useAuth();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("orders");
+  const [orders, setOrders] = useState<any[]>([]);
+  const [addresses, setAddresses] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    if (!user) return;
+
+    async function fetchData() {
+      setIsLoading(true);
+      // Fetch Orders joined with order_services
+      const { data: ordersData } = await supabaseAnon
+        .from('orders')
+        .select(`
+          id,
+          created_at,
+          order_status,
+          total_amount,
+          order_services (
+            id, dumpster_size, price
+          )
+        `)
+        .order('created_at', { ascending: false });
+
+      if (ordersData) {
+        setOrders(ordersData);
+      }
+
+      // Fetch Addresses
+      const { data: addressData } = await supabaseAnon
+        .from('customer_addresses')
+        .select('*');
+
+      if (addressData) {
+        setAddresses(addressData);
+      }
+      setIsLoading(false);
+    }
+    fetchData();
+  }, [user]);
 
   if (!isLoggedIn) {
     router.push("/auth");
@@ -41,9 +83,17 @@ export default function AccountPage() {
       id: "orders",
       icon: Package,
       label: "My Orders",
-      count: 5,
+      count: orders.length,
       color: "text-blue-600",
       bgColor: "bg-blue-50"
+    },
+    {
+      id: "addresses",
+      icon: MapPin,
+      label: "Addresses",
+      count: addresses.length,
+      color: "text-green-600",
+      bgColor: "bg-green-50"
     },
     {
       id: "rewards",
@@ -52,65 +102,12 @@ export default function AccountPage() {
       count: user?.rewards || 0,
       color: "text-amber-600",
       bgColor: "bg-amber-50"
-    },
-    {
-      id: "wishlist",
-      icon: Heart,
-      label: "Wishlist",
-      count: 3,
-      color: "text-red-600",
-      bgColor: "bg-red-50"
-    },
-    {
-      id: "notifications",
-      icon: Bell,
-      label: "Notifications",
-      count: 12,
-      color: "text-purple-600",
-      bgColor: "bg-purple-50"
-    },
-    {
-      id: "addresses",
-      icon: MapPin,
-      label: "Addresses",
-      count: 2,
-      color: "text-green-600",
-      bgColor: "bg-green-50"
-    },
-    {
-      id: "payments",
-      icon: CreditCard,
-      label: "Payment Methods",
-      count: 0,
-      color: "text-indigo-600",
-      bgColor: "bg-indigo-50"
     }
   ];
 
   const quickActions = [
-    { icon: HelpCircle, label: "Help Center", href: "/help" },
-    { icon: FileText, label: "Terms & Conditions", href: "/terms" },
-    { icon: Shield, label: "Privacy Policy", href: "/privacy" },
-    { icon: Settings, label: "Account Settings", href: "/settings" }
-  ];
-
-  const recentOrders = [
-    {
-      id: "ORD-2024-001",
-      date: "Dec 15, 2024",
-      status: "Delivered",
-      items: "20 Yard Roll-off Dumpster",
-      price: "$412.00",
-      statusColor: "text-green-600"
-    },
-    {
-      id: "ORD-2024-002",
-      date: "Dec 10, 2024",
-      status: "In Progress",
-      items: "10 Yard Rubber-wheeled Dumpster",
-      price: "$295.00",
-      statusColor: "text-blue-600"
-    }
+    { icon: FileText, label: "Terms & Conditions", href: "/terms-conditions" },
+    { icon: Shield, label: "Privacy Policy", href: "/privacy-policy" }
   ];
 
   const handleLogout = () => {
@@ -175,28 +172,26 @@ export default function AccountPage() {
                     <button
                       key={item.id}
                       onClick={() => setActiveTab(item.id)}
-                      className={`w-full flex items-center justify-between p-3 rounded-lg transition-all ${
-                        activeTab === item.id
-                          ? `${item.bgColor} ${item.color}`
-                          : "hover:bg-slate-50 text-slate-700"
-                      }`}
+                      className={`w-full flex items-center justify-between p-3 rounded-lg transition-all ${activeTab === item.id
+                        ? `${item.bgColor} ${item.color}`
+                        : "hover:bg-slate-50 text-slate-700"
+                        }`}
                     >
                       <div className="flex items-center gap-3">
                         <item.icon size={20} />
                         <span className="font-medium">{item.label}</span>
                       </div>
                       {item.count > 0 && (
-                        <span className={`text-xs font-semibold px-2 py-1 rounded-full ${
-                          activeTab === item.id ? "bg-white/50" : "bg-slate-100"
-                        }`}>
+                        <span className={`text-xs font-semibold px-2 py-1 rounded-full ${activeTab === item.id ? "bg-white/50" : "bg-slate-100"
+                          }`}>
                           {item.count}
                         </span>
                       )}
                     </button>
                   ))}
-                  
+
                   <div className="border-t border-slate-200 my-4"></div>
-                  
+
                   {quickActions.map((action) => (
                     <Link key={action.label} href={action.href}>
                       <button className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-slate-50 text-slate-700 transition-all">
@@ -225,30 +220,57 @@ export default function AccountPage() {
                   </div>
 
                   <div className="space-y-4">
-                    {recentOrders.map((order) => (
-                      <div
-                        key={order.id}
-                        className="border border-slate-200 rounded-lg p-4 hover:shadow-md transition-shadow"
-                      >
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-3 mb-2">
-                              <ShoppingBag size={20} className="text-blue-600" />
-                              <span className="font-semibold text-slate-900">{order.id}</span>
-                              <span className={`text-sm font-medium ${order.statusColor}`}>
-                                • {order.status}
-                              </span>
-                            </div>
-                            <p className="text-slate-600 mb-1">{order.items}</p>
-                            <p className="text-sm text-slate-500">{order.date}</p>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-xl font-bold text-slate-900 mb-2">{order.price}</p>
-                            <Button size="sm" variant="outline">Track Order</Button>
-                          </div>
-                        </div>
+                    {isLoading ? (
+                      <div className="py-12 flex justify-center text-blue-600">
+                        <Loader2 className="animate-spin w-8 h-8" />
                       </div>
-                    ))}
+                    ) : orders.length === 0 ? (
+                      <div className="py-12 text-center text-slate-500 border border-slate-200 border-dashed rounded-xl">
+                        <Package className="mx-auto w-12 h-12 mb-3 text-slate-300" />
+                        <p>No orders found yet.</p>
+                        <Link href="/services/dumpster-rental">
+                          <Button className="mt-4 bg-blue-600 hover:bg-blue-700">Rent a Dumpster</Button>
+                        </Link>
+                      </div>
+                    ) : (
+                      orders.map((order) => {
+                        const itemsStr = order.order_services
+                          ?.map((s: any) => `${s.dumpster_size} Yard Dumpster`)
+                          .join(", ") || "No items attached";
+
+                        let statusColor = "text-slate-600";
+                        if (order.order_status === "COMPLETED") statusColor = "text-green-600";
+                        if (order.order_status === "CONFIRMED") statusColor = "text-blue-600";
+                        if (order.order_status === "CANCELLED") statusColor = "text-red-600";
+
+                        return (
+                          <div
+                            key={order.id}
+                            className="border border-slate-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+                          >
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-3 mb-2">
+                                  <ShoppingBag size={20} className="text-blue-600" />
+                                  <span className="font-semibold text-slate-900 truncate max-w-[200px]" title={order.id}>
+                                    {order.id.split('-')[0].toUpperCase()}...
+                                  </span>
+                                  <span className={`text-sm font-medium ${statusColor}`}>
+                                    • {order.order_status}
+                                  </span>
+                                </div>
+                                <p className="text-slate-600 mb-1">{itemsStr}</p>
+                                <p className="text-sm text-slate-500">{format(new Date(order.created_at), 'PPP')}</p>
+                              </div>
+                              <div className="text-right">
+                                <p className="text-xl font-bold text-slate-900 mb-2">${order.total_amount}</p>
+                                <Button size="sm" variant="outline">Track Order</Button>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
                   </div>
                 </div>
               )}
@@ -284,33 +306,41 @@ export default function AccountPage() {
                 </div>
               )}
 
-              {activeTab === "notifications" && (
+              {activeTab === "addresses" && (
                 <div className="bg-white rounded-xl shadow-sm p-6">
-                  <h2 className="text-2xl font-bold text-slate-900 mb-6">Notifications</h2>
-                  <div className="space-y-3">
-                    {[
-                      { type: "order", message: "Your order #ORD-2024-001 has been delivered", time: "2 hours ago", unread: true },
-                      { type: "offer", message: "Special offer: Get 20% off on your next rental", time: "1 day ago", unread: true },
-                      { type: "payment", message: "Payment successful for order #ORD-2024-002", time: "3 days ago", unread: false }
-                    ].map((notif, index) => (
-                      <div
-                        key={index}
-                        className={`p-4 rounded-lg border ${
-                          notif.unread ? "bg-blue-50 border-blue-200" : "bg-white border-slate-200"
-                        }`}
-                      >
-                        <div className="flex items-start gap-3">
-                          <Bell size={20} className={notif.unread ? "text-blue-600" : "text-slate-400"} />
-                          <div className="flex-1">
-                            <p className="text-slate-900 font-medium">{notif.message}</p>
-                            <p className="text-sm text-slate-500 mt-1">{notif.time}</p>
-                          </div>
-                          {notif.unread && (
-                            <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
-                          )}
-                        </div>
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-2xl font-bold text-slate-900">Saved Addresses</h2>
+                    <Button variant="outline" size="sm">Add New</Button>
+                  </div>
+
+                  <div className="space-y-4">
+                    {isLoading ? (
+                      <div className="py-12 flex justify-center text-blue-600">
+                        <Loader2 className="animate-spin w-8 h-8" />
                       </div>
-                    ))}
+                    ) : addresses.length === 0 ? (
+                      <div className="py-12 text-center text-slate-500 border border-slate-200 border-dashed rounded-xl">
+                        <MapPin className="mx-auto w-12 h-12 mb-3 text-slate-300" />
+                        <p>No addresses saved yet.</p>
+                      </div>
+                    ) : (
+                      addresses.map((addr) => (
+                        <div key={addr.id} className="border border-slate-200 rounded-lg p-4 hover:border-blue-400 transition-colors">
+                          <div className="flex items-start justify-between">
+                            <div className="flex items-start gap-3">
+                              <MapPin size={24} className="text-blue-600 mt-1" />
+                              <div>
+                                <h3 className="font-semibold text-slate-900 mb-1">
+                                  {addr.address_line1} {addr.is_default && <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full ml-2">Default</span>}
+                                </h3>
+                                <p className="text-slate-600">{addr.city}, {addr.state} {addr.zip}</p>
+                              </div>
+                            </div>
+                            <Button variant="ghost" size="sm" className="text-slate-500 hover:text-blue-600">Edit</Button>
+                          </div>
+                        </div>
+                      ))
+                    )}
                   </div>
                 </div>
               )}

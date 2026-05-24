@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { useMemo, useState, useEffect } from "react";
-import { MapPin, Zap } from "lucide-react";
+import { MapPin, Zap, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar"
@@ -286,8 +286,21 @@ export function HeroNew() {
                         }}
                         onKeyPress={handleKeyPress}
                         placeholder="Zip code"
-                        className="w-full pl-9 pr-3 py-2 rounded-xl border-2 border-slate-300 focus:border-[#0A1628] focus:ring-2 focus:ring-[#0A1628]/20 outline-none text-slate-900 font-medium transition-all text-sm h-[44px]"
+                        className="w-full pl-9 pr-9 py-2 rounded-xl border-2 border-slate-300 focus:border-[#0A1628] focus:ring-2 focus:ring-[#0A1628]/20 outline-none text-slate-900 font-medium transition-all text-sm h-[44px]"
                       />
+                      {zipCode && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setZipCode("");
+                            setBookingError("");
+                          }}
+                          className="absolute right-2 text-slate-400 hover:text-slate-600 focus:outline-none"
+                          aria-label="Clear zip code"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      )}
                     </div>
                   </div>
 
