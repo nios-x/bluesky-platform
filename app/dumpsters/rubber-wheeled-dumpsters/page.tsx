@@ -10,9 +10,7 @@ import Image from "next/image";
 
 import {
     ChevronRight,
-    Sparkles,
-    Bot,
-    HelpCircle
+    Bot
 } from "lucide-react";
 
 

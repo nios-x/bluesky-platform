@@ -1,3 +1,4 @@
+//app/page.tsx
 import { Header } from "@/components/header";
 import { Hero } from "@/components/home/hero";
 import MapSection from "@/components/home/map-section";
