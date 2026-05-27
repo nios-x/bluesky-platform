@@ -36,7 +36,7 @@ export default function DumpstersPage() {
       <main className="flex-1">
 
 
-        {/* HERO */}
+
 
         {/* BREADCRUMB */}
 
@@ -45,13 +45,13 @@ export default function DumpstersPage() {
           <div className="max-w-7xl mx-auto px-5 py-4">
 
             <div className="
-    flex
-    items-center
-    gap-2
-    text-sm
-    text-gray-500
-    flex-wrap
-    ">
+                flex
+                items-center
+                gap-2
+                text-sm
+                text-gray-500
+                flex-wrap
+                ">
 
               <Link href="/">
 
@@ -79,140 +79,78 @@ export default function DumpstersPage() {
 
         <section
           className="
-  relative
-  overflow-hidden
-  bg-[#0A1628]
-  text-white
+    relative
+    overflow-hidden
+    bg-gradient-to-r
+    from-[#0A1628]
+    via-[#183867]
+    to-[#0A1628]
   "
         >
+          <div className="max-w-7xl mx-auto px-5 py-8 md:py-10">
 
-          {/* floating animation */}
+            <div className="max-w-4xl mx-auto text-center">
 
-          <motion.div
-            animate={{
-              x: [0, 40, 0],
-              y: [0, -30, 0]
-            }}
-            transition={{
-              duration: 12,
-              repeat: Infinity
-            }}
-            className="
-      absolute
-      w-[220px]
-      h-[220px]
-      md:w-[350px]
-      md:h-[350px]
-      rounded-full
-      bg-[#FFD700]/10
-      blur-3xl
-      -top-16
-      -right-12
-    "
-          />
+              <div
+                className="
+        inline-flex
+        items-center
+        rounded-full
+        px-4
+        py-2
+        bg-white/10
+        text-white
+        mb-4
+        text-sm
+        font-medium
+        "
+              >
+                Professional Dumpster Rentals
+              </div>
 
-          <motion.div
-            animate={{
-              x: [0, -50, 0],
-              y: [0, 50, 0]
-            }}
-            transition={{
-              duration: 14,
-              repeat: Infinity
-            }}
-            className="
-      absolute
-      w-[200px]
-      h-[200px]
-      md:w-[300px]
-      md:h-[300px]
-      rounded-full
-      bg-[#DAA520]/10
-      blur-3xl
-      bottom-0
-      left-0
-    "
-          />
+              <h1
+                className="
+        text-[30px]
+        sm:text-4xl
+        lg:text-5xl
+        font-black
+        text-white
+        leading-[1.1]
+        "
+              >
+                Dumpster Solutions For Every Cleanup Project
+              </h1>
 
+              <p
+                className="
+        mt-4
+        text-white/85
+        text-sm
+        md:text-base
+        max-w-2xl
+        mx-auto
+        leading-7
+        "
+              >
+                Residential cleanups, construction projects,
+                roofing jobs and long-term waste solutions.
+                Fast delivery, flexible rental periods and
+                dependable service for projects of every size.
+              </p>
 
-
-          <div className="max-w-7xl mx-auto px-5 py-8 md:py-10 relative">
-
-            <div className="grid lg:grid-cols-2 gap-8 items-center">
-
-              {/* LEFT */}
-
-              <div className="max-w-2xl">
-
-                <div
+              <div
+                className="
+        flex
+        flex-col
+        sm:flex-row
+        justify-center
+        gap-3
+        mt-6
+        "
+              >
+                <Button
+                  asChild
                   className="
-          inline-flex
-          px-3
-          py-1.5
-          rounded-full
-          bg-[#FFD700]/10
-          border
-          border-[#FFD700]/20
-          text-[#FFD700]
-          text-xs
-          md:text-sm
-          font-bold
-          mb-4
-          "
-                >
-
-                  Professional Dumpster Rentals
-
-                </div>
-
-
-                <h1
-                  className="
-          text-[30px]
-          sm:text-4xl
-          lg:text-5xl
-          font-black
-          leading-[1.1]
-          "
-                >
-
-                  Dumpster Solutions For Every Cleanup Project
-
-                </h1>
-
-
-                <p
-                  className="
-          mt-4
-          text-gray-300
-          text-sm
-          md:text-base
-          max-w-xl
-          leading-7
-          "
-                >
-
-                  Residential cleanups, construction projects,
-                  roofing jobs and long-term waste solutions.
-                  Fast delivery, flexible rental periods and
-                  dependable service for projects of every size.
-
-                </p>
-
-
-                <div
-                  className="
-          flex
-          flex-col
-          sm:flex-row
-          gap-3
-          mt-6
-          "
-                >
-
-                  <Button
-                    asChild
-                    className="
             h-12
             px-6
             rounded-2xl
@@ -224,60 +162,44 @@ export default function DumpstersPage() {
             font-bold
             w-full
             sm:w-auto
-            "
-                  >
+          "
+                >
+                  <Link href="/smart-assessment">
+                    <Sparkles size={18} className="mr-2" />
+                    Find My Dumpster
+                  </Link>
+                </Button>
 
-                    <Link href="/smart-assessment">
-
-                      <Sparkles
-                        size={18}
-                        className="mr-2"
-                      />
-
-                      Find My Dumpster
-
-                    </Link>
-
-                  </Button>
-
-
-
-                  <Button
-                    variant="outline"
-                    className="
+                <Button
+                  variant="outline"
+                  className="
             h-12
             px-6
             rounded-2xl
-            border-white
-            bg-white/5
-            backdrop-blur
+            border-white/30
+            bg-white/10
             text-white
             hover:bg-white
             hover:text-[#0A1628]
             w-full
             sm:w-auto
-            "
-                    onClick={() =>
-                      document
-                        .getElementById("dumpster-size")
-                        ?.scrollIntoView({
-                          behavior: "smooth"
-                        })
-                    }
-                  >
-
-                    View Dumpsters
-
-                  </Button>
-
-                </div>
+          "
+                  onClick={() =>
+                    document
+                      .getElementById("dumpster-size")
+                      ?.scrollIntoView({
+                        behavior: "smooth"
+                      })
+                  }
+                >
+                  View Dumpsters
+                </Button>
 
               </div>
 
             </div>
 
           </div>
-
         </section>
 
         {/* SERVICES */}
@@ -822,7 +744,7 @@ export default function DumpstersPage() {
 
 
               
-                <Link href="/permits">
+                <Link href="/dumpster-permits">
 
                   <Button
                     size="lg"

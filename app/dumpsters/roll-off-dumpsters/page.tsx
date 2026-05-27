@@ -75,7 +75,7 @@ export default async function RollOffPage() {
 
       {/* HERO */}
 
-      <section className="bg-[#0A1628] overflow-hidden">
+      <section className="bg-gradient-to-r from-[#0A1628] via-[#183867] to-[#0A1628] overflow-hidden">
 
         <div className="max-w-7xl mx-auto px-5 py-10">
 
@@ -83,7 +83,7 @@ export default async function RollOffPage() {
 
             <div>
 
-              <div className="inline-flex px-4 py-2 rounded-full bg-[#FFD700]/10 text-[#FFD700] text-sm font-bold mb-5">
+              <div className="inline-flex px-4 py-2 rounded-full bg-white/10 text-white text-sm font-bold mb-5">
 
                 Construction & Cleanup Solutions
 
