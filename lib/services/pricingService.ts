@@ -15,7 +15,7 @@ export async function calculateServerSideBreakdown(bookingsData: any[], contactI
 
   for (const bData of bookingsData) {
     if (!bData.zipCode) {
-      throw new Error("we are coming soon to you area");
+      throw new Error("We are coming soon to you area");
     }
 
     // Find the specific dumpster to get the exact size ID and calculate free days
@@ -52,7 +52,7 @@ export async function calculateServerSideBreakdown(bookingsData: any[], contactI
       });
     } catch (err: any) {
       // Throw the exact error message the user requested when DB lookup fails
-      throw new Error("we are coming soon to you area");
+      throw new Error("We are coming soon to you area");
     }
 
     const basePrice = pricingRule.base_price;
@@ -65,11 +65,11 @@ export async function calculateServerSideBreakdown(bookingsData: any[], contactI
     }
 
     let extraDaysCost = 0;
-    let freeDays = 7;
+    let freeDays = 7; // Rubber-Wheel default: 7 days included free
     if (dData) {
       const typeObj = Array.isArray(dData.dumpster_types) ? dData.dumpster_types[0] : dData.dumpster_types;
-      if (typeObj?.name?.includes("Rubber")) {
-        freeDays = 14;
+      if (!typeObj?.name?.includes("Rubber")) {
+        freeDays = 14; // Roll-Off: 14 days included free
       }
     }
 
