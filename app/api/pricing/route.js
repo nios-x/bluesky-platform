@@ -31,7 +31,7 @@ export async function GET(request) {
     return NextResponse.json(pricing);
   } catch (error) {
     const isNotFound =
-      error.message.includes("not available") ||
+      error.message.includes("not currently available") ||
       error.message.includes("not set");
 
     return NextResponse.json(

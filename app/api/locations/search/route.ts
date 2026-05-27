@@ -18,7 +18,7 @@ function getLocalMatches(query: string): LocalMatch[] {
   const q = query.trim().toLowerCase();
 
   // Extract zip portion from mixed queries like "COMINS, MI 48612"
-  const zipMatch = q.match(/\b(\d{4,5})\b/);
+  const zipMatch = q.match(/\b(\d{2,5})\b/);
   const textPart = q.replace(/\d+/g, "").replace(/[,]/g, " ").trim();
 
   const matches = (LOCATIONS as any[]).filter((loc) => {
