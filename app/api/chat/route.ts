@@ -130,7 +130,7 @@ function recommendDumpsterSize(conversationText: string): number {
  *   needsZipCode?: boolean
  * }
  */
-export async function POST(request: NextRequest): Promise<NextResponse<ChatResponse>> {
+export async function POST(request: NextRequest) {
   try {
     const body: RequestBody = await request.json();
 

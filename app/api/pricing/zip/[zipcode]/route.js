@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
 import { getZipPricingContext } from "@/lib/controllers/pricing";
 
-export async function GET(request, context) {
+export const dynamic = "force-dynamic";
+
+export async function GET(request, { params }) {
   try {
-    const params = await context.params;
-    const zip = params?.zip;
+    const { zipcode: zip } = await params;
 
     if (!zip || typeof zip !== "string" || zip.length !== 5) {
       return NextResponse.json(
